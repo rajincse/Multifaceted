@@ -12,5 +12,11 @@ public class IMDBMySql extends DatabaseHelper{
 		super(url, classPath, user, password);
 		// TODO Auto-generated constructor stub
 	}
+	public IMDBMySql(String host, String port, String databaseName, String userName, String password)
+	{
+		super( "jdbc:mysql://"+host+":"+port+"/"+databaseName, CLASSPATH, userName, password);
+	}
+	
+	
 
 }

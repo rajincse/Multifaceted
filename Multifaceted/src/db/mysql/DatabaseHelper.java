@@ -21,6 +21,23 @@ public class DatabaseHelper {
 		this.user = user;
 		this.password = password;
 	}
+	public boolean isValidConnection()
+	{
+		boolean result = false;
+		try {
+			Class.forName(this.classPath);
+			Connection con = DriverManager.getConnection(this.url,this.user,this.password);
+			con.close();
+			result = true;
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return result;
+	}
 	protected boolean execute(String command)
 	{
 		boolean result = false;

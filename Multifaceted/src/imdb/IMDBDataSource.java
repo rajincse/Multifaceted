@@ -1,5 +1,10 @@
 package imdb;
 
+import imdb.entity.Actor;
+import imdb.entity.Movie;
+
+import java.util.ArrayList;
+
 import perspectives.base.DataSource;
 import perspectives.base.Property;
 import perspectives.base.Task;
@@ -107,6 +112,16 @@ public class IMDBDataSource extends DataSource{
 		pStatus.setReadOnly(true);
 		this.addProperty(pStatus);
 		
+	}
+	
+	public ArrayList<Movie> getMovieList(String searchKey)
+	{
+		return this.db.getMovieList(searchKey);
+	}
+	
+	public ArrayList<Actor> getActorList(String searchKey)
+	{
+		return this.db.getActorList(searchKey);
 	}
 
 }

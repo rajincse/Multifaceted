@@ -59,7 +59,7 @@ public class DatabaseHelper {
 		}
 		return result;
 	}
-	protected DefaultTableModel getData(String command)
+	public DefaultTableModel getData(String command)
 	{
 		DefaultTableModel table = new DefaultTableModel();
 		try {

@@ -1,0 +1,44 @@
+<!--
+To change this template, choose Tools | Templates
+and open the template in the editor.
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Create Query URL</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+        <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+        <script>
+            $(document).ready(function ()
+                {
+                    $('#btnSubmit').click(function ()
+                        {
+                            var content = $('#txtSQL').val();
+                            var encodedContent = encodeURIComponent(content);
+                            var queryURL='QueryServlet?Query='+encodedContent;
+                            $('#linkQueryServlet').attr('href',window.location+queryURL);
+                            $('#linkQueryServlet').html(window.location+queryURL);
+                        });
+                
+                    
+                });
+        
+            
+        </script>
+    </head>
+    <body>
+        <div>
+            Write SQL:
+        </div>
+        <div>
+            <textarea id="txtSQL" rows="4" cols="50"></textarea>
+        </div>
+        <div>
+            <button id="btnSubmit" >Submit</button>
+        </div>
+        <div>
+            <a id="linkQueryServlet" target="_blank"></a>
+        </div>
+    </body>
+</html>

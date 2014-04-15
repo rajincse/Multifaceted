@@ -4,9 +4,17 @@
         <servlet-name>QueryServlet</servlet-name>
         <servlet-class>imdb.QueryServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>DataServlet</servlet-name>
+        <servlet-class>imdb.DataServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>QueryServlet</servlet-name>
         <url-pattern>/QueryServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>DataServlet</servlet-name>
+        <url-pattern>/DataServlet</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>
@@ -29,7 +37,7 @@
         <param-name>db.mysql.username</param-name>
         <param-value>root</param-value>
     </context-param>
-     <context-param>
+    <context-param>
         <param-name>db.mysql.password</param-name>
         <param-value>rajin</param-value>
     </context-param>

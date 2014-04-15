@@ -1,13 +1,15 @@
 package imdb;
 
 
-import imdb.entity.Actor;
 import imdb.entity.Movie;
 import java.util.ArrayList;
 
 import javax.swing.table.DefaultTableModel;
 
 import db.mysql.DatabaseHelper;
+import imdb.entity.CompactMovie;
+import imdb.entity.CompactPerson;
+import imdb.entity.Person;
 
 public class IMDBMySql extends DatabaseHelper{
 	public static final int LIMIT =10;
@@ -20,6 +22,9 @@ public class IMDBMySql extends DatabaseHelper{
 	public static final String USER = "root";
 	public static final String PASSWORD = "rajin";
 	
+        private static final int ACTOR_ID=1;
+        private static final int ACTRESS_ID=2;
+        private static final int DIRECTOR_ID=8;
 	public IMDBMySql()
 	{
 		super( "jdbc:mysql://"+HOST+":"+PORT+"/"+DB, CLASSPATH, USER, PASSWORD);
@@ -31,12 +36,12 @@ public class IMDBMySql extends DatabaseHelper{
 	
 	/*- Movie-*/
 	
-	public ArrayList<Movie> getMovieList(String searchKey )
+	public ArrayList<CompactMovie> searchMovie(String searchKey )
 	{
-		ArrayList<Movie> movieList = new ArrayList<Movie>();
+		ArrayList<CompactMovie> movieList = new ArrayList<CompactMovie>();
 		String query = "SELECT 	T.id, "
 				+"		T.title,  "
-				+"		T.production_year AS `year` "
+				+"		COALESCE(T.production_year,0) AS `year` "
 				+"FROM title AS T "
 				+"WHERE   "
 				+" T.title LIKE '%"+searchKey+"%' "
@@ -49,52 +54,59 @@ public class IMDBMySql extends DatabaseHelper{
 			long id =Long.parseLong( table.getValueAt(row, 0).toString());
 			String title = table.getValueAt(row, 1).toString();
 			int year = Integer.parseInt( table.getValueAt(row, 2).toString());
-			Movie movie = new Movie(id, title, year);
+			CompactMovie movie = new CompactMovie(id, title, year);
 			movieList.add(movie);
 		}
 		return movieList;
 	}
-	public Movie getMovie(long id)
+	public Movie getMovie(long movieId)
 	{
 		String query ="SELECT 	T.title AS title,  "
-				+"		T.production_year AS `year`,   "
-				+"		MI.info AS rating "
-				+"FROM  "
-				+"title AS T "
-				+"INNER JOIN movie_info_idx AS MI ON MI.movie_id = T.id AND MI.info_type_id=101 "
-				+"WHERE  "
-				+"T.id = "+id+";";
+                                +"		COALESCE(T.production_year,0) AS `year`,   "
+                                +"		MI.info AS rating, "
+                                +"		C.role_id, "
+                                +"		N.id,  "
+                                +"		N.`name`, "
+                                +"		N.gender "
+                                +"		 "
+                                +"FROM  "
+                                +"title AS T "
+                                +"INNER JOIN movie_info_idx AS MI ON MI.movie_id = T.id AND MI.info_type_id=101 "
+                                +"INNER JOIN cast_info AS C ON C.movie_id = T.id AND (C.role_id = 1 OR C.role_id =2 OR C.role_id =8) "
+                                +"INNER JOIN `name` AS N ON N.id = C.person_id "
+                                +"WHERE  "
+                                +"T.id = "+movieId+";";
 		DefaultTableModel table = this.getData(query);
 		String title = table.getValueAt(0, 0).toString();
 		int year = Integer.parseInt( table.getValueAt(0,1).toString());
 		double rating = Double.parseDouble(table.getValueAt(0,2).toString());
-		Movie movie = new Movie(id, title, year);
-		movie.setRating(rating);
-		movie.setLoaded(true);
+		
+                ArrayList<CompactPerson> actorList = new ArrayList<CompactPerson>();
+                ArrayList<CompactPerson> directorList = new ArrayList<CompactPerson>();
+                for(int row=0;row<table.getRowCount();row++)
+                {
+                    int roleID = Integer.parseInt( table.getValueAt(row,3).toString());
+                    long id =Long.parseLong( table.getValueAt(row, 4).toString());
+                    String name = table.getValueAt(row, 5).toString();
+                    String gender = table.getValueAt(row, 6).toString();
+                    CompactPerson person = new CompactPerson(id, name, gender);
+                    
+                    if(roleID == ACTOR_ID || roleID == ACTRESS_ID)
+                    {
+                        actorList.add(person);
+                    }
+                    else if(roleID == DIRECTOR_ID)
+                    {
+                        directorList.add(person);
+                    }
+                }
+                Movie movie = new Movie(movieId, title, year, rating, actorList, directorList);
 		return movie;
 	}
-	public void loadMovie(Movie movie)
-	{
-		if(!movie.isLoaded())
-		{
-			String query ="SELECT MI.info AS rating "
-					+"FROM  "
-					+"title AS T "
-					+"INNER JOIN movie_info_idx AS MI ON MI.movie_id = T.id AND MI.info_type_id=101 "
-					+"WHERE  "
-					+"T.id = "+movie.getId()+";";
-			DefaultTableModel table = this.getData(query);
-			if(table.getRowCount() > 0)
-			{
-				double rating = Double.parseDouble(table.getValueAt(0,0).toString());
-				movie.setRating(rating);
-				movie.setLoaded(true);
-			}
-		}
-	}
+	
 	
 	/*- Actor-*/
-	public ArrayList<Actor> getActorList(String searchKey)
+	public ArrayList<CompactPerson> searchPerson(String searchKey)
 	{
 		String query ="SELECT  "
 				+"	N.id, "
@@ -106,18 +118,82 @@ public class IMDBMySql extends DatabaseHelper{
 				+"LIMIT 0,"+LIMIT+";";
 		DefaultTableModel table = this.getData(query);
 		int totalRows = table.getRowCount();
-		ArrayList<Actor> actorList = new ArrayList<Actor>();
+		ArrayList<CompactPerson> actorList = new ArrayList<CompactPerson>();
 		for(int row=0;row<totalRows;row++)
 		{
 			long id =Long.parseLong( table.getValueAt(row, 0).toString());
 			String name = table.getValueAt(row, 1).toString();
 			String gender = table.getValueAt(row, 2).toString();
-			Actor actor = new Actor(id, name, gender);
+			CompactPerson actor = new CompactPerson(id, name, gender);
 			actorList.add(actor);
 		}
 		
 		return actorList;
 	}
+        
+        public Person getPerson(long personId)
+        {
+            String query="SELECT 	 "
+                        +"		N.`name`, "
+                        +"		N.gender, "
+                        +"		C.role_id, "
+                        +"		T.id, "
+                        +"		T.title AS title,  "
+                        +"		COALESCE(T.production_year,0) AS `year` , "
+                        +"		COALESCE(PI.info,'') AS biography "
+                        +"FROM  "
+                        +"title AS T "
+                        +"INNER JOIN cast_info AS C ON C.movie_id = T.id AND (C.role_id = 1 OR C.role_id=2 OR C.role_id=8) AND T.kind_id=1 "
+                        +"INNER JOIN `name` AS N ON N.id = C.person_id "
+                        +" LEFT OUTER JOIN person_info AS PI ON N.id = PI.person_id AND PI.info_type_id=19 "
+                        +"WHERE  "
+                        +"N.id = "+personId+" "
+                        +"ORDER BY T.production_year DESC;";
+            DefaultTableModel table = this.getData(query);            
+            String name = table.getValueAt(0, 0).toString();
+            String gender = table.getValueAt(0, 1).toString();
+            
+            ArrayList<CompactMovie> actedMovieList = new ArrayList<CompactMovie>();
+            ArrayList<Long> actedMovieListId = new ArrayList<Long>();
+            ArrayList<CompactMovie> directedMovieList = new ArrayList<CompactMovie>();
+            ArrayList<Long> directedMovieListId = new ArrayList<Long>();
+            ArrayList<String> biographyList = new ArrayList<String>();
+           
+            int totalRows = table.getRowCount();
+            for(int row=0;row<totalRows;row++)
+            {
+                    long roleId =Long.parseLong( table.getValueAt(row, 2).toString());
+                    
+                    long movieId = Long.parseLong( table.getValueAt(row, 3).toString());
+                    String title = table.getValueAt(row, 4).toString();
+                    
+                    int year = Integer.parseInt( table.getValueAt(row, 5).toString());
+                    System.out.println(row);
+
+                    CompactMovie movie = new CompactMovie(movieId, title, year);
+                    
+                    
+                    if((roleId == ACTOR_ID || roleId == ACTRESS_ID) 
+                            && !actedMovieListId.contains(movieId))
+                    {
+                        actedMovieList.add(movie);
+                        actedMovieListId.add(movieId);
+                    }
+                    else if(roleId == DIRECTOR_ID && !directedMovieListId.contains(movieId))
+                    {
+                        directedMovieList.add(movie);
+                        directedMovieListId.add(movieId);
+                    }
+                    
+                    String bio = table.getValueAt(row, 6).toString();
+                    if(bio != null && !bio.isEmpty() && !biographyList.contains(bio))
+                    {
+                        biographyList.add(bio);
+                    }
+            }
+            Person person = new Person(personId, name, gender, actedMovieList, directedMovieList, biographyList);
+            return person;
+        }
 	
 	
 }

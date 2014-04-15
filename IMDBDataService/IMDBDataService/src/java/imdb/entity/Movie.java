@@ -1,48 +1,27 @@
 package imdb.entity;
 
-public class Movie {
-	private long id;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+
+import com.google.gson.reflect.TypeToken;
+
+public class Movie extends CompactMovie{
 	
-	private String title;
-	private int year;
+	protected double rating;
 	
-	private boolean isLoaded;
+	protected ArrayList<CompactPerson> actors =null;
+	protected ArrayList<CompactPerson> directors =null;
 	
 	
-	private double rating;
-	
-	public Movie(long id, String title, int year)
+	public Movie(long id, String title, int year, double rating,  ArrayList<CompactPerson> actors,  ArrayList<CompactPerson> directors )
 	{
-		this.id =id;
-		this.title = title;
-		this.year = year;
+		super(id,title,year);
+        this.rating = rating;
+		this.actors = actors;
+		this.directors = directors;
 		
-		this.isLoaded = false;
 	}
 	
-	
-	public boolean isLoaded() {
-		return isLoaded;
-	}
-	public void setLoaded(boolean isLoaded)
-	{
-		this.isLoaded = isLoaded;
-	}
-
-	public long getId() {
-		return id;
-	}
-
-	public String getTitle() {
-		return title;
-	}
-
-	
-
-	public int getYear() {
-		return year;
-	}
-
 
 	public double getRating() {
 		return rating;
@@ -53,16 +32,32 @@ public class Movie {
 	}
 
 
+	public ArrayList<CompactPerson> getActors() {
+		return actors;
+	}
+	public void setActors(ArrayList<CompactPerson> actors) {
+		this.actors = actors;
+	}
+	public ArrayList<CompactPerson> getDirectors() {
+		return directors;
+	}
+	public void setDirectors(ArrayList<CompactPerson> directors) {
+		this.directors = directors;
+	}
+	public static Type getType()
+	{
+		return new TypeToken<Movie>(){}.getType();
+	}
+	public static Type getListType()
+	{
+		return new TypeToken<ArrayList<Movie>>(){}.getType();
+	}
+	
 	@Override
 	public String toString() {
-		if(isLoaded)
-		{
-			return ""+this.id+", "+this.title+", "+","+this.year+", "+String.format("%.2f", this.rating);
-		}
-		else
-		{
-			return ""+this.id+", "+this.title+", "+","+this.year;
-		}
+		return super.toString()+", "+String.format("%.2f", this.rating)
+				+", Actors:"+this.actors.size()
+				+(this.directors.size()>0?", Director:"+this.directors.get(0).toString():"");
 			
 	}
 

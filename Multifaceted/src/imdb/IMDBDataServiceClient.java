@@ -36,6 +36,10 @@ public class IMDBDataServiceClient {
 	{
 		this.gson = new Gson();
 		this.host = host;
+		if(!this.host.endsWith("/"))
+		{
+			this.host+="/";
+		}
 	}
 	public boolean isValid()
 	{

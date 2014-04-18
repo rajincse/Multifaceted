@@ -46,7 +46,7 @@ public class CompactPerson {
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		return ""+id+", "+name+", "+(gender.equalsIgnoreCase("m")?"Male":"Female");
+		return name+", "+(gender.equalsIgnoreCase("m")?"Male":"Female");
 		
 		
 	}

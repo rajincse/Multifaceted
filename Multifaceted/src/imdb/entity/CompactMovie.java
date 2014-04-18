@@ -42,7 +42,7 @@ public class CompactMovie {
 	}
 	@Override
 	public String toString() {
-		return ""+this.id+", "+this.title+", "+","+this.year;
+		return this.title+" ("+this.year+")";
 			
 	}
 }

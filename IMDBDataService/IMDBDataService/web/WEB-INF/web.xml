@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app version="3.0" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
+    
     <servlet>
         <servlet-name>QueryServlet</servlet-name>
         <servlet-class>imdb.QueryServlet</servlet-class>
@@ -21,24 +22,35 @@
             30
         </session-timeout>
     </session-config>
-    <context-param>
-        <param-name>db.mysql.host</param-name>
-        <param-value>localhost</param-value>
-    </context-param>
-    <context-param>
-        <param-name>db.mysql.port</param-name>
-        <param-value>3306</param-value>
-    </context-param>
-    <context-param>
-        <param-name>db.mysql.databasename</param-name>
-        <param-value>imdb</param-value>
-    </context-param>
-    <context-param>
-        <param-name>db.mysql.username</param-name>
-        <param-value>root</param-value>
-    </context-param>
-    <context-param>
-        <param-name>db.mysql.password</param-name>
-        <param-value>rajin</param-value>
-    </context-param>
+    <env-entry> 
+            <env-entry-name>db.mysql.host</env-entry-name> 
+            <env-entry-type>java.lang.String</env-entry-type> 
+            <env-entry-value>localhost</env-entry-value>         
+    </env-entry>
+    <env-entry> 
+            <env-entry-name>db.mysql.port</env-entry-name> 
+            <env-entry-type>java.lang.String</env-entry-type> 
+            <env-entry-value>3306</env-entry-value>        
+    </env-entry>
+    <env-entry> 
+            <env-entry-name>db.mysql.databasename</env-entry-name> 
+            <env-entry-type>java.lang.String</env-entry-type> 
+            <env-entry-value>imdb</env-entry-value>         
+    </env-entry>
+    <env-entry> 
+            <env-entry-name>db.mysql.username</env-entry-name> 
+             <env-entry-type>java.lang.String</env-entry-type> 
+            <env-entry-value>root</env-entry-value>        
+    </env-entry>
+    <env-entry> 
+            <env-entry-name>db.mysql.password</env-entry-name> 
+            <env-entry-type>java.lang.String</env-entry-type> 
+            <env-entry-value>rajin</env-entry-value>        
+    </env-entry>
+    
+    <env-entry> 
+            <env-entry-name>db.mysql.query.limit</env-entry-name> 
+            <env-entry-type>java.lang.String</env-entry-type> 
+            <env-entry-value>10</env-entry-value>        
+    </env-entry>
 </web-app>

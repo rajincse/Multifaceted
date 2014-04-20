@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.json.simple.JSONObject;
+import util.Configuration;
 
 /**
  *
@@ -29,11 +30,7 @@ public class QueryServlet extends HttpServlet {
      * @throws ServletException if a servlet-specific error occurs
      * @throws IOException if an I/O error occurs
      */
-    public static final String PARAM_HOST ="db.mysql.host";
-    public static final String PARAM_PORT ="db.mysql.port";
-    public static final String PARAM_DATABASE_NAME ="db.mysql.databasename";
-    public static final String PARAM_USER_NAME ="db.mysql.username";
-    public static final String PARAM_PASSWORD ="db.mysql.password";
+   
     
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -43,7 +40,7 @@ public class QueryServlet extends HttpServlet {
             /* TODO output your page here. You may use following sample code. */
            
            String query = request.getParameter("Query");
-           IMDBMySql db = getDB();
+           IMDBMySql db = Configuration.getDB();
            JSONObject data= db.getJSONData(query);
            JSONObject obj =new JSONObject();
            obj.put("Data",data);
@@ -52,17 +49,7 @@ public class QueryServlet extends HttpServlet {
             out.close();
         }
     }
-    private IMDBMySql getDB()
-    {
-       String host = getServletContext().getInitParameter(QueryServlet.PARAM_HOST);
-        String port = getServletContext().getInitParameter(QueryServlet.PARAM_PORT);
-        String databaseName = getServletContext().getInitParameter(QueryServlet.PARAM_DATABASE_NAME);
-        String userName = getServletContext().getInitParameter(QueryServlet.PARAM_USER_NAME);
-        String password = getServletContext().getInitParameter(QueryServlet.PARAM_PASSWORD);
-        IMDBMySql db = new IMDBMySql(host, port, databaseName, userName, password);
-        
-        return db;
-    }
+    
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /**

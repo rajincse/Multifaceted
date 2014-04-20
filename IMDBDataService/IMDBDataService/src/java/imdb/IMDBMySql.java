@@ -1,18 +1,16 @@
 package imdb;
 
 
-import imdb.entity.Movie;
-import java.util.ArrayList;
-
-import javax.swing.table.DefaultTableModel;
-
 import db.mysql.DatabaseHelper;
 import imdb.entity.CompactMovie;
 import imdb.entity.CompactPerson;
+import imdb.entity.Movie;
 import imdb.entity.Person;
+import java.util.ArrayList;
+import javax.swing.table.DefaultTableModel;
+import util.Configuration;
 
 public class IMDBMySql extends DatabaseHelper{
-	public static final int LIMIT =10;
 	
 	public static final String CLASSPATH ="com.mysql.jdbc.Driver";
 	public static final String HOST ="localhost";
@@ -46,7 +44,7 @@ public class IMDBMySql extends DatabaseHelper{
 				+"WHERE   "
 				+" T.title LIKE '%"+searchKey+"%' "
 				+"AND T.kind_id = 1 "
-				+"LIMIT 0,"+LIMIT+" ; ";
+				+"LIMIT 0,"+Configuration.getQueryLimit()+" ; ";
 		DefaultTableModel table = this.getData(query);
 		int totalRows = table.getRowCount();
 		for(int row=0;row<totalRows;row++)
@@ -72,10 +70,12 @@ public class IMDBMySql extends DatabaseHelper{
                                 +"FROM  "
                                 +"title AS T "
                                 +"LEFT OUTER JOIN movie_info_idx AS MI ON MI.movie_id = T.id AND MI.info_type_id=101 "
-                                +"INNER JOIN cast_info AS C ON C.movie_id = T.id AND (C.role_id = 1 OR C.role_id =2 OR C.role_id =8) "
+                                +"INNER JOIN cast_info AS C ON C.movie_id = T.id "
+                                +" AND ( C.role_id=8 OR ((C.role_id = 1 OR C.role_id =2) AND C.nr_order IS NOT NULL)) "
                                 +"INNER JOIN `name` AS N ON N.id = C.person_id "
                                 +"WHERE  "
-                                +"T.id = "+movieId+";";
+                                +"T.id = "+movieId+" "
+                                +"ORDER BY C.nr_order;";
 		DefaultTableModel table = this.getData(query);
 		String title = table.getValueAt(0, 0).toString();
 		int year = Integer.parseInt( table.getValueAt(0,1).toString());
@@ -115,7 +115,7 @@ public class IMDBMySql extends DatabaseHelper{
 				+" FROM `name` AS N "
 				+"WHERE  "
 				+"N.`name` LIKE '%"+searchKey+"%' "
-				+"LIMIT 0,"+LIMIT+";";
+				+"LIMIT 0,"+Configuration.getQueryLimit()+";";
 		DefaultTableModel table = this.getData(query);
 		int totalRows = table.getRowCount();
 		ArrayList<CompactPerson> actorList = new ArrayList<CompactPerson>();

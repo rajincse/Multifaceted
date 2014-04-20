@@ -19,6 +19,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import util.Configuration;
 
 /**
  *
@@ -47,7 +48,7 @@ public class DataServlet extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
         try {
-            IMDBMySql db = getDB();
+            IMDBMySql db = Configuration.getDB();
             Gson gson = new Gson();
             String jsonData="";
             String method = request.getParameter("method");
@@ -104,17 +105,6 @@ public class DataServlet extends HttpServlet {
         }
     }
    
-    private IMDBMySql getDB()
-    {
-        String host = getServletContext().getInitParameter(QueryServlet.PARAM_HOST);
-        String port = getServletContext().getInitParameter(QueryServlet.PARAM_PORT);
-        String databaseName = getServletContext().getInitParameter(QueryServlet.PARAM_DATABASE_NAME);
-        String userName = getServletContext().getInitParameter(QueryServlet.PARAM_USER_NAME);
-        String password = getServletContext().getInitParameter(QueryServlet.PARAM_PASSWORD);
-        IMDBMySql db = new IMDBMySql(host, port, databaseName, userName, password);
-        
-        return db;
-    }
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /**
      * Handles the HTTP

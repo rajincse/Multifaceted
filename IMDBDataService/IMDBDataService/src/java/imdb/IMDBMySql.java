@@ -108,14 +108,15 @@ public class IMDBMySql extends DatabaseHelper{
 	/*- Actor-*/
 	public ArrayList<CompactPerson> searchPerson(String searchKey)
 	{
-		String query ="SELECT  "
-				+"	N.id, "
-				+"	N.`name`, "
-				+"	N.gender "
-				+" FROM `name` AS N "
-				+"WHERE  "
-				+"N.`name` LIKE '%"+searchKey+"%' "
-				+"LIMIT 0,"+Configuration.getQueryLimit()+";";
+		String query ="SELECT   "
+                            +"	N.id,  "
+                            +"	N.`name`,  "
+                            +"	N.gender "
+                            +" FROM `name` AS N  "                            
+                            +"WHERE   "
+                            +"N.gender IS NOT NULL AND   "
+                            +"N.`name` LIKE '%"+searchKey+"%' "
+                            +"LIMIT 0,"+Configuration.getQueryLimit()+" ;";
 		DefaultTableModel table = this.getData(query);
 		int totalRows = table.getRowCount();
 		ArrayList<CompactPerson> actorList = new ArrayList<CompactPerson>();

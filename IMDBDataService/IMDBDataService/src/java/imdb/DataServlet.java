@@ -5,20 +5,20 @@
 package imdb;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import imdb.entity.CompactMovie;
 import imdb.entity.CompactPerson;
 import imdb.entity.Movie;
 import imdb.entity.Person;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import util.Configuration;
 
 /**
@@ -89,15 +89,31 @@ public class DataServlet extends HttpServlet {
         }
         catch(Exception ex)
         {
-            out.println(ex.getMessage());
-            ex.printStackTrace();
+            JSONObject exceptionObject = new JSONObject();
+            
+            exceptionObject.put("ExceptionMessage",ex.getMessage()+" ("+ex.getClass().toString()+")");
+                    
+            JSONArray stackArray = new JSONArray();
+            StackTraceElement[] stackTrace = ex.getStackTrace();
+            for(StackTraceElement elem: stackTrace)
+            {
+                stackArray.add(elem.toString());
+            }
+            exceptionObject.put("StackTrace", stackArray);
+            
+            JSONArray parameters = new JSONArray();
             Enumeration<String> names = request.getParameterNames();
             while(names.hasMoreElements())
             {
                  String n = names.nextElement();
-                 out.println(n+":"+request.getParameter(n));
-
+                 JSONObject paramObj = new JSONObject();
+                 paramObj.put(n, request.getParameter(n));
+                 
+                 parameters.add(paramObj);
             }
+            exceptionObject.put("Parameters",parameters);
+            
+            out.println(exceptionObject);
             
         }
         finally {     

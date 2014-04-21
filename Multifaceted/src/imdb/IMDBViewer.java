@@ -28,7 +28,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	private static final String PROPERTY_SELECTED_ITEM="Selected Item";
 	private static final String PROPERTY_SELECT="Select";
 	
-	
+	private static final int MAX_ACTOR=10;
 	
 	private IMDBDataSource data;
 	
@@ -190,7 +190,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 					layout.addEdge(source, destination);
 				}
 				
-				if(actorCount >=20)
+				if(actorCount >=MAX_ACTOR)
 				{
 					break;
 				}

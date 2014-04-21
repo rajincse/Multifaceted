@@ -10,6 +10,10 @@ import perspectives.base.ObjectInteraction;
 import perspectives.util.Label;
 
 public class PivotPathLayout {
+	public static final int COEFF_COMPULSIVE_FORCE=500;
+	public static final int SPRING_LENGTH=750;
+	public static final int COEFF_BOUNDARY_FORCE=10000;
+	
 	private LayoutViewerInterface viewer;
 	public PivotPathLayout(LayoutViewerInterface viewer)
 	{
@@ -145,7 +149,7 @@ public class PivotPathLayout {
 		//edge forces
 		for (int i=0; i<edges1.size(); i++)
 		{
-			double[] f = compAttraction(elemPos.get(edges1.get(i)), elemPos.get(edges2.get(i)), 750);
+			double[] f = compAttraction(elemPos.get(edges1.get(i)), elemPos.get(edges2.get(i)), SPRING_LENGTH);
 			fx[edges1.get(i)] += f[0];
 			fy[edges1.get(i)] += f[1];
 			
@@ -163,7 +167,7 @@ public class PivotPathLayout {
 			
 			double d = elemPos.get(i).getY() - y;
 			
-			double mag = 10000 * 1/(d*d);
+			double mag = COEFF_BOUNDARY_FORCE * 1/(d*d);
 			
 			if (layer.get(i) == 0)
 				fy[i] -= mag;
@@ -280,7 +284,7 @@ public class PivotPathLayout {
 		vx /= d;
 		vy /= d;
 		
-		double mag = -500 * 1./(d*d);
+		double mag = COEFF_COMPULSIVE_FORCE  * (-1.)/(d*d);
 		
 		return new double[]{vx*mag, vy*mag};
 	}
@@ -297,22 +301,22 @@ public class PivotPathLayout {
 			
 			//g.drawString(elem.get(i), x, y);
 			labels.get(i).render(g);
-//			Label label = labels.get(i);
-//			int lx = (int)label.x;
-//			int ly = (int)label.y;
-//			int lw = (int) label.w;
-//			int lh = (int) label.h;
-//			g.setColor(Color.blue);
-//			g.drawRect(lx-lw/2,ly-lh/2,lw,lh);
-//			int radius =5;
-//			g.setColor(Color.green);
-//			g.fillOval(x-radius, y-radius, 2*radius, 2*radius);
-//			
-//			g.setColor(Color.pink);
-//			g.fillOval(lx-lw/2-radius, ly-lh/2-radius, 2*radius, 2*radius);
-//			g.fillOval(lx-lw/2-radius, ly+lh/2-radius, 2*radius, 2*radius);
-//			g.fillOval(lx+lw/2-radius, ly-lh/2-radius, 2*radius, 2*radius);
-//			g.fillOval(lx+lw/2-radius, ly+lh/2-radius, 2*radius, 2*radius);
+			Label label = labels.get(i);
+			int lx = (int)label.x;
+			int ly = (int)label.y;
+			int lw = (int) label.w;
+			int lh = (int) label.h;
+			g.setColor(Color.blue);
+			g.drawRect(lx-lw/2,ly-lh/2,lw,lh);
+			int radius =5;
+			g.setColor(Color.green);
+			g.fillOval(x-radius, y-radius, 2*radius, 2*radius);
+			
+			g.setColor(Color.pink);
+			g.fillOval(lx-lw/2-radius, ly-lh/2-radius, 2*radius, 2*radius);
+			g.fillOval(lx-lw/2-radius, ly+lh/2-radius, 2*radius, 2*radius);
+			g.fillOval(lx+lw/2-radius, ly-lh/2-radius, 2*radius, 2*radius);
+			g.fillOval(lx+lw/2-radius, ly+lh/2-radius, 2*radius, 2*radius);
 		}
 		
 		for (int i=0; i<edges1.size(); i++)

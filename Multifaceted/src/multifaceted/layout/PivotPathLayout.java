@@ -1,6 +1,7 @@
 package multifaceted.layout;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.Point2D;
@@ -21,7 +22,7 @@ public class PivotPathLayout {
 		this.viewer = viewer;
 	}
 	
-	ArrayList<Label> labels = new ArrayList<Label>();
+	ArrayList<PivotLabel> labels = new ArrayList<PivotLabel>();
 	
 	private ObjectInteraction objectInteraction = new ObjectInteraction()
 	{
@@ -59,9 +60,10 @@ public class PivotPathLayout {
 		return this.objectInteraction;
 	}
 	
-	public void addLabel(String s, boolean tilt)
+	public void addLabel(String s, boolean tilt, boolean isChangeable)
 	{
-		Label l = new Label(0 , 0, s);
+		PivotLabel l = new PivotLabel(s, isChangeable);
+		
 		l.setColor(Color.LIGHT_GRAY);
 		if (tilt)
 		l.setRotationAngle(Math.PI / 3);
@@ -116,6 +118,8 @@ public class PivotPathLayout {
 	{
 		edges1.add(e1);
 		edges2.add(e2);
+		this.labels.get(e1).increaseEdgeCount();
+		this.labels.get(e2).increaseEdgeCount();
 	}
 	
 	public void iteration()

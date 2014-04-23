@@ -10,7 +10,8 @@ import perspectives.base.ObjectInteraction;
 import perspectives.util.Label;
 
 public class PivotPathLayout {
-	public static final int COEFF_COMPULSIVE_FORCE=500;
+	public static final int COEFF_COMPULSIVE_FORCE_WEAK=50;
+	public static final int COEFF_COMPULSIVE_FORCE_STRONG=500;
 	public static final int SPRING_LENGTH=750;
 	public static final int COEFF_BOUNDARY_FORCE=10000;
 	
@@ -228,31 +229,46 @@ public class PivotPathLayout {
 		
 		double fx =0;
 		double fy =0;
-		int totalPoints = 4;
+		int totalPoints = 5;
 		Point2D[] label1Points = new Point2D[totalPoints];
 		Point2D[] label2Points = new Point2D[totalPoints];
+		
+		label1Points[0] = new Point((int)(label1.x),(int)(label1.y)) ;
+		label2Points[0] = new Point((int)(label2.x),(int)(label2.y)) ;
+		
 
-		label1Points[0] = new Point((int)(label1.x-label1.w/2),(int)(label1.y - label1.h/2)) ;
-		label2Points[0] = new Point((int)(label2.x-label2.w/2),(int)(label2.y - label2.h/2)) ;
+		label1Points[1] = new Point((int)(label1.x-label1.w/2),(int)(label1.y - label1.h/2)) ;
+		label2Points[1] = new Point((int)(label2.x-label2.w/2),(int)(label2.y - label2.h/2)) ;
 		
-		label1Points[1] = new Point((int)(label1.x-label1.w/2),(int)(label1.y + label1.h/2)) ;
-		label2Points[1] = new Point((int)(label2.x-label2.w/2),(int)(label2.y + label2.h/2)) ;
+		label1Points[2] = new Point((int)(label1.x-label1.w/2),(int)(label1.y + label1.h/2)) ;
+		label2Points[2] = new Point((int)(label2.x-label2.w/2),(int)(label2.y + label2.h/2)) ;
 		
-		label1Points[2] = new Point((int)(label1.x+label1.w/2),(int)(label1.y - label1.h/2)) ;
-		label2Points[2] = new Point((int)(label2.x+label2.w/2),(int)(label2.y - label2.h/2)) ;
+		label1Points[3] = new Point((int)(label1.x+label1.w/2),(int)(label1.y - label1.h/2)) ;
+		label2Points[3] = new Point((int)(label2.x+label2.w/2),(int)(label2.y - label2.h/2)) ;
 		
-		label1Points[3] = new Point((int)(label1.x+label1.w/2),(int)(label1.y + label1.h/2)) ;
-		label2Points[3] = new Point((int)(label2.x+label2.w/2),(int)(label2.y + label2.h/2)) ;
+		label1Points[4] = new Point((int)(label1.x+label1.w/2),(int)(label1.y + label1.h/2)) ;
+		label2Points[4] = new Point((int)(label2.x+label2.w/2),(int)(label2.y + label2.h/2)) ;
 		
 		for(int i=0;i<label1Points.length;i++)
 		{
 			Point2D p1 = label1Points[i];
 			for(int j=0;j<label2Points.length;j++)
 			{
+				
 				Point2D p2 = label2Points[j];
-				double[] f = this.compRepulsion(p1, p2);
-				fx+=f[0];
-				fy+=f[1];
+				if(i==0 || j==0)
+				{
+					double[] f = this.compRepulsion(p1, p2, COEFF_COMPULSIVE_FORCE_STRONG);
+					fx+=f[0];
+					fy+=f[1];
+				}
+				else
+				{
+					double[] f = this.compRepulsion(p1, p2, COEFF_COMPULSIVE_FORCE_WEAK);
+					fx+=f[0];
+					fy+=f[1];
+				}
+				
 			}
 			
 		}
@@ -260,7 +276,7 @@ public class PivotPathLayout {
 		return new double[]{fx,fy};
 	}
 	
-	private double[] compRepulsion(Point2D p1, Point2D p2)
+	private double[] compRepulsion(Point2D p1, Point2D p2, int forceCoefficient)
 	{
 		double d = p1.distance(p2);
 		
@@ -284,23 +300,16 @@ public class PivotPathLayout {
 		vx /= d;
 		vy /= d;
 		
-		double mag = COEFF_COMPULSIVE_FORCE  * (-1.)/(d*d);
+		double mag = forceCoefficient  * (-1.)/(d*d);
 		
 		return new double[]{vx*mag, vy*mag};
 	}
-	
-	public void render(Graphics2D g) {
-		g.setColor(Color.black);
+	private void renderDebug(Graphics2D g)
+	{
 		for (int i=0; i<elem.size(); i++)
 		{
 			int x = (int)elemPos.get(i).getX();
 			int y = (int)elemPos.get(i).getY();
-			
-			labels.get(i).x = x;
-			labels.get(i).y = y;
-			
-			//g.drawString(elem.get(i), x, y);
-			labels.get(i).render(g);
 			Label label = labels.get(i);
 			int lx = (int)label.x;
 			int ly = (int)label.y;
@@ -317,6 +326,23 @@ public class PivotPathLayout {
 			g.fillOval(lx-lw/2-radius, ly+lh/2-radius, 2*radius, 2*radius);
 			g.fillOval(lx+lw/2-radius, ly-lh/2-radius, 2*radius, 2*radius);
 			g.fillOval(lx+lw/2-radius, ly+lh/2-radius, 2*radius, 2*radius);
+			
+		}
+		
+	}
+	public void render(Graphics2D g) {
+		g.setColor(Color.black);
+		
+		for (int i=0; i<elem.size(); i++)
+		{
+			int x = (int)elemPos.get(i).getX();
+			int y = (int)elemPos.get(i).getY();
+			
+			labels.get(i).x = x;
+			labels.get(i).y = y;
+			
+			//g.drawString(elem.get(i), x, y);
+			labels.get(i).render(g);
 		}
 		
 		for (int i=0; i<edges1.size(); i++)
@@ -333,5 +359,6 @@ public class PivotPathLayout {
 			
 			g.drawLine(x1, y1, x2, y2);
 		}
+//		this.renderDebug(g);
 	}
 }

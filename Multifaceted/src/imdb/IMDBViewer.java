@@ -165,7 +165,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 				if(!layout.getElements().contains(""+director.getId()))
 				{
 					layout.addBottomElement(""+director.getId());
-					layout.addLabel(director.getName(), false);
+					layout.addLabel(director.getDisplayName(), false);
 					
 				}
 				int destination = layout.getElements().indexOf(""+director.getId());
@@ -179,7 +179,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 				if(!layout.getElements().contains(""+actor.getId()) && actor.getId() != person.getId())
 				{
 					layout.addTopElement(""+actor.getId());
-					layout.addLabel(actor.getName(),false);
+					layout.addLabel(actor.getDisplayName(),false);
 					
 					actorCount++;
 					

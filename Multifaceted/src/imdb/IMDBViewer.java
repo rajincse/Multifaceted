@@ -139,6 +139,9 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	}
 	private void selectPerson(CompactPerson compactPerson)
 	{
+		this.stopSimulation();
+		this.layout.init();
+		
 		System.out.println("Selected:"+compactPerson);
 		Person person = this.data.getPerson(compactPerson);
 		int movieCount =0;

@@ -15,52 +15,124 @@ import perspectives.util.Label;
 public class PivotPathLayout {
 	public static final int COEFF_COMPULSIVE_FORCE_WEAK=10;
 	public static final int COEFF_COMPULSIVE_FORCE_STRONG=25;
-	public static final int COEFF_SPRING_LENGTH=1;
+	public static final int COEFF_SPRING_LENGTH=10;
 	public static final int COEFF_BOUNDARY_FORCE=100;
 	
 	public static final int MAX_MIDDLE_ITEM =20;
 	public static final int STEP_MIDDLE_ITEM =50;
 	
 	private LayoutViewerInterface viewer;
-	public PivotPathLayout(LayoutViewerInterface viewer)
-	{
-		this.viewer = viewer;
-	}
-	
 	
 	private ObjectInteraction objectInteraction = new ObjectInteraction()
 	{
 
 		@Override
 		protected void mouseIn(int object) {
-			if (objectInteraction.getItem(object).selected)
-				elem.get(object).getLabel().setColor(Color.red);
-			else
-				elem.get(object).getLabel().setColor(Color.yellow);
-			viewer.callRequestRender();
+			if(!elem.isEmpty())
+			{
+				if (objectInteraction.getItem(object).selected)
+					elem.get(object).getLabel().setColor(Color.red);
+				else
+					elem.get(object).getLabel().setColor(Color.yellow);
+				viewer.callRequestRender();
+			}
+			
 		}
 
 		@Override
 		protected void mouseOut(int object) {
-			if (objectInteraction.getItem(object).selected)
-				elem.get(object).getLabel().setColor(Color.pink);
-			else
-				elem.get(object).getLabel().setColor(Color.LIGHT_GRAY);
-			viewer.callRequestRender();
+			if(!elem.isEmpty())
+			{
+				if (objectInteraction.getItem(object).selected)
+					elem.get(object).getLabel().setColor(Color.pink);
+				else
+					elem.get(object).getLabel().setColor(Color.LIGHT_GRAY);
+				viewer.callRequestRender();
+			}
 		}
 
 		@Override
 		protected void itemsSelected(int[] objects) {
-			for (int i=0; i<elem.size(); i++)
-				elem.get(i).getLabel().setColor(Color.LIGHT_GRAY);
-			for (int i=0; i<objects.length; i++)
-				elem.get(objects[i]).getLabel().setColor(Color.pink);
-			viewer.callRequestRender();
+			if(!elem.isEmpty())
+			{
+				for (int i=0; i<elem.size(); i++)
+					elem.get(i).getLabel().setColor(Color.LIGHT_GRAY);
+				for (int i=0; i<objects.length; i++)
+					elem.get(objects[i]).getLabel().setColor(Color.pink);
+				viewer.callRequestRender();
+			}
 		}
 		
 	};
-	public ObjectInteraction getObjectInteraction()
+	
+	ArrayList<PivotElement> elem = new ArrayList<PivotElement>();
+	ArrayList<String> elementId = new ArrayList<String>();
+	ArrayList<Integer> layer = new ArrayList<Integer>();
+
+	ArrayList<PivotEdge> edges = new ArrayList<PivotEdge>();
+	
+	int cnt = 0;
+	
+	int middles = 0;
+	
+	public PivotPathLayout(LayoutViewerInterface viewer)
 	{
+		this.viewer = viewer;
+	}
+	
+	public void init()
+	{
+		elem.clear();
+		elementId.clear();
+		edges.clear();
+		this.layer.clear();
+		cnt =0;
+		middles =0;
+		objectInteraction = new ObjectInteraction()
+		{
+
+			@Override
+			protected void mouseIn(int object) {
+				if(!elem.isEmpty())
+				{
+					if (objectInteraction.getItem(object).selected)
+						elem.get(object).getLabel().setColor(Color.red);
+					else
+						elem.get(object).getLabel().setColor(Color.yellow);
+					viewer.callRequestRender();
+				}
+				
+			}
+
+			@Override
+			protected void mouseOut(int object) {
+				if(!elem.isEmpty())
+				{
+					if (objectInteraction.getItem(object).selected)
+						elem.get(object).getLabel().setColor(Color.pink);
+					else
+						elem.get(object).getLabel().setColor(Color.LIGHT_GRAY);
+					viewer.callRequestRender();
+				}
+			}
+
+			@Override
+			protected void itemsSelected(int[] objects) {
+				if(!elem.isEmpty())
+				{
+					for (int i=0; i<elem.size(); i++)
+						elem.get(i).getLabel().setColor(Color.LIGHT_GRAY);
+					for (int i=0; i<objects.length; i++)
+						elem.get(objects[i]).getLabel().setColor(Color.pink);
+					viewer.callRequestRender();
+				}
+			}
+			
+		};
+	}
+	
+	public ObjectInteraction getObjectInteraction()
+	{	
 		return this.objectInteraction;
 	}
 	
@@ -73,15 +145,7 @@ public class PivotPathLayout {
 		objectInteraction.addItem(objectInteraction.new RectangleItem(label));
 	}
 
-	ArrayList<PivotElement> elem = new ArrayList<PivotElement>();
-	ArrayList<String> elementId = new ArrayList<String>();
-	ArrayList<Integer> layer = new ArrayList<Integer>();
-
-	ArrayList<PivotEdge> edges = new ArrayList<PivotEdge>();
 	
-	int cnt = 0;
-	
-	int middles = 0;
 	
 	public ArrayList<String> getElements()
 	{

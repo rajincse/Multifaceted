@@ -1,5 +1,7 @@
 package multifaceted.layout;
 
+import imdb.IMDBViewer;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
@@ -11,10 +13,13 @@ import perspectives.base.ObjectInteraction;
 import perspectives.util.Label;
 
 public class PivotPathLayout {
-	public static final int COEFF_COMPULSIVE_FORCE_WEAK=50;
-	public static final int COEFF_COMPULSIVE_FORCE_STRONG=500;
-	public static final int COEFF_SPRING_LENGTH=50;
-	public static final int COEFF_BOUNDARY_FORCE=10000;
+	public static final int COEFF_COMPULSIVE_FORCE_WEAK=10;
+	public static final int COEFF_COMPULSIVE_FORCE_STRONG=25;
+	public static final int COEFF_SPRING_LENGTH=1;
+	public static final int COEFF_BOUNDARY_FORCE=100;
+	
+	public static final int MAX_MIDDLE_ITEM =20;
+	public static final int STEP_MIDDLE_ITEM =50;
 	
 	private LayoutViewerInterface viewer;
 	public PivotPathLayout(LayoutViewerInterface viewer)
@@ -82,10 +87,17 @@ public class PivotPathLayout {
 	{
 		return this.elementId;
 	}
-	
+	public Point2D.Double getRandomPosition(double y)
+	{
+		double minX= 0;
+		double maxX = (MAX_MIDDLE_ITEM+1) * STEP_MIDDLE_ITEM;
+		double range = maxX -minX;
+		double x = Math.random() * range;
+		return new Point2D.Double(x,y);
+	}
 	public int addTopElement(String id, String displayName)
 	{
-		Point2D.Double position = new Point2D.Double(0,0); 
+		Point2D.Double position = getRandomPosition(0);
 		PivotElement element = new PivotElement(id, displayName, position);
 		this.elem.add(element);
 		this.elementId.add(id);
@@ -97,11 +109,11 @@ public class PivotPathLayout {
 	public int addBottomElement(String id, String displayName)
 	{
 		
-		Point2D.Double position = new Point2D.Double(0,900); 
+		Point2D.Double position = getRandomPosition(900);
 		PivotElement element = new PivotElement(id, displayName, position);
 		this.elem.add(element);
 		this.elementId.add(id);
-		this.addLabel(element.getLabel(), false, false);		
+		this.addLabel(element.getLabel(), false, true);		
 		layer.add(2);
 		return cnt++;
 	}
@@ -109,7 +121,7 @@ public class PivotPathLayout {
 	public int addMiddleElement(String id, String displayName)
 	{
 		middles++;
-		Point2D.Double position = new Point2D.Double(middles*50,450); 
+		Point2D.Double position = new Point2D.Double(middles*STEP_MIDDLE_ITEM,450); 
 		PivotElement element = new PivotElement(id, displayName, position);
 		this.elem.add(element);
 		this.elementId.add(id);
@@ -232,6 +244,9 @@ public class PivotPathLayout {
 		vy = vy/vl;
 		
 		double mag = d/springLength;
+		
+		if (d < springLength)
+			return new double[]{0,0};
 		
 		return new double[]{vx*mag, vy*mag};			
 	}

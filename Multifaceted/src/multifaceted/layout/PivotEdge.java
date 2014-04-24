@@ -52,8 +52,9 @@ public class PivotEdge {
 		int y1 = (int)this.getSource().getPosition().getY();
 		int x2 = (int)this.getDestination().getPosition().getX();
 		int y2 = (int)this.getDestination().getPosition().getY();
+		double d = this.getSource().getPosition().distance(this.getDestination().getPosition());
 		g.setColor(Color.black);
-		g.drawString(getSpringLength()+"", (x1+x2)/2, (y1+y2)/2);
+		g.drawString(getSpringLength()+", "+String.format("%.2f", d), (x1+x2)/2, (y1+y2)/2);
 		
 	}
 }

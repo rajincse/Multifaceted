@@ -29,6 +29,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	private static final String PROPERTY_SELECT="Select";
 	
 	private static final int MAX_ACTOR=5;
+	private static final int MIN_ACTOR=5;
 	
 	private IMDBDataSource data;
 	
@@ -141,14 +142,14 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		System.out.println("Selected:"+compactPerson);
 		Person person = this.data.getPerson(compactPerson);
 		int movieCount =0;
-		for(int i=0;i< person.getActedMovieList().size() && movieCount< 10;i++)
+		for(int i=0;i< person.getActedMovieList().size() && movieCount< PivotPathLayout.MAX_MIDDLE_ITEM;i++)
 		{
 			
 			CompactMovie compactMovie = person.getActedMovieList().get(i);
 			
 			System.out.println(compactMovie+" "+compactMovie.getId());
 			Movie movie = this.data.getMovie(compactMovie);
-			if(movie.getActors().size()< 5)
+			if(movie.getActors().size()< MIN_ACTOR)
 			{	
 				continue;
 			}

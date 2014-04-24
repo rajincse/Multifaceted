@@ -6,7 +6,7 @@ import java.awt.Font;
 import perspectives.util.Label;
 
 public class PivotLabel extends Label{
-	private static final double INCREASING_FACTOR_FONT=1.7; 
+	private static final double INCREASING_FACTOR_FONT=1.3; 
 	
 	private int edgeCount;
 	private boolean isChangeable;

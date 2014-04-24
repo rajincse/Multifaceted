@@ -71,11 +71,11 @@ public class IMDBMySql extends DatabaseHelper{
                                 +"title AS T "
                                 +"LEFT OUTER JOIN movie_info_idx AS MI ON MI.movie_id = T.id AND MI.info_type_id=101 "
                                 +"INNER JOIN cast_info AS C ON C.movie_id = T.id "
-                                +" AND ( C.role_id=8 OR ((C.role_id = 1 OR C.role_id =2) AND C.nr_order IS NOT NULL)) "
+                                +" AND ( C.role_id=8 OR C.role_id = 1 OR C.role_id =2) "
                                 +"INNER JOIN `name` AS N ON N.id = C.person_id "
                                 +"WHERE  "
                                 +"T.id = "+movieId+" "
-                                +"ORDER BY C.nr_order;";
+                                +"ORDER BY COALESCE(C.nr_order,1000);";
 		DefaultTableModel table = this.getData(query);
 		String title = table.getValueAt(0, 0).toString();
 		int year = Integer.parseInt( table.getValueAt(0,1).toString());
@@ -154,7 +154,7 @@ public class IMDBMySql extends DatabaseHelper{
                         +"INNER JOIN cast_info AS C ON C.movie_id = T.id AND (C.role_id = 1 OR C.role_id=2 OR C.role_id=8) AND T.kind_id=1 "
                         +"INNER JOIN `name` AS N ON N.id = C.person_id "
                         +" LEFT OUTER JOIN person_info AS PI ON N.id = PI.person_id AND PI.info_type_id=19 "
-                        +"WHERE  "
+                        +"WH    ERE  "
                         +"N.id = "+personId+" "
                         +"ORDER BY T.production_year DESC;";
             DefaultTableModel table = this.getData(query);            

@@ -6,10 +6,12 @@ import java.awt.Font;
 import perspectives.util.Label;
 
 public class PivotLabel extends Label{
-	private static final double INCREASING_FACTOR_FONT=1.3; 
+	private static final double INCREASING_FACTOR_FONT=2; 
 	
 	private int edgeCount;
 	private boolean isChangeable;
+	
+
 	public PivotLabel( String label, boolean isChangeable) {
 		super(0, 0, label);
 		this.edgeCount =0;
@@ -38,7 +40,14 @@ public class PivotLabel extends Label{
 	public void increaseEdgeCount()
 	{
 		this.edgeCount++;
-		setEdgeCount(edgeCount);
+		changeView();
 	}
 
+	public int getEdgeCount() {
+		return edgeCount;
+	}
+	public void setChangeable(boolean isChangeable) {
+		this.isChangeable = isChangeable;
+	}
+	
 }

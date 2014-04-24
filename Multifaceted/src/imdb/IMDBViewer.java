@@ -156,16 +156,15 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			{
 				movieCount++;
 			}
-			layout.addMiddleElement(""+compactMovie.getId());
-			layout.addLabel(compactMovie.toString()+" rating:"+movie.getRating(), true,false);
+			layout.addMiddleElement(""+compactMovie.getId(), compactMovie.toString()+" rating:"+movie.getRating());
+			
 			int source = layout.getElements().indexOf(""+compactMovie.getId());
 			ArrayList<CompactPerson> directorList = movie.getDirectors();
 			for(CompactPerson director: directorList)
 			{
 				if(!layout.getElements().contains(""+director.getId()))
 				{
-					layout.addBottomElement(""+director.getId());
-					layout.addLabel(director.getDisplayName(), false,false);
+					layout.addBottomElement(""+director.getId(),director.getDisplayName());					
 					
 				}
 				int destination = layout.getElements().indexOf(""+director.getId());
@@ -178,8 +177,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			{
 				if(!layout.getElements().contains(""+actor.getId()) && actor.getId() != person.getId())
 				{
-					layout.addTopElement(""+actor.getId());
-					layout.addLabel(actor.getDisplayName(),false,true);
+					layout.addTopElement(""+actor.getId(),actor.getDisplayName());					
 					
 					actorCount++;
 					
@@ -218,9 +216,6 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	}
 	
 	
-	
-	
-	@Override
 	public void render(Graphics2D g) {
 		layout.render(g);
 	}
@@ -230,7 +225,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		
 		for (int i=0; i<10; i++)
 		{
-			System.out.println("Iteration:"+i);
+//			System.out.println("Iteration:"+i);
 			layout.iteration();
 		}
 			
@@ -239,46 +234,45 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		this.requestRender();
 		
 	}
-	@Override
 	public Color getBackgroundColor() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	@Override
+
 	public void keyPressed(String arg0, String arg1) {
 		// TODO Auto-generated method stub
 		
 	}
-	@Override
+
 	public void keyReleased(String arg0, String arg1) {
 		// TODO Auto-generated method stub
 		
 	}
-	@Override
+
 	public boolean mousepressed(int x, int y, int button) {
 		layout.getObjectInteraction().mousePress(x, y);
 		return false;
 	}
 
-	@Override
+
 	public boolean mousereleased(int x, int y, int button) {
 		layout.getObjectInteraction().mouseRelease(x, y);
 		return false;
 	}
 
-	@Override
+
 	public boolean mousemoved(int x, int y) {
 		return layout.getObjectInteraction().mouseMove(x, y);
 		
 	}
 
-	@Override
+
 	public boolean mousedragged(int x, int y, int oldx, int oldy) {
 		return layout.getObjectInteraction().mouseMove(x, y);
 	}
 
 
-	@Override
+
 	public void callRequestRender() {
 		// TODO Auto-generated method stub
 		this.requestRender();

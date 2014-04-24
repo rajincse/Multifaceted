@@ -82,7 +82,9 @@ public class IMDBMySql extends DatabaseHelper{
 		double rating = Double.parseDouble(table.getValueAt(0,2).toString());
 		
                 ArrayList<CompactPerson> actorList = new ArrayList<CompactPerson>();
+                ArrayList<Long> actorIdList = new ArrayList<Long>();
                 ArrayList<CompactPerson> directorList = new ArrayList<CompactPerson>();
+                ArrayList<Long> directorIdList = new ArrayList<Long>();
                 for(int row=0;row<table.getRowCount();row++)
                 {
                     int roleID = Integer.parseInt( table.getValueAt(row,3).toString());
@@ -91,13 +93,18 @@ public class IMDBMySql extends DatabaseHelper{
                     String gender = table.getValueAt(row, 6).toString();
                     CompactPerson person = new CompactPerson(id, name, gender);
                     
-                    if(roleID == ACTOR_ID || roleID == ACTRESS_ID)
+                    if(
+                          (roleID == ACTOR_ID || roleID == ACTRESS_ID )
+                            && ! actorIdList.contains(id)
+                            )
                     {
                         actorList.add(person);
+                        actorIdList.add(id);
                     }
-                    else if(roleID == DIRECTOR_ID)
+                    else if(roleID == DIRECTOR_ID && !directorIdList.contains(id))
                     {
                         directorList.add(person);
+                        directorIdList.add(id);
                     }
                 }
                 Movie movie = new Movie(movieId, title, year, rating, actorList, directorList);

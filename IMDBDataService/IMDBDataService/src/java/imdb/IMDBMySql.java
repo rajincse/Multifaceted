@@ -23,6 +23,9 @@ public class IMDBMySql extends DatabaseHelper{
         private static final int ACTOR_ID=1;
         private static final int ACTRESS_ID=2;
         private static final int DIRECTOR_ID=8;
+        
+        public static final int SORT_BY_RATING=0;
+        public static final int SORT_BY_YEAR=1;
 	public IMDBMySql()
 	{
 		super( "jdbc:mysql://"+HOST+":"+PORT+"/"+DB, CLASSPATH, USER, PASSWORD);
@@ -139,8 +142,13 @@ public class IMDBMySql extends DatabaseHelper{
 		return actorList;
 	}
         
-        public Person getPerson(long personId)
+        public Person getPerson(long personId, int sortType)
         {
+            String sortString ="COALESCE(MI.info,0) DESC";
+            if(sortType == SORT_BY_YEAR)
+            {
+                sortString = "COALESCE(T.production_year,0) DESC";
+            }
             String query="SELECT 	 "
                         +"		N.`name`, "
                         +"		N.gender, "
@@ -151,12 +159,13 @@ public class IMDBMySql extends DatabaseHelper{
                         +"		COALESCE(PI.info,'') AS biography "
                         +"FROM  "
                         +"title AS T "
+                        +"LEFT OUTER JOIN movie_info_idx AS MI ON MI.movie_id = T.id AND MI.info_type_id=101 "
                         +"INNER JOIN cast_info AS C ON C.movie_id = T.id AND (C.role_id = 1 OR C.role_id=2 OR C.role_id=8) AND T.kind_id=1 "
                         +"INNER JOIN `name` AS N ON N.id = C.person_id "
                         +" LEFT OUTER JOIN person_info AS PI ON N.id = PI.person_id AND PI.info_type_id=19 "
                         +"WHERE  "
                         +"N.id = "+personId+" "
-                        +"ORDER BY T.production_year DESC;";
+                        +"ORDER BY "+sortString+" ;";
             DefaultTableModel table = this.getData(query);            
             String name = table.getValueAt(0, 0).toString();
             String gender = table.getValueAt(0, 1).toString();

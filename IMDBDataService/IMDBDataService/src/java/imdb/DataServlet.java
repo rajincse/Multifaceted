@@ -75,7 +75,15 @@ public class DataServlet extends HttpServlet {
             else if(method.equalsIgnoreCase(METHOD_GET_PERSON))
             {
                 long id = Long.parseLong( request.getParameter("id"));
-                Person person = db.getPerson(id);
+                String sortString = request.getParameter("sort");
+                
+                int sortType = IMDBMySql.SORT_BY_RATING;
+                if(sortString != null && !sortString.isEmpty())
+                {
+                    sortType = Integer.parseInt(sortString);
+                }
+                
+                Person person = db.getPerson(id,sortType);
                 jsonData = gson.toJson(person);
             }
             else if(method.equalsIgnoreCase(METHOD_IS_VALID))

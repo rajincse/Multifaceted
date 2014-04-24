@@ -48,7 +48,7 @@ public class PivotElement {
 		
 		this.label.render(g);
 		
-		renderDebug(g);
+//		renderDebug(g);
 	}
 	private void renderDebug(Graphics2D g)
 	{
@@ -71,8 +71,8 @@ public class PivotElement {
 			g.fillOval(lx-lw/2-radius, ly+lh/2-radius, 2*radius, 2*radius);
 			g.fillOval(lx+lw/2-radius, ly-lh/2-radius, 2*radius, 2*radius);
 			g.fillOval(lx+lw/2-radius, ly+lh/2-radius, 2*radius, 2*radius);
-			
-		
+			g.setColor(Color.black);
+			g.drawString(this.label.getEdgeCount()+"", lx, ly);
 		
 	}
 	@Override

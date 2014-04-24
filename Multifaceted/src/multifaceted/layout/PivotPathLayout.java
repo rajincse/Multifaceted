@@ -22,7 +22,6 @@ public class PivotPathLayout {
 		this.viewer = viewer;
 	}
 	
-	ArrayList<PivotLabel> labels = new ArrayList<PivotLabel>();
 	
 	private ObjectInteraction objectInteraction = new ObjectInteraction()
 	{
@@ -30,27 +29,27 @@ public class PivotPathLayout {
 		@Override
 		protected void mouseIn(int object) {
 			if (objectInteraction.getItem(object).selected)
-				labels.get(object).setColor(Color.red);
+				elem.get(object).getLabel().setColor(Color.red);
 			else
-				labels.get(object).setColor(Color.yellow);
+				elem.get(object).getLabel().setColor(Color.yellow);
 			viewer.callRequestRender();
 		}
 
 		@Override
 		protected void mouseOut(int object) {
 			if (objectInteraction.getItem(object).selected)
-				labels.get(object).setColor(Color.pink);
+				elem.get(object).getLabel().setColor(Color.pink);
 			else
-				labels.get(object).setColor(Color.LIGHT_GRAY);
+				elem.get(object).getLabel().setColor(Color.LIGHT_GRAY);
 			viewer.callRequestRender();
 		}
 
 		@Override
 		protected void itemsSelected(int[] objects) {
-			for (int i=0; i<labels.size(); i++)
-				labels.get(i).setColor(Color.LIGHT_GRAY);
+			for (int i=0; i<elem.size(); i++)
+				elem.get(i).getLabel().setColor(Color.LIGHT_GRAY);
 			for (int i=0; i<objects.length; i++)
-				labels.get(objects[i]).setColor(Color.pink);
+				elem.get(objects[i]).getLabel().setColor(Color.pink);
 			viewer.callRequestRender();
 		}
 		
@@ -60,15 +59,13 @@ public class PivotPathLayout {
 		return this.objectInteraction;
 	}
 	
-	private void addLabel(String s, boolean tilt, boolean isChangeable)
+	private void addLabel(PivotLabel label , boolean tilt, boolean isChangeable)
 	{
-		PivotLabel l = new PivotLabel(s, isChangeable);
-		
-		l.setColor(Color.LIGHT_GRAY);
+		label.setChangeable(isChangeable);
+		label.setColor(Color.LIGHT_GRAY);
 		if (tilt)
-		l.setRotationAngle(Math.PI / 3);
-		labels.add(l);
-		objectInteraction.addItem(objectInteraction.new RectangleItem(l));
+			label.setRotationAngle(Math.PI / 3);
+		objectInteraction.addItem(objectInteraction.new RectangleItem(label));
 	}
 
 	ArrayList<PivotElement> elem = new ArrayList<PivotElement>();
@@ -92,7 +89,7 @@ public class PivotPathLayout {
 		PivotElement element = new PivotElement(id, displayName, position);
 		this.elem.add(element);
 		this.elementId.add(id);
-		this.addLabel(displayName, false, true);		
+		this.addLabel(element.getLabel(), false, true);		
 		layer.add(0);
 		return cnt++;
 	}
@@ -104,20 +101,19 @@ public class PivotPathLayout {
 		PivotElement element = new PivotElement(id, displayName, position);
 		this.elem.add(element);
 		this.elementId.add(id);
-		this.addLabel(displayName, false, false);		
+		this.addLabel(element.getLabel(), false, false);		
 		layer.add(2);
 		return cnt++;
 	}
 	
 	public int addMiddleElement(String id, String displayName)
 	{
-		
-		Point2D.Double position = new Point2D.Double(middles*50,450); 
 		middles++;
+		Point2D.Double position = new Point2D.Double(middles*50,450); 
 		PivotElement element = new PivotElement(id, displayName, position);
 		this.elem.add(element);
 		this.elementId.add(id);
-		this.addLabel(displayName, false, false);		
+		this.addLabel(element.getLabel(), true, false);		
 		layer.add(1);
 		return cnt++;
 	}
@@ -126,6 +122,7 @@ public class PivotPathLayout {
 	{
 		PivotElement source = this.elem.get(e1);
 		PivotElement destination = this.elem.get(e2);
+		
 		PivotEdge edge = new PivotEdge(source, destination, false);
 		this.edges.add(edge);
 	}
@@ -240,8 +237,8 @@ public class PivotPathLayout {
 	}
 	private double[] computeLabelRepulsion(int index1, int index2)
 	{
-		Label label1 = this.labels.get(index1);
-		Label label2 = this.labels.get(index2);
+		Label label1 = this.elem.get(index1).getLabel();
+		Label label2 = this.elem.get(index2).getLabel();
 		
 		double fx =0;
 		double fy =0;
@@ -326,14 +323,7 @@ public class PivotPathLayout {
 		
 		for (int i=0; i<elem.size(); i++)
 		{
-			int x = (int)elem.get(i).getPosition().getX();
-			int y = (int)elem.get(i).getPosition().getY();
-			Label l = this.labels.get(i);
-			l.x = x;
-			l.y = y;
-
-			l.render(g);
-			
+			this.elem.get(i).render(g);
 		}
 		
 		for (int i=0; i<edges.size(); i++)
@@ -347,12 +337,7 @@ public class PivotPathLayout {
 					g.setColor(Color.black);
 			if (objectInteraction.getItem(e1).selected || (objectInteraction.getItem(e2).selected))
 					g.setColor(Color.red);
-			int x1 = (int)edge.getSource().getPosition().getX();
-			int y1 = (int)edge.getSource().getPosition().getY();
-			int x2 = (int)edge.getDestination().getPosition().getX();
-			int y2 = (int)edge.getDestination().getPosition().getY();
-			
-			g.drawLine(x1, y1, x2, y2);
+			edge.render(g);
 		}
 	}
 }

@@ -154,7 +154,7 @@ public class IMDBMySql extends DatabaseHelper{
                         +"INNER JOIN cast_info AS C ON C.movie_id = T.id AND (C.role_id = 1 OR C.role_id=2 OR C.role_id=8) AND T.kind_id=1 "
                         +"INNER JOIN `name` AS N ON N.id = C.person_id "
                         +" LEFT OUTER JOIN person_info AS PI ON N.id = PI.person_id AND PI.info_type_id=19 "
-                        +"WH    ERE  "
+                        +"WHERE  "
                         +"N.id = "+personId+" "
                         +"ORDER BY T.production_year DESC;";
             DefaultTableModel table = this.getData(query);            

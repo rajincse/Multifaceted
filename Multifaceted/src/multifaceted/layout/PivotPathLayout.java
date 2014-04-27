@@ -201,7 +201,7 @@ public class PivotPathLayout {
 		PivotElement source = this.elem.get(e1);
 		PivotElement destination = this.elem.get(e2);
 		
-		PivotEdge edge = new PivotEdge(source, destination, false);
+		PivotEdge edge = new PivotEdge(source, e1, destination,e2, false);
 		this.edges.add(edge);
 	}
 	
@@ -238,8 +238,8 @@ public class PivotPathLayout {
 		{
 			PivotEdge edge = this.edges.get(i);
 					
-			int e1 = this.elem.indexOf(edge.getSource());
-			int e2 = this.elem.indexOf(edge.getDestination());
+			int e1 = edge.getSourceIndex();
+			int e2 = edge.getDestinationIndex();
 			
 			int springLength = edge.getSpringLength()* COEFF_SPRING_LENGTH;
 			double[] f = compAttraction(edge.getSource().getPosition(), edge.getDestination().getPosition(),springLength);
@@ -411,8 +411,8 @@ public class PivotPathLayout {
 		{
 			PivotEdge edge = this.edges.get(i);
 			
-			int e1 = this.elem.indexOf(edge.getSource());
-			int e2 = this.elem.indexOf(edge.getDestination());
+			int e1 = edge.getSourceIndex();
+			int e2 = edge.getDestinationIndex();
 			g.setColor(Color.lightGray);
 			if (objectInteraction.getItem(e1).hovered || (objectInteraction.getItem(e2).hovered))
 					g.setColor(Color.black);

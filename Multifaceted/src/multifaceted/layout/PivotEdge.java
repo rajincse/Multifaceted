@@ -9,10 +9,15 @@ public class PivotEdge {
 	private PivotElement destination;
 	private boolean isDirected;
 	
-	public PivotEdge(PivotElement source, PivotElement destination, boolean isDirected)
+	private int sourceIndex;
+	private int destinationIndex;
+	
+	public PivotEdge(PivotElement source, int sourceIndex, PivotElement destination, int destinationIndex, boolean isDirected)
 	{
 		this.source = source;
+		this.sourceIndex = sourceIndex;
 		this.destination = destination;
+		this.destinationIndex = destinationIndex;
 		this.isDirected = isDirected;
 		
 		this.source.getLabel().increaseEdgeCount();
@@ -29,6 +34,12 @@ public class PivotEdge {
 		return isDirected;
 	}
 	
+	public int getSourceIndex() {
+		return sourceIndex;
+	}
+	public int getDestinationIndex() {
+		return destinationIndex;
+	}
 	public int getSpringLength()
 	{
 		return Math.min(this.source.getLabel().getEdgeCount()+1, this.destination.getLabel().getEdgeCount()+1);

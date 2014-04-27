@@ -162,13 +162,15 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			}
 			layout.addMiddleElement(""+compactMovie.getId(), compactMovie.toString()+" rating:"+movie.getRating());
 			
-			int source = layout.getElements().indexOf(""+compactMovie.getId());
+			String sourceId = ""+compactMovie.getId();
+			int source = layout.getElements().indexOf(sourceId);
+			
 			ArrayList<CompactPerson> directorList = movie.getDirectors();
 			for(CompactPerson director: directorList)
 			{
 				if(!layout.getElements().contains(""+director.getId()))
 				{
-					layout.addBottomElement(""+director.getId(),director.getDisplayName());					
+					layout.addBottomElement(""+director.getId(),director.getDisplayName(),sourceId );					
 					
 				}
 				int destination = layout.getElements().indexOf(""+director.getId());
@@ -181,7 +183,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			{
 				if(!layout.getElements().contains(""+actor.getId()) && actor.getId() != person.getId())
 				{
-					layout.addTopElement(""+actor.getId(),actor.getDisplayName());					
+					layout.addTopElement(""+actor.getId(),actor.getDisplayName(), sourceId);					
 					
 					actorCount++;
 					

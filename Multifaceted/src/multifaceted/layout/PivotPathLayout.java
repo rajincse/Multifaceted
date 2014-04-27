@@ -1,9 +1,8 @@
 package multifaceted.layout;
 
-import imdb.IMDBViewer;
+
 
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.Point2D;
@@ -18,8 +17,10 @@ public class PivotPathLayout {
 	public static final int COEFF_SPRING_LENGTH=10;
 	public static final int COEFF_BOUNDARY_FORCE=100;
 	
-	public static final int MAX_MIDDLE_ITEM =20;
+	public static final int MAX_MIDDLE_ITEM =10;
 	public static final int STEP_MIDDLE_ITEM =50;
+	public static final int TOP_Y =0;
+	public static final int BOTTOM_Y=900;
 	
 	private LayoutViewerInterface viewer;
 	
@@ -151,17 +152,19 @@ public class PivotPathLayout {
 	{
 		return this.elementId;
 	}
-	public Point2D.Double getRandomPosition(double y)
-	{
-		double minX= 0;
-		double maxX = (MAX_MIDDLE_ITEM+1) * STEP_MIDDLE_ITEM;
+	public double getRandomPositionX(double maxX, double minX)
+	{	
 		double range = maxX -minX;
-		double x = Math.random() * range;
-		return new Point2D.Double(x,y);
+		double x = Math.random() * range + minX;
+		return x;
 	}
-	public int addTopElement(String id, String displayName)
+	public int addTopElement(String id, String displayName, String sourceId)
 	{
-		Point2D.Double position = getRandomPosition(0);
+		int sourceIndex = this.elementId.indexOf(sourceId);
+				
+		double minX = this.elem.get(sourceIndex).getPosition().getX()- STEP_MIDDLE_ITEM;
+		double maxX = this.elem.get(sourceIndex).getPosition().getX()+ STEP_MIDDLE_ITEM;
+		Point2D.Double position = new Point2D.Double(getRandomPositionX(maxX, minX), TOP_Y);
 		PivotElement element = new PivotElement(id, displayName, position);
 		this.elem.add(element);
 		this.elementId.add(id);
@@ -170,10 +173,12 @@ public class PivotPathLayout {
 		return cnt++;
 	}
 	
-	public int addBottomElement(String id, String displayName)
+	public int addBottomElement(String id, String displayName, String sourceId)
 	{
-		
-		Point2D.Double position = getRandomPosition(900);
+		int sourceIndex = this.elementId.indexOf(sourceId);
+		double minX = this.elem.get(sourceIndex).getPosition().getX()- STEP_MIDDLE_ITEM;
+		double maxX = this.elem.get(sourceIndex).getPosition().getX()+ STEP_MIDDLE_ITEM;
+		Point2D.Double position = new Point2D.Double(getRandomPositionX(maxX, minX), BOTTOM_Y);
 		PivotElement element = new PivotElement(id, displayName, position);
 		this.elem.add(element);
 		this.elementId.add(id);

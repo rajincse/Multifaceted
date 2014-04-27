@@ -158,10 +158,8 @@ public class PivotPathLayout {
 		double x = Math.random() * range + minX;
 		return x;
 	}
-	public int addTopElement(String id, String displayName, String sourceId)
-	{
-		int sourceIndex = this.elementId.indexOf(sourceId);
-				
+	public int addTopElement(String id, String displayName, int sourceIndex)
+	{			
 		double minX = this.elem.get(sourceIndex).getPosition().getX()- STEP_MIDDLE_ITEM;
 		double maxX = this.elem.get(sourceIndex).getPosition().getX()+ STEP_MIDDLE_ITEM;
 		Point2D.Double position = new Point2D.Double(getRandomPositionX(maxX, minX), TOP_Y);
@@ -173,9 +171,8 @@ public class PivotPathLayout {
 		return cnt++;
 	}
 	
-	public int addBottomElement(String id, String displayName, String sourceId)
+	public int addBottomElement(String id, String displayName, int sourceIndex)
 	{
-		int sourceIndex = this.elementId.indexOf(sourceId);
 		double minX = this.elem.get(sourceIndex).getPosition().getX()- STEP_MIDDLE_ITEM;
 		double maxX = this.elem.get(sourceIndex).getPosition().getX()+ STEP_MIDDLE_ITEM;
 		Point2D.Double position = new Point2D.Double(getRandomPositionX(maxX, minX), BOTTOM_Y);

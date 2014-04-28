@@ -183,7 +183,17 @@ public class PivotPathLayout {
 		layer.add(2);
 		return cnt++;
 	}
-	
+	public int addMiddleElement(PivotElement element)
+	{
+		middles++;
+		Point2D.Double position = new Point2D.Double(middles*STEP_MIDDLE_ITEM,450); 
+		element.setPosition(position);
+		this.elem.add(element);
+		this.elementId.add(element.getId());
+		this.addLabel(element.getLabel(), true, false);		
+		layer.add(1);
+		return cnt++;
+	}
 	public int addMiddleElement(String id, String displayName)
 	{
 		middles++;

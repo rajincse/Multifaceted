@@ -7,6 +7,7 @@ import imdb.entity.Person;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
 import multifaceted.layout.LayoutViewerInterface;
@@ -160,7 +161,11 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			{
 				movieCount++;
 			}
-			int source=layout.addMiddleElement(""+compactMovie.getId(), compactMovie.toString()+" rating:"+movie.getRating());
+			MovieElement movieElement = new MovieElement(""+compactMovie.getId(), 
+															compactMovie.getTitle(),
+															movie.getRating()/2,
+															movie.getYear());
+			int source = layout.addMiddleElement(movieElement);
 			
 		
 			ArrayList<CompactPerson> directorList = movie.getDirectors();

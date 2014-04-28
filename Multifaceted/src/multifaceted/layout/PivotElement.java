@@ -7,9 +7,9 @@ import java.awt.geom.Point2D;
 import perspectives.util.Label;
 
 public class PivotElement {
-	private PivotLabel label;
-	private Point2D position;
-	private String id;
+	protected PivotLabel label;
+	protected Point2D position;
+	protected String id;
 	
 	public PivotElement(String id, String displayString, Point2D position)
 	{

@@ -12,9 +12,9 @@ import perspectives.base.ObjectInteraction;
 import perspectives.util.Label;
 
 public class PivotPathLayout {
-	public static final int COEFF_COMPULSIVE_FORCE_WEAK=10;
-	public static final int COEFF_COMPULSIVE_FORCE_STRONG=25;
-	public static final int COEFF_SPRING_LENGTH=10;
+	public static final int COEFF_COMPULSIVE_FORCE_WEAK=50;
+	public static final int COEFF_COMPULSIVE_FORCE_STRONG=150;
+	public static final int COEFF_SPRING_LENGTH=200;
 	public static final int COEFF_BOUNDARY_FORCE=100;
 	
 	public static final int MAX_MIDDLE_ITEM =10;
@@ -22,9 +22,14 @@ public class PivotPathLayout {
 	public static final int TOP_Y =0;
 	public static final int BOTTOM_Y=900;
 	
+	public static final int LAYER_TOP=0;
+	public static final int LAYER_MIDDLE=1;
+	public static final int LAYER_BOTTOM=2;
+	
+	
 	private LayoutViewerInterface viewer;
 	
-	private ObjectInteraction objectInteraction = new ObjectInteraction()
+	protected ObjectInteraction objectInteraction = new ObjectInteraction()
 	{
 
 		@Override
@@ -68,7 +73,6 @@ public class PivotPathLayout {
 	
 	ArrayList<PivotElement> elem = new ArrayList<PivotElement>();
 	ArrayList<String> elementId = new ArrayList<String>();
-	ArrayList<Integer> layer = new ArrayList<Integer>();
 
 	ArrayList<PivotEdge> edges = new ArrayList<PivotEdge>();
 	
@@ -86,7 +90,6 @@ public class PivotPathLayout {
 		elem.clear();
 		elementId.clear();
 		edges.clear();
-		this.layer.clear();
 		cnt =0;
 		middles =0;
 		objectInteraction = new ObjectInteraction()
@@ -137,7 +140,7 @@ public class PivotPathLayout {
 		return this.objectInteraction;
 	}
 	
-	private void addLabel(PivotLabel label , boolean tilt, boolean isChangeable)
+	protected void addLabel(PivotLabel label , boolean tilt, boolean isChangeable)
 	{
 		label.setChangeable(isChangeable);
 		label.setColor(Color.LIGHT_GRAY);
@@ -163,11 +166,13 @@ public class PivotPathLayout {
 		double minX = this.elem.get(sourceIndex).getPosition().getX()- STEP_MIDDLE_ITEM;
 		double maxX = this.elem.get(sourceIndex).getPosition().getX()+ STEP_MIDDLE_ITEM;
 		Point2D.Double position = new Point2D.Double(getRandomPositionX(maxX, minX), TOP_Y);
-		PivotElement element = new PivotElement(id, displayName, position);
+		PivotElement element = new PivotElement(id, displayName, position, LAYER_TOP);
 		this.elem.add(element);
 		this.elementId.add(id);
 		this.addLabel(element.getLabel(), false, true);		
-		layer.add(0);
+		
+		
+		
 		return cnt++;
 	}
 	
@@ -176,11 +181,10 @@ public class PivotPathLayout {
 		double minX = this.elem.get(sourceIndex).getPosition().getX()- STEP_MIDDLE_ITEM;
 		double maxX = this.elem.get(sourceIndex).getPosition().getX()+ STEP_MIDDLE_ITEM;
 		Point2D.Double position = new Point2D.Double(getRandomPositionX(maxX, minX), BOTTOM_Y);
-		PivotElement element = new PivotElement(id, displayName, position);
+		PivotElement element = new PivotElement(id, displayName, position, LAYER_BOTTOM);
 		this.elem.add(element);
 		this.elementId.add(id);
-		this.addLabel(element.getLabel(), false, true);		
-		layer.add(2);
+		this.addLabel(element.getLabel(), false, true);	
 		return cnt++;
 	}
 	public int addMiddleElement(PivotElement element)
@@ -188,21 +192,20 @@ public class PivotPathLayout {
 		middles++;
 		Point2D.Double position = new Point2D.Double(middles*STEP_MIDDLE_ITEM,450); 
 		element.setPosition(position);
+		element.setLayer(LAYER_MIDDLE);
 		this.elem.add(element);
 		this.elementId.add(element.getId());
-		this.addLabel(element.getLabel(), true, false);		
-		layer.add(1);
+		this.addLabel(element.getLabel(), true, false);
 		return cnt++;
 	}
 	public int addMiddleElement(String id, String displayName)
 	{
 		middles++;
 		Point2D.Double position = new Point2D.Double(middles*STEP_MIDDLE_ITEM,450); 
-		PivotElement element = new PivotElement(id, displayName, position);
+		PivotElement element = new PivotElement(id, displayName, position, LAYER_MIDDLE);
 		this.elem.add(element);
 		this.elementId.add(id);
-		this.addLabel(element.getLabel(), true, false);		
-		layer.add(1);
+		this.addLabel(element.getLabel(), true, false);
 		return cnt++;
 	}
 	
@@ -227,10 +230,10 @@ public class PivotPathLayout {
 		for (int i=0; i<elem.size()-1; i++)
 			for (int j=i+1; j<elem.size(); j++)
 			{
-				if (layer.get(i) == 1 || layer.get(j) == 1)
+				if (elem.get(i).getLayer() == LAYER_MIDDLE || elem.get(j).getLayer() == LAYER_MIDDLE)
 					continue;
 				
-				if (!layer.get(i).equals(layer.get(j)))
+				if (elem.get(i).getLayer() != elem.get(j).getLayer())
 					continue;
 				
 				double[] f= this.computeLabelRepulsion(i, j);
@@ -254,25 +257,25 @@ public class PivotPathLayout {
 			int springLength = edge.getSpringLength()* COEFF_SPRING_LENGTH;
 			double[] f = compAttraction(edge.getSource().getPosition(), edge.getDestination().getPosition(),springLength);
 			fx[e1] += f[0];
-			fy[e2] += f[1];
+			fy[e1] += f[1];
 			
-			fx[e1] -= f[0];
+			fx[e2] -= f[0];
 			fy[e2] -= f[1];
 		}
 		
 	//boundary forces
 		for (int i=0; i<elem.size(); i++)
 		{
-			if (layer.get(i) == 1) continue;
+			if (this.elem.get(i).getLayer() == LAYER_MIDDLE) continue;
 			
 			double y = 300;
-			if (layer.get(i) == 2) y = 600;
+			if (this.elem.get(i).getLayer() == LAYER_BOTTOM) y = 600;
 			
 			double d = elem.get(i).getPosition().getY() - y;
 			
 			double mag = COEFF_BOUNDARY_FORCE * 1/(d*d);
 			
-			if (layer.get(i) == 0)
+			if (this.elem.get(i).getLayer() == LAYER_TOP)
 				fy[i] -= mag;
 			else fy[i] += mag;
 			
@@ -280,7 +283,7 @@ public class PivotPathLayout {
 		
 		for (int i=0; i<fx.length; i++)
 		{
-			if (layer.get(i) == 1)
+			if (this.elem.get(i).getLayer() == LAYER_MIDDLE)
 				continue;
 				
 			double fl = Math.sqrt(fx[i]*fx[i] + fy[i]*fy[i]);
@@ -301,7 +304,7 @@ public class PivotPathLayout {
 		
 	}
 	
-	private double[] compAttraction(Point2D p1, Point2D p2, double springLength)
+	protected double[] compAttraction(Point2D p1, Point2D p2, double springLength)
 	{
 		double x1 = p1.getX();
 		double y1 = p1.getY();	
@@ -380,7 +383,7 @@ public class PivotPathLayout {
 		return new double[]{fx,fy};
 	}
 	
-	private double[] compRepulsion(Point2D p1, Point2D p2, int forceCoefficient)
+	protected double[] compRepulsion(Point2D p1, Point2D p2, int forceCoefficient)
 	{
 		double d = p1.distance(p2);
 		
@@ -408,13 +411,18 @@ public class PivotPathLayout {
 		
 		return new double[]{vx*mag, vy*mag};
 	}
-	
+	public static void drawPoint(double x, double y, Graphics2D g, Color c)
+	{
+		g.setColor(c);
+		int radius = 5;
+		g.fillOval((int)x-radius,(int) y-radius, 2*radius, 2*radius);
+	}
 	public void render(Graphics2D g) {
 		g.setColor(Color.black);
 		
-		for (int i=0; i<elem.size(); i++)
-		{
-			this.elem.get(i).render(g);
+		for (PivotElement element: this.elem)
+		{	
+			element.render(g);
 		}
 		
 		for (int i=0; i<edges.size(); i++)

@@ -7,7 +7,6 @@ import imdb.entity.Person;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
 import multifaceted.layout.LayoutViewerInterface;
@@ -28,6 +27,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	private static final String PROPERTY_SEARCH_RESULT = "Search Result";
 	private static final String PROPERTY_SELECTED_ITEM="Selected Item";
 	private static final String PROPERTY_SELECT="Select";
+	private static final String PROPERTY_STEP="Step";
 	
 	private static final int MAX_ACTOR=5;
 	private static final int MIN_ACTOR=5;
@@ -97,6 +97,17 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 						}
 					};
 			addProperty(pSelect);
+			
+			Property<PSignal> pStep = new Property<PSignal>(PROPERTY_STEP, new PSignal())
+					{
+						@Override
+						protected boolean updating(PSignal newvalue) {
+							// TODO Auto-generated method stub
+							simulate();
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pStep);
 		}catch(Exception e)
 		{
 			e.printStackTrace();

@@ -11,11 +11,14 @@ public class PivotElement {
 	protected Point2D position;
 	protected String id;
 	
-	public PivotElement(String id, String displayString, Point2D position)
+	protected int layer;
+	
+	public PivotElement(String id, String displayString, Point2D position, int layer)
 	{
 		this.id = id;
 		this.label = new PivotLabel(displayString,false);
 		this.position = position;
+		this.layer = layer;
 	}
 
 	public PivotLabel getLabel() {
@@ -41,6 +44,14 @@ public class PivotElement {
 	public void setId(String id) {
 		this.id = id;
 	}
+	public int getLayer() {
+		return layer;
+	}
+
+	public void setLayer(int layer) {
+		this.layer = layer;
+	}
+
 	public void render(Graphics2D g)
 	{	
 		this.label.x =(int) this.getPosition().getX();

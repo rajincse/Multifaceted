@@ -8,6 +8,7 @@ import java.awt.geom.Point2D;
 
 import multifaceted.layout.PivotElement;
 import multifaceted.layout.PivotLabel;
+import multifaceted.layout.PivotPathLayout;
 
 public class MovieElement extends PivotElement{
 	public static final int OFFSET_LABEL=10;
@@ -18,7 +19,7 @@ public class MovieElement extends PivotElement{
 	private PivotLabel yearLabel;
 	private int year;
 	public MovieElement(String id, String displayString,double rating,int year) {
-		super(id, displayString, new Point2D.Double(0, 0));
+		super(id, displayString, new Point2D.Double(0, 0), PivotPathLayout.LAYER_MIDDLE);
 		this.rating = rating;
 		this.ratingLabel = new PivotLabel(String.format("%.2f", rating), false);
 		
@@ -75,12 +76,7 @@ public class MovieElement extends PivotElement{
 		this.yearLabel.render(g);
 	}
 	
-	private void drawPoint(double x, double y, Graphics2D g, Color c)
-	{
-		g.setColor(c);
-		int radius = 5;
-		g.fillOval((int)x-radius,(int) y-radius, 2*radius, 2*radius);
-	}
+	
 	@Override
 	public void render(Graphics2D g) {
 		// TODO Auto-generated method stub

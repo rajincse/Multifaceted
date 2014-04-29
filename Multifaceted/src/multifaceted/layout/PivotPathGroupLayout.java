@@ -10,10 +10,10 @@ import java.util.Map.Entry;
 import perspectives.util.Label;
 
 public class PivotPathGroupLayout extends PivotPathLayout{
-	public static final int COEFF_COMPULSIVE_FORCE_WEAK=50;
-	public static final int COEFF_COMPULSIVE_FORCE_STRONG=150;
-	public static final int COEFF_SPRING_LENGTH=100;
-	public static final int COEFF_BOUNDARY_FORCE=10000;
+	public static final int COEFF_COMPULSIVE_FORCE_WEAK=100;
+	public static final int COEFF_COMPULSIVE_FORCE_STRONG=250;
+	public static final int COEFF_SPRING_LENGTH=200;
+	public static final int COEFF_BOUNDARY_FORCE=100;
 
 	HashMap<String, GroupedPivotElement> topGroupedElements = new HashMap<String, GroupedPivotElement>();
 	HashMap<String, GroupedPivotElement> bottomGroupedElements = new HashMap<String, GroupedPivotElement>();
@@ -84,11 +84,86 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 	}
 	
 	@Override
+	public void addEdge(int e1, int e2) {
+		// TODO Auto-generated method stub
+		super.addEdge(e1, e2);
+		
+		PivotElement destination = this.elem.get(e2);
+		if(destination.getLabel().getEdgeCount() > 1)
+		{
+			String sourceId ="";
+			for(PivotEdge edge:this.edges)
+			{
+				if(edge.getDestinationIndex() == e2)
+				{
+					sourceId = edge.getSource().getId();
+					break;
+				}
+			}
+			if(!sourceId.isEmpty())
+			{
+				if(this.topGroupedElements.containsKey(sourceId))
+				{
+					GroupedPivotElement group = this.topGroupedElements.get(sourceId);
+					if(group.getElements().contains(destination))
+					{
+						group.removeElement(destination);
+						
+						GroupedPivotElement newGroup = new GroupedPivotElement(destination);
+						this.topGroupedElements.put(destination.getId(), newGroup);		
+					}
+				}
+				else if(this.bottomGroupedElements.containsKey(sourceId))
+				{
+					GroupedPivotElement group = this.bottomGroupedElements.get(sourceId);
+					if(group.getElements().contains(destination))
+					{
+						group.removeElement(destination);
+						
+						GroupedPivotElement newGroup = new GroupedPivotElement(destination);
+						this.bottomGroupedElements.put(destination.getId(), newGroup);		
+					}
+				}
+			}
+		}
+	}
+	
+	@Override
 	public void iteration() {
 		for(Entry<String, GroupedPivotElement> group1Entry: this.topGroupedElements.entrySet())
 		{
 			GroupedPivotElement group1 = group1Entry.getValue();
 			for(Entry<String, GroupedPivotElement> group2Entry: this.topGroupedElements.entrySet())
+			{
+				if(group1Entry.getKey() != group2Entry.getKey())
+				{
+					
+					GroupedPivotElement group2 = group2Entry.getValue();
+					double[] f = this.computeGroupReplusion(group1, group2);
+					
+					group1.fx+= f[0];
+					group1.fy+= f[1];
+					
+					group2.fx-= f[0];
+					group2.fy-= f[1];
+				}
+			}
+			
+			for(PivotElement element : this.elem)
+			{
+				if(element.getLayer()== LAYER_MIDDLE)
+				{
+					double[] f= this.computeGroupToElementRepulsion(group1, element);
+					group1.fx+= f[0];
+					group1.fy+= f[1];
+				}
+			}
+		}
+		
+		for(Entry<String, GroupedPivotElement> group1Entry: this.bottomGroupedElements.entrySet())
+		{
+			GroupedPivotElement group1 = group1Entry.getValue();
+			for(Entry<String, GroupedPivotElement> group2Entry: this.bottomGroupedElements.entrySet())
 			{
 				if(group1Entry.getKey() != group2Entry.getKey())
 				{
@@ -130,14 +205,14 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 			{
 				group = this.topGroupedElements.get(destinationId);
 			}
-//			else if(this.bottomGroupedElements.containsKey(sourceId))
-//			{
-//				group = this.bottomGroupedElements.get(sourceId);
-//			}
-//			else if(this.bottomGroupedElements.containsKey(destinationId))
-//			{
-//				group = this.bottomGroupedElements.get(destinationId);
-//			}
+			else if(this.bottomGroupedElements.containsKey(sourceId))
+			{
+				group = this.bottomGroupedElements.get(sourceId);
+			}
+			else if(this.bottomGroupedElements.containsKey(destinationId))
+			{
+				group = this.bottomGroupedElements.get(destinationId);
+			}
 			else
 			{
 				continue;
@@ -157,8 +232,21 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 			double mag = COEFF_BOUNDARY_FORCE * 1/(d*d);
 			group.fy-= mag;
 		}
+		for(GroupedPivotElement group: this.bottomGroupedElements.values())
+		{
+			double y = 600;
+			double d = group.getCenterPosition().getY() - y;
+			
+			double mag = COEFF_BOUNDARY_FORCE * 1/(d*d);
+			group.fy+= mag;
+		}
 		
 		for(GroupedPivotElement group: this.topGroupedElements.values())
+		{
+			group.applyForces();
+		}
+		
+		for(GroupedPivotElement group: this.bottomGroupedElements.values())
 		{
 			group.applyForces();
 		}

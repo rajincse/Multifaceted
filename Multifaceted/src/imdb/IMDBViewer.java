@@ -10,6 +10,7 @@ import java.awt.Graphics2D;
 import java.util.ArrayList;
 
 import multifaceted.layout.LayoutViewerInterface;
+import multifaceted.layout.PivotPathGroupLayout;
 import multifaceted.layout.PivotPathLayout;
 
 import perspectives.base.Property;
@@ -32,6 +33,9 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	private static final int MAX_ACTOR=5;
 	private static final int MIN_ACTOR=5;
 	
+	private static final int MAX_SIMULATION =50;
+	private static final int SIMULATION_SPEED =10;
+	
 	private IMDBDataSource data;
 	
 	private ArrayList<CompactPerson> personList = null;
@@ -41,7 +45,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	public IMDBViewer(String name, IMDBDataSource data) {
 		super(name);
 		this.data = data;
-		this.layout = new PivotPathLayout(this);
+		this.layout = new PivotPathGroupLayout(this);
 		try
 		{
 			
@@ -245,15 +249,21 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		layout.render(g);
 	}
 
+	private int simulationCount=0;
 	@Override
 	public void simulate() {
 		
-		for (int i=0; i<10; i++)
+		for (int i=0; i<SIMULATION_SPEED; i++)
 		{
-//			System.out.println("Iteration:"+i);
 			layout.iteration();
 		}
 			
+		simulationCount++;
+		if(simulationCount > MAX_SIMULATION)
+		{
+			stopSimulation();
+			simulationCount=0;
+		}
 		
 		
 		this.requestRender();

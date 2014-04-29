@@ -62,6 +62,21 @@ public class GroupedPivotElement {
 		
 		this.elements.add(elem);
 	}
+	
+	public void removeElement(PivotElement elem)
+	{
+		if(this.elements.contains(elem))
+		{
+			int index = this.elements.indexOf(elem);
+			for(int i=index+1;i< this.elements.size();i++)
+			{
+				PivotElement residingElement = this.elements.get(i);
+				residingElement.setPosition(new Point2D.Double( 
+						residingElement.getPosition().getX(), residingElement.getPosition().getY()- elem.getLabel().h - GAP_Y));
+			}
+			this.elements.remove(elem);
+		}
+	}
 	public double getWidth()
 	{
 		double maxWidth =java.lang.Double.MIN_VALUE;
@@ -96,19 +111,25 @@ public class GroupedPivotElement {
 			elem.render(g);
 		}
 		
-//		Point2D center = this.getCenterPosition();
-//		double w = this.getWidth();
-//		double h = this.getHeight();
-//		
-//		g.setColor(Color.green);
-//		g.drawRect((int)(center.getX()-w/2),(int) (center.getY()-h/2),(int) w,(int) h);
+//		renderDebug(g);
+	}
+	
+	public void renderDebug(Graphics2D g)	
+	{
+		Point2D center = this.getCenterPosition();
+		double w = this.getWidth();
+		double h = this.getHeight();
+		
+		g.setColor(Color.black);
+		g.drawRect((int)(center.getX()-w/2),(int) (center.getY()-h/2),(int) w,(int) h);
+//		g.setColor(Color.black);
 //		g.drawString("fx:"+String.format("%.2f",this.fx)+", fy:"+String.format("%.2f",this.fy),(int)center.getX(),(int) center.getY());
-//		
-//		Point2D[] gravityPoints = this.getGravityPoints();
-//		for(Point2D p: gravityPoints)
-//		{
-//			PivotPathLayout.drawPoint(p.getX(), p.getY(), g, Color.blue);
-//		}
+		
+		Point2D[] gravityPoints = this.getGravityPoints();
+		for(Point2D p: gravityPoints)
+		{
+			PivotPathLayout.drawPoint(p.getX(), p.getY(), g, Color.blue);
+		}
 	}
 	public Point2D[] getGravityPoints()
 	{
@@ -146,6 +167,8 @@ public class GroupedPivotElement {
 	public void applyForces()
 	{
 		this.applyForces(this.fx, this.fy);
+		this.fx =0;
+		this.fy=0;
 	}
 	public void applyForces(double fx, double fy)
 	{	
@@ -163,5 +186,15 @@ public class GroupedPivotElement {
 			y+= fy;
 			elem.setPosition(new Point2D.Double(x,y));
 		}
+	}
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		String str ="items:\r\n";
+		for(PivotElement elem:this.elements)
+		{
+			str+= elem.toString()+"\r\n";
+		}
+		return str;
 	}
 }

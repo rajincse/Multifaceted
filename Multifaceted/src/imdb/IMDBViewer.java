@@ -159,12 +159,20 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		this.layout.init();
 		
 		System.out.println("Selected:"+compactPerson);
+		
 		Person person = this.data.getPerson(compactPerson);
+		updateSelectedItem(person.getDisplayName()+"("+(person.getGender().equals("m")?"Male":"Female")+")"+"\r\n"
+						+(person.getBiographyList().size()>0?person.getBiographyList().get(0):""));
 		int movieCount =0;
-		for(int i=0;i< person.getActedMovieList().size() && movieCount< PivotPathLayout.MAX_MIDDLE_ITEM;i++)
+		ArrayList<CompactMovie> movieList = person.getActedMovieList();
+		if(person.getActedMovieList().size() < person.getDirectedMovieList().size())
+		{
+			movieList = person.getDirectedMovieList();
+		}
+		for(int i=0;i< movieList.size() && movieCount< PivotPathLayout.MAX_MIDDLE_ITEM;i++)
 		{
 			
-			CompactMovie compactMovie = person.getActedMovieList().get(i);
+			CompactMovie compactMovie = movieList.get(i);
 			
 			System.out.println(compactMovie+" "+compactMovie.getId());
 			Movie movie = this.data.getMovie(compactMovie);
@@ -311,6 +319,14 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	public void callRequestRender() {
 		// TODO Auto-generated method stub
 		this.requestRender();
+	}
+
+
+	@Override
+	public void selectItem(String id) {
+		// TODO Auto-generated method stub
+		CompactPerson person = new CompactPerson(Long.parseLong(id), "", "");
+		selectPerson(person);
 	}
 
 }

@@ -29,47 +29,7 @@ public class PivotPathLayout {
 	
 	private LayoutViewerInterface viewer;
 	
-	protected ObjectInteraction objectInteraction = new ObjectInteraction()
-	{
-
-		@Override
-		protected void mouseIn(int object) {
-			if(!elem.isEmpty())
-			{
-				if (objectInteraction.getItem(object).selected)
-					elem.get(object).getLabel().setColor(Color.red);
-				else
-					elem.get(object).getLabel().setColor(Color.yellow);
-				viewer.callRequestRender();
-			}
-			
-		}
-
-		@Override
-		protected void mouseOut(int object) {
-			if(!elem.isEmpty())
-			{
-				if (objectInteraction.getItem(object).selected)
-					elem.get(object).getLabel().setColor(Color.pink);
-				else
-					elem.get(object).getLabel().setColor(Color.LIGHT_GRAY);
-				viewer.callRequestRender();
-			}
-		}
-
-		@Override
-		protected void itemsSelected(int[] objects) {
-			if(!elem.isEmpty())
-			{
-				for (int i=0; i<elem.size(); i++)
-					elem.get(i).getLabel().setColor(Color.LIGHT_GRAY);
-				for (int i=0; i<objects.length; i++)
-					elem.get(objects[i]).getLabel().setColor(Color.pink);
-				viewer.callRequestRender();
-			}
-		}
-		
-	};
+	protected ObjectInteraction objectInteraction = null;
 	
 	ArrayList<PivotElement> elem = new ArrayList<PivotElement>();
 	ArrayList<String> elementId = new ArrayList<String>();
@@ -83,15 +43,10 @@ public class PivotPathLayout {
 	public PivotPathLayout(LayoutViewerInterface viewer)
 	{
 		this.viewer = viewer;
+		initObjectInteraction();
 	}
-	
-	public void init()
+	protected void initObjectInteraction()
 	{
-		elem.clear();
-		elementId.clear();
-		edges.clear();
-		cnt =0;
-		middles =0;
 		objectInteraction = new ObjectInteraction()
 		{
 
@@ -124,15 +79,34 @@ public class PivotPathLayout {
 			protected void itemsSelected(int[] objects) {
 				if(!elem.isEmpty())
 				{
+					System.out.println("Selection");
 					for (int i=0; i<elem.size(); i++)
 						elem.get(i).getLabel().setColor(Color.LIGHT_GRAY);
 					for (int i=0; i<objects.length; i++)
+					{
 						elem.get(objects[i]).getLabel().setColor(Color.pink);
+						System.out.println(elem.get(objects[i]));
+					}
+						
 					viewer.callRequestRender();
+					
+					if(objects.length ==1 && elem.get(objects[0]).getLayer() != LAYER_MIDDLE)
+					{
+						viewer.selectItem(elem.get(objects[0]).getId());
+					}
 				}
 			}
 			
 		};
+	}
+	public void init()
+	{
+		elem.clear();
+		elementId.clear();
+		edges.clear();
+		cnt =0;
+		middles =0;
+		initObjectInteraction();
 	}
 	
 	public ObjectInteraction getObjectInteraction()

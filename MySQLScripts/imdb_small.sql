@@ -82,34 +82,6 @@ WHERE
 N.gender IS NOT NULL;
 
 -- cast info
- DROP TABLE cast_info;
-CREATE TABLE cast_info
-(
-	id INT PRIMARY KEY,
-	movie_id INT, 
-	person_id INT,
-	person_role_id INT,
-	role_id INT,
-	nr_order INT
-);
-
-CREATE INDEX idx_movie_id ON cast_info(movie_id);
-CREATE INDEX idx_person_id ON cast_info(person_id);
-CREATE INDEX idx_person_role_id ON cast_info(person_role_id);
-
-INSERT INTO cast_info(id, movie_id, person_id, person_role_id, role_id, nr_order)
-SELECT 
-	C.id,
-	C.movie_id,
-	C.person_id,
-	C.person_role_id,
-	C.role_id,
-	COALESCE(C.nr_order,1000) AS nr_order
-FROM 
-imdb.cast_info AS C
-INNER JOIN 
-movie AS M ON C.movie_id = M.id;
-
-
-
+-- mysqldump -u root -prajin imdb cast_info > C:\Users\rajin\Documents\dumps\cast_info.sql
+-- mysql -u root -p imdb_small < C:\Users\rajin\Documents\dumps\cast_info.sql
 

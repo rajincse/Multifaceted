@@ -85,3 +85,26 @@ N.gender IS NOT NULL;
 -- mysqldump -u root -prajin imdb cast_info > C:\Users\rajin\Documents\dumps\cast_info.sql
 -- mysql -u root -p imdb_small < C:\Users\rajin\Documents\dumps\cast_info.sql
 
+
+-- biography
+CREATE TABLE biography
+(
+	id INT PRIMARY KEY,
+	person_id INT, 
+	biography TEXT
+);
+CREATE INDEX idx_bio_person_id ON biography(person_id);
+
+INSERT INTO biography ( id, person_id, biography)
+SELECT 
+	PI.id,
+	PI.person_id,
+	PI.info
+
+FROM 
+imdb.person_info AS PI 
+INNER JOIN 
+person AS P ON P.id = PI.person_id
+WHERE 
+PI.info_type_id =19;
+

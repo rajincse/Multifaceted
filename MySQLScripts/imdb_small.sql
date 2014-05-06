@@ -81,8 +81,15 @@ SELECT
 WHERE   
 N.gender IS NOT NULL;
 
+ALTER TABLE person ADD COLUMN `name` TEXT;
+CREATE INDEX idx_name ON person(`name`(106));
+
+UPDATE person 
+SET `name` = CONCAT(first_name, ' ', last_name);
+
 -- cast info
 -- mysqldump -u root -prajin imdb cast_info > C:\Users\rajin\Documents\dumps\cast_info.sql
+-- mysqldump -u root -p imdb_small cast_info --where="movie_id IN ( SELECT id FROM movie)" --lock-tables=false> C:\Users\rajin\Documents\dumps\cast_info.sql
 -- mysql -u root -p imdb_small < C:\Users\rajin\Documents\dumps\cast_info.sql
 
 

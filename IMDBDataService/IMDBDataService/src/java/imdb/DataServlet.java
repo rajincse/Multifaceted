@@ -48,7 +48,7 @@ public class DataServlet extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
         try {
-            IMDBMySql db = Configuration.getDB();
+            IMDBMySql db = Configuration.getDBSmall();
             Gson gson = new Gson();
             String jsonData="";
             String method = request.getParameter("method");

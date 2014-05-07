@@ -90,29 +90,7 @@ public class IMDBDataSource extends DataSource{
 	
 	public ArrayList<CompactPerson> searchPerson(String searchKey)
 	{
-		if(!searchKey.contains(","))
-		{
-			String[] split = searchKey.split(" ");
-			if(split.length > 1)
-			{
-				String firstName = split[0];
-				String lastName ="";
-				for(int i=1;i<split.length;i++)
-				{
-					lastName+=split[i]+" ";
-				}
-				return this.client.searchPerson(lastName.trim()+", "+firstName);
-			}
-			else
-			{
-				return this.client.searchPerson(searchKey);
-			}
-		}
-		else
-		{
-			return this.client.searchPerson(searchKey);
-		}
-		
+		return this.client.searchPerson(searchKey);		
 	}
 	
 	public Movie getMovie(CompactMovie movie)

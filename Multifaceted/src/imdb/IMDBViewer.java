@@ -28,7 +28,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	private static final String PROPERTY_SEARCH_RESULT = "Search Result";
 	private static final String PROPERTY_SELECTED_ITEM="Selected Item";
 	private static final String PROPERTY_SELECT="Select";
-	private static final String PROPERTY_STEP="Step";
+	private static final String PROPERTY_STEP="Debug.Step";
+	private static final String PROPERTY_PERFORMANCE="Debug.Check Performance";
 	
 	private static final int MAX_ACTOR=5;
 	private static final int MIN_ACTOR=5;
@@ -46,6 +47,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		super(name);
 		this.data = data;
 		this.layout = new PivotPathGroupLayout(this);
+//		this.layout = new PivotPathLayout(this);
 		try
 		{
 			
@@ -112,6 +114,28 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 						}
 					};
 			addProperty(pStep);
+			Property<PString> pPerformance = new Property<PString>(PROPERTY_PERFORMANCE, new PString(""))
+					{
+						@Override
+						protected boolean updating(PString newvalue) {
+							// TODO Auto-generated method stub
+							long[] ids = new long[]{437747,700661,369071,1304615,95992};
+							
+							String msg="\r\n";
+							for(int i =0; i< ids.length;i++)
+							{
+								CompactPerson person = new CompactPerson(ids[i],"Rajin","m");
+								long time = System.currentTimeMillis();
+								selectPerson(person);
+								time = System.currentTimeMillis() - time;
+								msg+=ids[i]+": "+time+"\r\n";								
+							}
+							System.out.println("Performance:"+msg);
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pPerformance);
+			
 		}catch(Exception e)
 		{
 			e.printStackTrace();
@@ -131,7 +155,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			for(int i=0;i<personList.size();i++)
 			{
 				resultList[i]= personList.get(i).toString();	
-				System.out.println(resultList[i]);
+				System.out.println(resultList[i]+" "+personList.get(i).getId());
 			}
 			removeProperty(PROPERTY_SEARCH_RESULT);
 			Property<POptions> pResult = new Property<POptions>(PROPERTY_SEARCH_RESULT, new POptions(resultList))
@@ -154,7 +178,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		updateSelectedItem(item);
 	}
 	private void selectPerson(CompactPerson compactPerson)
-	{
+	{		
+		long time = System.currentTimeMillis();
 		this.stopSimulation();
 		this.layout.init();
 		
@@ -237,6 +262,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 
 		
 		this.startSimulation(50);
+		time = System.currentTimeMillis() - time;
+		System.out.println("Total time:"+time);
 	}
 	private void selectMovie(CompactMovie movie)
 	{

@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
@@ -17,6 +18,9 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 
 	HashMap<String, GroupedPivotElement> topGroupedElements = new HashMap<String, GroupedPivotElement>();
 	HashMap<String, GroupedPivotElement> bottomGroupedElements = new HashMap<String, GroupedPivotElement>();
+	
+	HashMap<String, ArrayList<String>> edgeSourceIds = new HashMap<String, ArrayList<String>>();
+	
 	public PivotPathGroupLayout(LayoutViewerInterface viewer) {
 		super(viewer);
 		// TODO Auto-generated constructor stub
@@ -29,6 +33,7 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 		
 		topGroupedElements.clear();
 		bottomGroupedElements.clear();
+		edgeSourceIds.clear();
 	}
 	
 	@Override
@@ -88,18 +93,38 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 		// TODO Auto-generated method stub
 		super.addEdge(e1, e2);
 		
+		PivotElement source = this.elem.get(e1);		
 		PivotElement destination = this.elem.get(e2);
+		if(this.edgeSourceIds.containsKey(destination.getId()))
+		{
+			ArrayList<String> sourceIdList = this.edgeSourceIds.get(destination.getId());
+			if(sourceIdList != null && !sourceIdList.contains(source.getId()))
+			{
+				sourceIdList.add(source.getId());
+			}
+			else
+			{
+				sourceIdList = new ArrayList<String>();
+				sourceIdList.add(source.getId());
+			}
+		}
+		else
+		{
+			ArrayList<String> sourceIdList = new ArrayList<String>();
+			sourceIdList.add(source.getId());
+			this.edgeSourceIds.put(destination.getId(), sourceIdList);
+		}
+		
 		if(destination.getLabel().getEdgeCount() > 1)
 		{
+			ArrayList<String> sourceIdList = this.edgeSourceIds.get(destination.getId());
 			String sourceId ="";
-			for(PivotEdge edge:this.edges)
+			if(!sourceIdList.isEmpty())
 			{
-				if(edge.getDestinationIndex() == e2)
-				{
-					sourceId = edge.getSource().getId();
-					break;
-				}
+				sourceId = sourceIdList.get(0);
 			}
+			
+
 			if(!sourceId.isEmpty())
 			{
 				if(this.topGroupedElements.containsKey(sourceId))

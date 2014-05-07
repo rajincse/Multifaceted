@@ -38,6 +38,11 @@
             <env-entry-value>imdb</env-entry-value>         
     </env-entry>
     <env-entry> 
+            <env-entry-name>db.mysql.databasename.small</env-entry-name> 
+            <env-entry-type>java.lang.String</env-entry-type> 
+            <env-entry-value>imdb_small</env-entry-value>         
+    </env-entry>
+    <env-entry> 
             <env-entry-name>db.mysql.username</env-entry-name> 
              <env-entry-type>java.lang.String</env-entry-type> 
             <env-entry-value>root</env-entry-value>        

@@ -1,7 +1,7 @@
 package util;
 
 import imdb.IMDBMySql;
-import imdb.QueryServlet;
+import imdb.IMDBSmallMySql;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.naming.Context;
@@ -16,6 +16,7 @@ public class Configuration {
     public static final String PARAM_HOST ="db.mysql.host";
     public static final String PARAM_PORT ="db.mysql.port";
     public static final String PARAM_DATABASE_NAME ="db.mysql.databasename";
+    public static final String PARAM_DATABASE_NAME_SMALL ="db.mysql.databasename.small";
     public static final String PARAM_USER_NAME ="db.mysql.username";
     public static final String PARAM_PASSWORD ="db.mysql.password";
     
@@ -47,7 +48,17 @@ public class Configuration {
         
         return db;
     }
-    
+     public  static IMDBMySql getDBSmall()
+    {
+        String host = getParamValue(PARAM_HOST);
+        String port = getParamValue(PARAM_PORT);
+        String databaseName = getParamValue(PARAM_DATABASE_NAME_SMALL);
+        String userName = getParamValue(PARAM_USER_NAME);
+        String password = getParamValue(PARAM_PASSWORD);
+        IMDBMySql db = new IMDBSmallMySql(host, port, databaseName, userName, password);
+        
+        return db;
+    }
     public static String getQueryLimit()
     {
         return Configuration.getParamValue(PARAM_QUERY_LIMIT);

@@ -36,11 +36,9 @@ public class IMDBMySql extends DatabaseHelper{
 	}
 	
 	/*- Movie-*/
-	
-	public ArrayList<CompactMovie> searchMovie(String searchKey )
-	{
-		ArrayList<CompactMovie> movieList = new ArrayList<CompactMovie>();
-		String query = "SELECT 	T.id, "
+	protected String getQuerySearchMovie(String searchKey )
+        {
+            String query = "SELECT 	T.id, "
 				+"		T.title,  "
 				+"		COALESCE(T.production_year,0) AS `year` "
 				+"FROM title AS T "
@@ -48,21 +46,11 @@ public class IMDBMySql extends DatabaseHelper{
 				+" T.title LIKE '%"+searchKey+"%' "
 				+"AND T.kind_id = 1 "
 				+"LIMIT 0,"+Configuration.getQueryLimit()+" ; ";
-		DefaultTableModel table = this.getData(query);
-		int totalRows = table.getRowCount();
-		for(int row=0;row<totalRows;row++)
-		{
-			long id =Long.parseLong( table.getValueAt(row, 0).toString());
-			String title = table.getValueAt(row, 1).toString();
-			int year = Integer.parseInt( table.getValueAt(row, 2).toString());
-			CompactMovie movie = new CompactMovie(id, title, year);
-			movieList.add(movie);
-		}
-		return movieList;
-	}
-	public Movie getMovie(long movieId)
-	{
-		String query ="SELECT 	T.title AS title,  "
+            return query;
+        }
+        protected String getQueryGetMovie(long movieId)
+        {
+            String query ="SELECT 	T.title AS title,  "
                                 +"		COALESCE(T.production_year,0) AS `year`,   "
                                 +"		COALESCE(MI.info,0) AS rating, "
                                 +"		C.role_id, "
@@ -79,6 +67,67 @@ public class IMDBMySql extends DatabaseHelper{
                                 +"WHERE  "
                                 +"T.id = "+movieId+" "
                                 +"ORDER BY COALESCE(C.nr_order,1000);";
+            return query;
+        }
+        
+        protected String getQuerySearchPerson(String searchKey)
+        {
+            String query ="SELECT   "
+                            +"	N.id,  "
+                            +"	N.`name`,  "
+                            +"	N.gender "
+                            +" FROM `name` AS N  "                            
+                            +"WHERE   "
+                            +"N.gender IS NOT NULL AND   "
+                            +"N.`name` LIKE '%"+searchKey+"%' "
+                            +"LIMIT 0,"+Configuration.getQueryLimit()+" ;";
+            return query;
+        }
+        protected String getQueryGetPerson(long personId, int sortType)
+        {
+            String sortString ="COALESCE(MI.info,0) DESC";
+            if(sortType == SORT_BY_YEAR)
+            {
+                sortString = "COALESCE(T.production_year,0) DESC";
+            }
+            String query="SELECT 	 "
+                        +"		N.`name`, "
+                        +"		N.gender, "
+                        +"		C.role_id, "
+                        +"		T.id, "
+                        +"		T.title AS title,  "
+                        +"		COALESCE(T.production_year,0) AS `year` , "
+                        +"		COALESCE(PI.info,'') AS biography "
+                        +"FROM  "
+                        +"title AS T "
+                        +"LEFT OUTER JOIN movie_info_idx AS MI ON MI.movie_id = T.id AND MI.info_type_id=101 "
+                        +"INNER JOIN cast_info AS C ON C.movie_id = T.id AND (C.role_id = 1 OR C.role_id=2 OR C.role_id=8) AND T.kind_id=1 "
+                        +"INNER JOIN `name` AS N ON N.id = C.person_id "
+                        +" LEFT OUTER JOIN person_info AS PI ON N.id = PI.person_id AND PI.info_type_id=19 "
+                        +"WHERE  "
+                        +"N.id = "+personId+" "
+                        +"ORDER BY "+sortString+" ;";
+            return query;
+        }
+	public ArrayList<CompactMovie> searchMovie(String searchKey )
+	{
+		ArrayList<CompactMovie> movieList = new ArrayList<CompactMovie>();
+		String query = this.getQuerySearchMovie(searchKey);
+		DefaultTableModel table = this.getData(query);
+		int totalRows = table.getRowCount();
+		for(int row=0;row<totalRows;row++)
+		{
+			long id =Long.parseLong( table.getValueAt(row, 0).toString());
+			String title = table.getValueAt(row, 1).toString();
+			int year = Integer.parseInt( table.getValueAt(row, 2).toString());
+			CompactMovie movie = new CompactMovie(id, title, year);
+			movieList.add(movie);
+		}
+		return movieList;
+	}
+	public Movie getMovie(long movieId)
+	{
+		String query =this.getQueryGetMovie(movieId);
 		DefaultTableModel table = this.getData(query);
 		String title = table.getValueAt(0, 0).toString();
 		int year = Integer.parseInt( table.getValueAt(0,1).toString());
@@ -118,15 +167,7 @@ public class IMDBMySql extends DatabaseHelper{
 	/*- Actor-*/
 	public ArrayList<CompactPerson> searchPerson(String searchKey)
 	{
-		String query ="SELECT   "
-                            +"	N.id,  "
-                            +"	N.`name`,  "
-                            +"	N.gender "
-                            +" FROM `name` AS N  "                            
-                            +"WHERE   "
-                            +"N.gender IS NOT NULL AND   "
-                            +"N.`name` LIKE '%"+searchKey+"%' "
-                            +"LIMIT 0,"+Configuration.getQueryLimit()+" ;";
+		String query =this.getQuerySearchPerson(searchKey);
 		DefaultTableModel table = this.getData(query);
 		int totalRows = table.getRowCount();
 		ArrayList<CompactPerson> actorList = new ArrayList<CompactPerson>();
@@ -143,29 +184,8 @@ public class IMDBMySql extends DatabaseHelper{
 	}
         
         public Person getPerson(long personId, int sortType)
-        {
-            String sortString ="COALESCE(MI.info,0) DESC";
-            if(sortType == SORT_BY_YEAR)
-            {
-                sortString = "COALESCE(T.production_year,0) DESC";
-            }
-            String query="SELECT 	 "
-                        +"		N.`name`, "
-                        +"		N.gender, "
-                        +"		C.role_id, "
-                        +"		T.id, "
-                        +"		T.title AS title,  "
-                        +"		COALESCE(T.production_year,0) AS `year` , "
-                        +"		COALESCE(PI.info,'') AS biography "
-                        +"FROM  "
-                        +"title AS T "
-                        +"LEFT OUTER JOIN movie_info_idx AS MI ON MI.movie_id = T.id AND MI.info_type_id=101 "
-                        +"INNER JOIN cast_info AS C ON C.movie_id = T.id AND (C.role_id = 1 OR C.role_id=2 OR C.role_id=8) AND T.kind_id=1 "
-                        +"INNER JOIN `name` AS N ON N.id = C.person_id "
-                        +" LEFT OUTER JOIN person_info AS PI ON N.id = PI.person_id AND PI.info_type_id=19 "
-                        +"WHERE  "
-                        +"N.id = "+personId+" "
-                        +"ORDER BY "+sortString+" ;";
+        {  
+            String query=this.getQueryGetPerson(personId, sortType);
             DefaultTableModel table = this.getData(query);            
             String name = table.getValueAt(0, 0).toString();
             String gender = table.getValueAt(0, 1).toString();

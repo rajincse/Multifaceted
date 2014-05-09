@@ -77,7 +77,7 @@ public class IMDBSmallMySql extends IMDBMySql{
                         +"		T.id, "
                         +"		T.title AS title,  "
                         +"		T.production_year AS `year` "
-                        +"		 ,B.biography AS biography "
+                        +"		 ,COALESCE(B.biography,'') AS biography "
                         +"FROM  "
                         +"movie AS T "
                         +"INNER JOIN cast_info AS C ON C.movie_id = T.id  AND (C.role_id = 1 OR C.role_id=2 OR C.role_id=8) "

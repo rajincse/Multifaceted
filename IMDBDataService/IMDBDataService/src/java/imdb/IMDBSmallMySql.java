@@ -82,7 +82,7 @@ public class IMDBSmallMySql extends IMDBMySql{
                         +"movie AS T "
                         +"INNER JOIN cast_info AS C ON C.movie_id = T.id  AND (C.role_id = 1 OR C.role_id=2 OR C.role_id=8) "
                         +"INNER JOIN person AS N ON N.id = C.person_id "
-                        +"  INNER JOIN biography AS B ON B.person_id = N.id "
+                        +"  LEFT OUTER JOIN biography AS B ON B.person_id = N.id "
                         +"WHERE  "
                         +"N.id = "+personId+" "
                         +"ORDER BY "+sortString+" ;";

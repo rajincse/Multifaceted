@@ -362,6 +362,20 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 	@Override
 	public void render(Graphics2D g) {
 		g.setColor(Color.black);
+		for (int i=0; i<edges.size(); i++)
+		{
+			PivotEdge edge = this.edges.get(i);
+			
+			int e1 = edge.getSourceIndex();
+			int e2 = edge.getDestinationIndex();
+			g.setColor(Color.lightGray);
+			if (objectInteraction.getItem(e1).hovered || (objectInteraction.getItem(e2).hovered))
+					g.setColor(Color.black);
+			if (objectInteraction.getItem(e1).selected || (objectInteraction.getItem(e2).selected))
+					g.setColor(Color.red);
+			edge.render(g);
+		}
+		
 
 		for (PivotElement element: this.elem)
 		{
@@ -383,19 +397,7 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 			group.render(g);
 		}
 		
-		for (int i=0; i<edges.size(); i++)
-		{
-			PivotEdge edge = this.edges.get(i);
-			
-			int e1 = edge.getSourceIndex();
-			int e2 = edge.getDestinationIndex();
-			g.setColor(Color.lightGray);
-			if (objectInteraction.getItem(e1).hovered || (objectInteraction.getItem(e2).hovered))
-					g.setColor(Color.black);
-			if (objectInteraction.getItem(e1).selected || (objectInteraction.getItem(e2).selected))
-					g.setColor(Color.red);
-			edge.render(g);
-		}
+		
 	}
 
 }

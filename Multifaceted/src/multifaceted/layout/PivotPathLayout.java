@@ -20,7 +20,7 @@ public class PivotPathLayout {
 	public static final int MAX_MIDDLE_ITEM =10;
 	public static final int STEP_MIDDLE_ITEM =50;
 	public static final int TOP_Y =0;
-	public static final int BOTTOM_Y=900;
+	public static final int BOTTOM_Y=700;
 	
 	public static final int LAYER_TOP=0;
 	public static final int LAYER_MIDDLE=1;

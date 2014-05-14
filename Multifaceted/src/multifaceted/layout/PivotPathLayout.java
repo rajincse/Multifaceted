@@ -17,7 +17,7 @@ public class PivotPathLayout {
 	public static final int COEFF_SPRING_LENGTH=200;
 	public static final int COEFF_BOUNDARY_FORCE=100;
 	
-	public static final int MAX_MIDDLE_ITEM =10;
+	public static final int MAX_MIDDLE_ITEM =30;
 	public static final int STEP_MIDDLE_ITEM =50;
 	public static final int TOP_Y =0;
 	public static final int BOTTOM_Y=700;
@@ -125,7 +125,7 @@ public class PivotPathLayout {
 
 	
 	
-	public ArrayList<String> getElements()
+	public ArrayList<String> getElementIds()
 	{
 		return this.elementId;
 	}

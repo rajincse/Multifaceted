@@ -7,7 +7,12 @@ import imdb.entity.Person;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.util.ArrayList;
+
+import javax.swing.JOptionPane;
+
+import eyetrack.EyeTrackerObjectDetector;
 
 import multifaceted.layout.LayoutViewerInterface;
 import multifaceted.layout.PivotPathGroupLayout;
@@ -43,11 +48,14 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	
 	private PivotPathLayout layout =null;
 	
+	private EyeTrackerObjectDetector et = null;
+	
 	public IMDBViewer(String name, IMDBDataSource data) {
 		super(name);
 		this.data = data;
 		this.layout = new PivotPathGroupLayout(this);
-//		this.layout = new PivotPathLayout(this);
+		et = new EyeTrackerObjectDetector();
+		setEyeTrackOffset();
 		try
 		{
 			
@@ -143,7 +151,15 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		
 	}
 	
-
+	private void setEyeTrackOffset()
+	{
+		Point p = new Point(0,0);
+		if (this.getContainer() != null && this.getContainer().getViewerWindow() != null)
+			p = this.getContainer().getViewerWindow().getDrawArea().getLocationOnScreen();
+		
+		
+		et.setOffset(p);
+	}
 	private void searchTask(String searchKey)
 	{
 		System.out.println("Search");
@@ -219,14 +235,14 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			ArrayList<CompactPerson> directorList = movie.getDirectors();
 			for(CompactPerson director: directorList)
 			{
-				if(!layout.getElements().contains(""+director.getId()))
+				if(!layout.getElementIds().contains(""+director.getId()))
 				{
 					int destination =layout.addBottomElement(""+director.getId(),director.getDisplayName(),source );					
 					layout.addEdge(source, destination);
 				}
 				else
 				{
-					int destination =layout.getElements().indexOf(""+director.getId());
+					int destination =layout.getElementIds().indexOf(""+director.getId());
 					layout.addEdge(source, destination);
 				}
 				 
@@ -237,7 +253,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			int actorCount=0;
 			for(CompactPerson actor: actorList)
 			{
-				if(!layout.getElements().contains(""+actor.getId()) && actor.getId() != person.getId())
+				if(!layout.getElementIds().contains(""+actor.getId()) && actor.getId() != person.getId())
 				{
 					int destination =layout.addTopElement(""+actor.getId(),actor.getDisplayName(), source);					
 					layout.addEdge(source, destination);
@@ -246,7 +262,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 				}
 				else if(actor.getId() != person.getId())
 				{
-					int destination = layout.getElements().indexOf(""+actor.getId());
+					int destination = layout.getElementIds().indexOf(""+actor.getId());
 					layout.addEdge(source, destination);
 				}
 				
@@ -281,7 +297,10 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	
 	
 	public void render(Graphics2D g) {
+		et.block(true);
 		layout.render(g);
+		setEyeTrackOffset();
+		et.block(false);
 	}
 
 	private int simulationCount=0;
@@ -321,6 +340,11 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 
 	public boolean mousepressed(int x, int y, int button) {
 		layout.getObjectInteraction().mousePress(x, y);
+		if (button == 1)
+		{
+			et.processGaze(new Point(x,y));
+			return true;
+		}
 		return false;
 	}
 
@@ -353,7 +377,12 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	public void selectItem(String id) {
 		// TODO Auto-generated method stub
 		CompactPerson person = new CompactPerson(Long.parseLong(id), "", "");
-		selectPerson(person);
+		int val = JOptionPane.showConfirmDialog(null, "Are You sure to change the view?", "Really?", JOptionPane.YES_NO_OPTION);
+		if(val == JOptionPane.YES_OPTION)
+		{
+			selectPerson(person);
+		}
+		
 	}
 
 }

@@ -44,7 +44,7 @@ public class IMDBSmallMySql extends IMDBMySql{
                         +"INNER JOIN person AS N ON N.id = C.person_id "
                         +"WHERE  "
                         +"T.id =  "+movieId+" "
-                        +"ORDER BY C.nr_order;";
+                        +"ORDER BY COALESCE(C.nr_order,1000);";
         return query;
     }
 

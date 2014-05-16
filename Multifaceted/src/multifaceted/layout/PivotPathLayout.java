@@ -98,7 +98,7 @@ public class PivotPathLayout {
 					
 					if(objects.length ==1 && elem.get(objects[0]).getLayer() != LAYER_MIDDLE)
 					{
-						viewer.selectItem(elem.get(objects[0]).getId());
+						viewer.selectItem(elem.get(objects[0]).getId(), elem.get(objects[0]).getLabel().getText());
 					}
 				}
 			}

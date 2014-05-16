@@ -50,6 +50,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	
 	private EyeTrackerObjectDetector et = null;
 	
+	private boolean isLocked = true;
+	
 	public IMDBViewer(String name, IMDBDataSource data) {
 		super(name);
 		this.data = data;
@@ -194,7 +196,9 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		updateSelectedItem(item);
 	}
 	private void selectPerson(CompactPerson compactPerson)
-	{		
+	{	
+		isLocked = true;
+		
 		long time = System.currentTimeMillis();
 		this.stopSimulation();
 		this.layout.init();
@@ -280,6 +284,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		this.startSimulation(50);
 		time = System.currentTimeMillis() - time;
 		System.out.println("Total time:"+time);
+		
+		isLocked = false;
 	}
 	private void selectMovie(CompactMovie movie)
 	{
@@ -339,18 +345,25 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	}
 
 	public boolean mousepressed(int x, int y, int button) {
-		layout.getObjectInteraction().mousePress(x, y);
 		if (button == 1)
 		{
 			et.processGaze(new Point(x,y));
 			return true;
+		}
+		else if(button ==3)
+		{
+			layout.getObjectInteraction().mousePress(x, y);
 		}
 		return false;
 	}
 
 
 	public boolean mousereleased(int x, int y, int button) {
-		layout.getObjectInteraction().mouseRelease(x, y);
+		if(button ==3)
+		{
+			layout.getObjectInteraction().mouseRelease(x, y);
+		}
+		
 		return false;
 	}
 
@@ -369,7 +382,11 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 
 	public void callRequestRender() {
 		// TODO Auto-generated method stub
-		this.requestRender();
+		if(!this.isLocked)
+		{
+			this.requestRender();
+		}
+		
 	}
 
 
@@ -383,6 +400,12 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			selectPerson(person);
 		}
 		
+	}
+
+	@Override
+	public void callSetToolTipText(String text) {
+		// TODO Auto-generated method stub
+		this.setToolTipText(text);
 	}
 
 }

@@ -25,6 +25,7 @@ import multifaceted.layout.PivotPathLayout;
 import perspectives.base.Property;
 import perspectives.base.Task;
 import perspectives.base.Viewer;
+import perspectives.properties.PBoolean;
 import perspectives.properties.POptions;
 import perspectives.properties.PSignal;
 import perspectives.properties.PString;
@@ -42,6 +43,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	private static final String PROPERTY_BACK="Back";
 	private static final String PROPERTY_STEP="Debug.Step";
 	private static final String PROPERTY_PERFORMANCE="Debug.Check Performance";
+	private static final String PROPERTY_SHOW_GAZE="Debug.Show Gaze";
 	
 	private static final int SELECT_FROM_SEARCH =0;
 	private static final int SELECT_FROM_RECENTLY_VIEWED =1;
@@ -211,6 +213,9 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 					};
 			addProperty(pPerformance);
 			
+			Property<PBoolean> pShowGaze = new Property<PBoolean>(PROPERTY_SHOW_GAZE,new PBoolean(true));
+			addProperty(pShowGaze);
+					
 		}catch(Exception e)
 		{
 			e.printStackTrace();
@@ -423,10 +428,15 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	private int gazeY;
 	@Override
 	public void gazeDetected(int x, int y) {
-		// TODO Auto-generated method stub
-		this.gazeX = x;
-		this.gazeY = y;
-		this.requestRender();
+		if(isShowGazeOn())
+		{
+			this.gazeX = x;
+			this.gazeY = y;
+			
+			this.requestRender();
+			layoutScoreInfo();
+		}
+		
 	}
 	@Override
 	public AffineTransform getTransform() {
@@ -438,6 +448,11 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		// TODO Auto-generated method stub
 		return ((ViewerContainer2D)this.getContainer()).getZoom();
 	}
+	private boolean isShowGazeOn()
+	{
+		PBoolean showGaze = (PBoolean)this.getProperty(PROPERTY_SHOW_GAZE).getValue();
+		return showGaze.boolValue();
+	}
 	
 	public void render(Graphics2D g) {
 		synchronized(this)
@@ -446,8 +461,11 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		}
 		et.block(true);
 		layout.render(g);
+		if(isShowGazeOn())
+		{
+			drawEyeGaze(g);
+		}
 		
-		drawEyeGaze(g);
 		et.block(false);
 	}
 	
@@ -504,10 +522,15 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			for(int i=0;i<layout.getElements().size();i++)
 			{
 				PivotElement element = layout.getElements().get(i);
-				if(nodeScore[i] > 0.009 || nodeScore2[i] >0.009)
-				{
-					System.out.println((i+1)+". "+element.getLabel().getText()+" NodeScore1:"+String.format("%.2f",nodeScore[i])+", NodeScore2:"+String.format("%.2f",nodeScore2[i]));
-				}
+				double s1 = Math.min(1,nodeScore[i]);
+				double s2 =Math.min(1,nodeScore2[i]);
+				Color c = new Color(100 + (int)(s1*90) + (int)(s2*30),50,50, 100 + (int)(s1*120)+(int)(s2*30));	
+				
+				element.getLabel().setColor(c);
+//				if(nodeScore[i] > 0.009 || nodeScore2[i] >0.009)
+//				{
+//					System.out.println((i+1)+". "+element.getLabel().getText()+" NodeScore1:"+String.format("%.2f",nodeScore[i])+", NodeScore2:"+String.format("%.2f",nodeScore2[i]));
+//				}
 			}
 		}
 		
@@ -515,8 +538,9 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	public boolean mousepressed(int x, int y, int button) {
 		if (button == 1)
 		{
-			et.processGaze(new Point(x,y));
-			layoutScoreInfo();
+			Point offset = this.getEyeTrackOffset();
+			et.processGaze(new Point(x+offset.x,y+offset.y));
+
 			return true;
 		}
 		else if(button ==3)
@@ -551,10 +575,9 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 
 	public void callRequestRender() {
 		// TODO Auto-generated method stub
-		if(!this.isLocked)
-		{
-			this.requestRender();
-		}
+		
+		this.requestRender();
+		
 		
 	}
 

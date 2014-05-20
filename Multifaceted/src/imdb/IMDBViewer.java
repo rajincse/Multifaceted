@@ -8,12 +8,14 @@ import imdb.entity.Person;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 
 import javax.swing.JOptionPane;
 
 import eyetrack.EyeTrackerObjectDetector;
 import eyetrack.EyeTrackerPivotElementDetector;
+import eyetrack.EyeTrackerViewer;
 
 import multifaceted.layout.LayoutViewerInterface;
 import multifaceted.layout.PivotElement;
@@ -28,8 +30,9 @@ import perspectives.properties.PSignal;
 import perspectives.properties.PString;
 import perspectives.properties.PText;
 import perspectives.two_d.JavaAwtRenderer;
+import perspectives.two_d.ViewerContainer2D;
 
-public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerInterface {
+public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerInterface , EyeTrackerViewer{
 
 	private static final String PROPERTY_SEARCH_ACTOR="Search Actor";
 	private static final String PROPERTY_SEARCH_RESULT = "Search Result";
@@ -69,8 +72,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		this.layout = new PivotPathGroupLayout(this);
 		this.recentlyViewed = new ArrayList<CompactPerson>();
 		this.recentlyViewedId  = new ArrayList<Long>();
-		et = new EyeTrackerPivotElementDetector();
-		setEyeTrackOffset();
+		et = new EyeTrackerPivotElementDetector(this);
 		try
 		{
 			
@@ -216,14 +218,14 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		
 	}
 	
-	private void setEyeTrackOffset()
+	public Point getEyeTrackOffset()
 	{
 		Point p = new Point(0,0);
 		if (this.getContainer() != null && this.getContainer().getViewerWindow() != null)
 			p = this.getContainer().getViewerWindow().getDrawArea().getLocationOnScreen();
 		
 		
-		et.setOffset(p);
+		return p;
 	}
 	private void searchTask(String searchKey)
 	{
@@ -411,12 +413,41 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		selectFrom = mode;
 	}
 	
+	private int gazeX;
+	private int gazeY;
+	@Override
+	public void gazeDetected(int x, int y) {
+		// TODO Auto-generated method stub
+		this.gazeX = x;
+		this.gazeY = y;
+		this.requestRender();
+	}
+	@Override
+	public AffineTransform getTransform() {
+		// TODO Auto-generated method stub
+		return ((ViewerContainer2D)this.getContainer()).transform;
+	}
+	@Override
+	public double getZoom() {
+		// TODO Auto-generated method stub
+		return ((ViewerContainer2D)this.getContainer()).getZoom();
+	}
 	
 	public void render(Graphics2D g) {
 		et.block(true);
 		layout.render(g);
-		setEyeTrackOffset();
+		
+		drawEyeGaze(g);
 		et.block(false);
+	}
+	
+	private void drawEyeGaze(Graphics2D g)
+	{
+		double zoom = this.getZoom();
+		int et =(int)( EyeTrackerPivotElementDetector.EDGETHRESHOLD/ zoom);
+		g.setColor(new Color(255,0,0,120));
+		g.fillOval(this.gazeX-5, this.gazeY-5, 10, 10);
+		g.drawOval(this.gazeX-et, this.gazeY-et, et*2, et*2);
 	}
 
 	private int simulationCount=0;

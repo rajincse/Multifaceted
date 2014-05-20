@@ -1,6 +1,8 @@
 package eyetrack;
 
 import java.awt.Point;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.util.ArrayList;
 
 import multifaceted.layout.PivotElement;
@@ -8,18 +10,16 @@ import multifaceted.layout.PivotElement;
 public class EyeTrackerPivotElementDetector implements EyeTrackerDataReceiver{
 
 	private EyeTrackServer g;
-	private Point offset;
 	double[] nodeScores;
 	double[] nodeScores2;
-	int EDGETHRESHOLD = 50;	
+	public static final int EDGETHRESHOLD = 50;	
 	
 	private ArrayList<PivotElement> elements=null;
 	private boolean blocked = false;
-	
-	public EyeTrackerPivotElementDetector()
+	private EyeTrackerViewer viewer = null;
+	public EyeTrackerPivotElementDetector(EyeTrackerViewer viewer)
 	{
-		offset = new Point(0,0);
-		
+		this.viewer = viewer;
 		g = new EyeTrackServer(this);
 	}
 	public void registerElements(ArrayList<PivotElement> elements)
@@ -48,11 +48,24 @@ public class EyeTrackerPivotElementDetector implements EyeTrackerDataReceiver{
 		{
 			if (blocked) return;
 		}
-		if(this.elements != null && !this.elements.isEmpty())
-		{
-			this.processElementGaze(gazePoint);
+		try {
+			Point offset = viewer.getEyeTrackOffset();
+			Point processingPoint = new Point(gazePoint.x - offset.x, gazePoint.y - offset.y);
+			
+			Point screenPoint = new Point();
+			
+			AffineTransform transform = viewer.getTransform().createInverse();
+			
+			transform.transform(processingPoint, screenPoint);
+			if(this.elements != null && !this.elements.isEmpty())
+			{
+				this.processElementGaze(screenPoint);
+			}
+			viewer.gazeDetected(screenPoint.x, screenPoint.y);
+		} catch (NoninvertibleTransformException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		
 	}
 	public void block(boolean block)
 	{
@@ -61,18 +74,14 @@ public class EyeTrackerPivotElementDetector implements EyeTrackerDataReceiver{
 			this.blocked = block;
 		}		
 	}
-	public void setOffset(Point p)
-	{
-		offset = p;
-	}
+	
 	
 	private void processElementGaze(Point gazePoint)
 	{
 		if (nodeScores == null)
 			return;
-		//int zoom = this.getZoom();
-		int zoom =1;
-		int et = (int)(EDGETHRESHOLD / 1);
+		double zoom =viewer.getZoom();
+		int et = (int)(EDGETHRESHOLD / zoom);
 		
 		for (int i=0; i<elements.size(); i++)	//for all nodes
 		{

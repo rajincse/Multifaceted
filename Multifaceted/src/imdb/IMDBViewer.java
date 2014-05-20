@@ -62,7 +62,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	
 	private EyeTrackerPivotElementDetector et = null;
 	
-	private boolean isLocked = true;
+	private boolean isLocked = false;
 	
 	private int selectFrom = SELECT_FROM_SEARCH;
 	
@@ -261,8 +261,10 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		updateSelectedItem(item, SELECT_FROM_SEARCH);
 	}
 	private void selectPerson(CompactPerson compactPerson)
-	{	
-		isLocked = true;
+	{	synchronized(this)
+		{
+			isLocked = true;
+		}
 		
 		long time = System.currentTimeMillis();
 		this.stopSimulation();
@@ -352,7 +354,11 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		time = System.currentTimeMillis() - time;
 		System.out.println("Total time:"+time);
 		
-		isLocked = false;
+		synchronized(this)
+		{
+			isLocked = false;
+		}
+		
 		registerEyetrackPoints();
 	}
 	
@@ -434,6 +440,10 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	}
 	
 	public void render(Graphics2D g) {
+		synchronized(this)
+		{
+			if (isLocked) return;
+		}
 		et.block(true);
 		layout.render(g);
 		

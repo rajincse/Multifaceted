@@ -57,15 +57,19 @@ public class EyeTrackerPivotElementDetector implements EyeTrackerDataReceiver{
 			AffineTransform transform = viewer.getTransform().createInverse();
 			
 			transform.transform(processingPoint, screenPoint);
-			if(this.elements != null && !this.elements.isEmpty())
-			{
-				this.processElementGaze(screenPoint);
-			}
-			viewer.gazeDetected(screenPoint.x, screenPoint.y);
+			processScreenPoint(screenPoint);
 		} catch (NoninvertibleTransformException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	public void processScreenPoint(Point screenPoint)
+	{
+		if(this.elements != null && !this.elements.isEmpty())
+		{
+			this.processElementGaze(screenPoint);
+		}
+		viewer.gazeDetected(screenPoint.x, screenPoint.y);
 	}
 	public void block(boolean block)
 	{

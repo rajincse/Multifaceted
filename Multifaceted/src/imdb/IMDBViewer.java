@@ -539,8 +539,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		if (button == 1)
 		{
 			((ViewerContainer2D)this.getContainer()).rightButtonDown = false;
-			Point offset = this.getEyeTrackOffset();
-			et.processGaze(new Point(x+offset.x,y+offset.y));
+			
+			et.processScreenPoint(new Point(x,y));
 
 			return true;
 		}

@@ -538,6 +538,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	public boolean mousepressed(int x, int y, int button) {
 		if (button == 1)
 		{
+			((ViewerContainer2D)this.getContainer()).rightButtonDown = false;
 			Point offset = this.getEyeTrackOffset();
 			et.processGaze(new Point(x+offset.x,y+offset.y));
 

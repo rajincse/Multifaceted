@@ -13,8 +13,10 @@ import java.util.ArrayList;
 import javax.swing.JOptionPane;
 
 import eyetrack.EyeTrackerObjectDetector;
+import eyetrack.EyeTrackerPivotElementDetector;
 
 import multifaceted.layout.LayoutViewerInterface;
+import multifaceted.layout.PivotElement;
 import multifaceted.layout.PivotPathGroupLayout;
 import multifaceted.layout.PivotPathLayout;
 
@@ -55,7 +57,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	
 	private PivotPathLayout layout =null;
 	
-	private EyeTrackerObjectDetector et = null;
+	private EyeTrackerPivotElementDetector et = null;
 	
 	private boolean isLocked = true;
 	
@@ -67,7 +69,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		this.layout = new PivotPathGroupLayout(this);
 		this.recentlyViewed = new ArrayList<CompactPerson>();
 		this.recentlyViewedId  = new ArrayList<Long>();
-		et = new EyeTrackerObjectDetector();
+		et = new EyeTrackerPivotElementDetector();
 		setEyeTrackOffset();
 		try
 		{
@@ -349,6 +351,12 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		System.out.println("Total time:"+time);
 		
 		isLocked = false;
+		registerEyetrackPoints();
+	}
+	
+	private void registerEyetrackPoints()
+	{
+		et.registerElements(layout.getElements());
 	}
 	private void selectMovie(CompactMovie movie)
 	{
@@ -446,10 +454,28 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		
 	}
 
+	private void layoutScoreInfo()
+	{		
+		double[] nodeScore = et.getNodeScore();
+		double[] nodeScore2 = et.getNodeScore2();
+		if(nodeScore != null && nodeScore2 != null)
+		{
+			for(int i=0;i<layout.getElements().size();i++)
+			{
+				PivotElement element = layout.getElements().get(i);
+				if(nodeScore[i] > 0.009 || nodeScore2[i] >0.009)
+				{
+					System.out.println((i+1)+". "+element.getLabel().getText()+" NodeScore1:"+String.format("%.2f",nodeScore[i])+", NodeScore2:"+String.format("%.2f",nodeScore2[i]));
+				}
+			}
+		}
+		
+	}
 	public boolean mousepressed(int x, int y, int button) {
 		if (button == 1)
 		{
 			et.processGaze(new Point(x,y));
+			layoutScoreInfo();
 			return true;
 		}
 		else if(button ==3)

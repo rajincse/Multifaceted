@@ -135,6 +135,11 @@ public class PivotPathLayout {
 	{
 		return this.elementId;
 	}
+	
+	public ArrayList<PivotElement> getElements()
+	{
+		return this.elem;
+	}
 	public double getRandomPositionX(double maxX, double minX)
 	{	
 		double range = maxX -minX;

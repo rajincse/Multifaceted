@@ -9,8 +9,11 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
-
 import javax.swing.JOptionPane;
 
 import eyetrack.EyeTrackerPivotElementDetector;
@@ -25,6 +28,7 @@ import perspectives.base.Property;
 import perspectives.base.Task;
 import perspectives.base.Viewer;
 import perspectives.properties.PBoolean;
+import perspectives.properties.PFileOutput;
 import perspectives.properties.POptions;
 import perspectives.properties.PSignal;
 import perspectives.properties.PString;
@@ -43,6 +47,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	private static final String PROPERTY_STEP="Debug.Step";
 	private static final String PROPERTY_PERFORMANCE="Debug.Check Performance";
 	private static final String PROPERTY_SHOW_GAZE="Debug.Show Gaze";
+	
+	private static final String PROPERTY_SAVE_RESULT = "Save Result";
 	
 	private static final int SELECT_FROM_SEARCH =0;
 	private static final int SELECT_FROM_RECENTLY_VIEWED =1;
@@ -67,6 +73,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	
 	private int selectFrom = SELECT_FROM_SEARCH;
 	
+	private StringBuffer resultText;
+	
 	public IMDBViewer(String name, IMDBDataSource data) {
 		super(name);
 		this.data = data;
@@ -74,6 +82,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		this.recentlyViewed = new ArrayList<CompactPerson>();
 		this.recentlyViewedId  = new ArrayList<Long>();
 		et = new EyeTrackerPivotElementDetector(this);
+		this.resultText = new StringBuffer();
 		try
 		{
 			
@@ -214,7 +223,17 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			
 			Property<PBoolean> pShowGaze = new Property<PBoolean>(PROPERTY_SHOW_GAZE,new PBoolean(true));
 			addProperty(pShowGaze);
-					
+			
+			Property<PFileOutput> pSaveResult = new Property<PFileOutput>(PROPERTY_SAVE_RESULT, new PFileOutput())
+					{
+						@Override
+						protected boolean updating(PFileOutput newvalue) {
+							// TODO Auto-generated method stub
+							saveResult(newvalue.path);
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pSaveResult);
 		}catch(Exception e)
 		{
 			e.printStackTrace();
@@ -516,6 +535,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	{		
 		double[] nodeScore = et.getNodeScore();
 		double[] nodeScore2 = et.getNodeScore2();
+		Color c= new Color(237, 185,188, 150);
 		if(nodeScore != null && nodeScore2 != null)
 		{
 			for(int i=0;i<layout.getElements().size();i++)
@@ -524,19 +544,35 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 				if(nodeScore[i]> EyeTrackerPivotElementDetector.SELECTION_THRESHOLD)
 				{
 					//Selected
-					Color c= new Color(221, 247,210, 200);
-					element.getLabel().setColor(c);
-					
+					c= new Color(221, 247,210, 200);
+					addResultData(element);
 				}
 				else
 				{
-					Color c= new Color(237, 185,188, 150);
+					c= new Color(237, 185,188, 150);
+				}
+				if(this.isShowGazeOn())
+				{
 					element.getLabel().setColor(c);
 				}
+				else
+				{
+					element.getLabel().setColor(Color.gray);
+				}
+				
 		
 			}
 		}
 		
+	}
+	private void addResultData(PivotElement element)
+	{
+		long time = System.currentTimeMillis();
+		String id = element.getId();
+		String name = element.getLabel().getText();
+		String data = time+"\t"+id+"\t"+name;
+		this.resultText.append(data+"\r\n");
+		System.out.println("##"+data);
 	}
 	public boolean mousepressed(int x, int y, int button) {
 		if (button == 1)
@@ -602,6 +638,24 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	public void callSetToolTipText(String text) {
 		// TODO Auto-generated method stub
 		this.setToolTipText(text);
+	}
+	
+	private void saveResult(String filePath)
+	{
+		
+		try {
+
+			FileWriter fstream = new FileWriter(new File(filePath), true);
+			BufferedWriter br = new BufferedWriter(fstream);
+
+			br.write(this.resultText.toString());
+
+			br.close();
+			JOptionPane.showMessageDialog(null, "End of Study. Result Saved to "+filePath);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

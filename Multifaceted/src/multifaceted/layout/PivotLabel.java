@@ -2,6 +2,11 @@ package multifaceted.layout;
 
 
 import java.awt.Font;
+import java.awt.Point;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 
 import perspectives.util.Label;
 
@@ -50,4 +55,58 @@ public class PivotLabel extends Label{
 		this.isChangeable = isChangeable;
 	}
 	
+	public double distance(Point p)
+	{
+		double d=0;
+		
+		AffineTransform at = new AffineTransform();
+		
+		
+		at.translate(w/2, h/2);
+		at.rotate(- getRotationAngle());
+		at.translate(-x, -y);
+		
+		Point2D.Double transformedPoint = new Point2D.Double();
+		at.transform(p, transformedPoint);
+		
+		if(transformedPoint.x < 0 && transformedPoint.y < 0)			
+		{
+			d= transformedPoint.distance(0,0);
+		}
+		else if(transformedPoint.x >= 0 && transformedPoint.x <=w && transformedPoint.y < 0 )
+		{
+			d = Line2D.ptLineDist(0, 0, w, 0, transformedPoint.x, transformedPoint.y);
+		}
+		else if(transformedPoint.x > w && transformedPoint.y < 0)
+		{
+			d = transformedPoint.distance(w,0);
+		}
+		else if(transformedPoint.x >w && transformedPoint.y>=0 && transformedPoint.y <=h)
+		{
+			d = Line2D.ptLineDist(w, 0, w, h, transformedPoint.x, transformedPoint.y);
+		}
+		else if(transformedPoint.x > w && transformedPoint.y > h)
+		{
+			d = transformedPoint.distance(w,h);
+		}
+		else if(transformedPoint.x >=0 && transformedPoint.x <=w && transformedPoint.y > h)
+		{
+			d = Line2D.ptLineDist(0, h, w, h, transformedPoint.x, transformedPoint.y);
+		}
+		else if(transformedPoint.x < 0 && transformedPoint.y >h)
+		{
+			d = transformedPoint.distance(0,h);
+		}
+		else if(transformedPoint.x < 0 && transformedPoint.y >=0 && transformedPoint.y <=h)
+		{
+			d = Line2D.ptLineDist(0, 0, 0, h, transformedPoint.x, transformedPoint.y);
+		}
+		else
+		{
+			d =0;
+		}
+
+
+		return d;
+	}
 }

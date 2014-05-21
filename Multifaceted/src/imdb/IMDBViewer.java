@@ -13,7 +13,6 @@ import java.util.ArrayList;
 
 import javax.swing.JOptionPane;
 
-import eyetrack.EyeTrackerObjectDetector;
 import eyetrack.EyeTrackerPivotElementDetector;
 import eyetrack.EyeTrackerViewer;
 
@@ -522,15 +521,19 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			for(int i=0;i<layout.getElements().size();i++)
 			{
 				PivotElement element = layout.getElements().get(i);
-				double s1 = Math.min(1,nodeScore[i]);
-				double s2 =Math.min(1,nodeScore2[i]);
-				Color c = new Color(100 + (int)(s1*90) + (int)(s2*30),50,50, 100 + (int)(s1*120)+(int)(s2*30));	
-				
-				element.getLabel().setColor(c);
-//				if(nodeScore[i] > 0.009 || nodeScore2[i] >0.009)
-//				{
-//					System.out.println((i+1)+". "+element.getLabel().getText()+" NodeScore1:"+String.format("%.2f",nodeScore[i])+", NodeScore2:"+String.format("%.2f",nodeScore2[i]));
-//				}
+				if(nodeScore[i]> EyeTrackerPivotElementDetector.SELECTION_THRESHOLD)
+				{
+					//Selected
+					Color c= new Color(221, 247,210, 200);
+					element.getLabel().setColor(c);
+					
+				}
+				else
+				{
+					Color c= new Color(237, 185,188, 150);
+					element.getLabel().setColor(c);
+				}
+		
 			}
 		}
 		

@@ -13,6 +13,7 @@ public class EyeTrackerPivotElementDetector implements EyeTrackerDataReceiver{
 	double[] nodeScores;
 	double[] nodeScores2;
 	public static final int EDGETHRESHOLD = 50;	
+	public static final double SELECTION_THRESHOLD =0.6;
 	
 	private ArrayList<PivotElement> elements=null;
 	private boolean blocked = false;
@@ -90,13 +91,12 @@ public class EyeTrackerPivotElementDetector implements EyeTrackerDataReceiver{
 		for (int i=0; i<elements.size(); i++)	//for all nodes
 		{
 			PivotElement element = this.elements.get(i);
-			int nx = (int)element.getPosition().getX();
-			int ny = (int)element.getPosition().getY();
 			
-			nodeScores[i] = Math.max(0, nodeScores[i]-0.02);	//node scores decay over time
+			
+			nodeScores[i] = Math.max(0, nodeScores[i]-0.05);	//node scores decay over time
 			if (nodeScores[i] < 0) nodeScores[i] = 0;
-				
-			double d = Math.sqrt((gazePoint.x-nx) * (gazePoint.x-nx) + (gazePoint.y-ny)*(gazePoint.y-ny));
+			
+			double d = element.getLabel().distance(gazePoint);
 												
 			if (d <= et)
 			{				

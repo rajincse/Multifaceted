@@ -84,6 +84,15 @@ public class EyeTrackServer implements Runnable{
         			 
         			
                     }
+                    else if (split.length == 4)
+                    {
+                    	// For fixation data
+                    	int x = Integer.parseInt(split[1]);
+	        			int y = Integer.parseInt(split[2]);        			
+	        			
+	        			double pupilDiameter = -1;
+	        			fgv.processGaze(new Point(x,y), pupilDiameter);  
+                    }
         			
         			
                 } catch (UnsupportedEncodingException e){

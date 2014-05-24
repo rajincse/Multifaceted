@@ -628,7 +628,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		long time = System.currentTimeMillis();
 		String id = element.getId();
 		String name = element.getLabel().getText();
-		String data = time+"\t"+id+"\t"+name;
+		String data = time+"\t"+id+"\t"+name+"\t"+element.getLayer();
 		this.resultText.append(data+"\r\n");
 		System.out.println("##"+data);
 	}

@@ -73,7 +73,7 @@ public class AnalysisViewer extends Viewer implements JavaAwtRenderer{
 			{
 				
 				String[] split = line.split("\t");
-				if(split.length == 3)
+				if(split.length >= 3)
 				{
 					long timeStamp = Long.parseLong(split[0]);
 					

@@ -361,7 +361,6 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 	
 	@Override
 	public void render(Graphics2D g) {
-		g.setColor(Color.black);
 		for (int i=0; i<edges.size(); i++)
 		{
 			PivotEdge edge = this.edges.get(i);
@@ -376,7 +375,8 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 			edge.render(g);
 		}
 		
-
+		renderMainItemEdge(g);
+		
 		for (PivotElement element: this.elem)
 		{
 			if(element.getLayer() == LAYER_TOP || element.getLayer() == LAYER_BOTTOM)

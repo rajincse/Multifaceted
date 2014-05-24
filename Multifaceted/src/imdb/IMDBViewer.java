@@ -49,10 +49,13 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	private static final String PROPERTY_SHOW_GAZE="Debug.Show Gaze";
 	
 	private static final String PROPERTY_SAVE_RESULT = "Save Result";
+	private static final String PROPERTY_SHOW_LIST_TYPE = "Show List";
 	
 	private static final int SELECT_FROM_SEARCH =0;
 	private static final int SELECT_FROM_RECENTLY_VIEWED =1;
 	
+	private static final int SELECT_FROM_ACTED=0;
+	private static final int SELECT_FROM_DIRECTED=1;
 	private static final int MAX_ACTOR=5;
 	private static final int MIN_ACTOR=5;
 	
@@ -72,6 +75,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	private boolean isLocked = false;
 	
 	private int selectFrom = SELECT_FROM_SEARCH;
+	
+	private int movieListSelectFrom = SELECT_FROM_ACTED;
 	
 	private StringBuffer resultText;
 	
@@ -234,13 +239,36 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 						}
 					};
 			addProperty(pSaveResult);
+			
+			POptions options = getMovieSelectionShowList(movieListSelectFrom);
+			Property<POptions> pShowList = new Property<POptions>(PROPERTY_SHOW_LIST_TYPE, options)
+					{
+						@Override
+						protected boolean updating(POptions newvalue) {
+							// TODO Auto-generated method stub
+							int selectionIndex = newvalue.selectedIndex;
+							if(selectionIndex != movieListSelectFrom)
+							{
+								movieListSelectFrom= 1- movieListSelectFrom;
+								selectPerson(currentPerson);
+							}
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pShowList);
 		}catch(Exception e)
 		{
 			e.printStackTrace();
 		}
 		
 	}
-	
+	private POptions getMovieSelectionShowList(int selectionIndex)
+	{
+		POptions options= new POptions(new String[]{"Acted Movie", "Directed Movie"});
+		options.selectedIndex  = selectionIndex;
+		
+		return options;
+	}
 	public Point getEyeTrackOffset()
 	{
 		Point p = new Point(0,0);
@@ -283,6 +311,39 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		String item = personList.get(newvalue.selectedIndex).toString();
 		updateSelectedItem(item, SELECT_FROM_SEARCH);
 	}
+	
+	private ArrayList<CompactMovie> getMovieList(Person person)
+	{
+		ArrayList<CompactMovie> movieList = null;
+		if(movieListSelectFrom == SELECT_FROM_ACTED && !person.getActedMovieList().isEmpty())
+		{
+			movieList = person.getActedMovieList();
+		}
+		else if(movieListSelectFrom == SELECT_FROM_DIRECTED && !person.getDirectedMovieList().isEmpty())
+		{
+			movieList = person.getDirectedMovieList();
+		}
+		else
+		{
+			if(person.getActedMovieList().size() > person.getDirectedMovieList().size())
+			{
+				movieList = person.getActedMovieList();
+				movieListSelectFrom = SELECT_FROM_ACTED;				
+			}
+			else
+			{
+				movieList = person.getDirectedMovieList();
+				movieListSelectFrom = SELECT_FROM_DIRECTED;
+				
+			}
+			POptions options = getMovieSelectionShowList(movieListSelectFrom);
+			getProperty(PROPERTY_SHOW_LIST_TYPE).setValue(options);
+			
+		}
+		
+		return movieList;
+	}
+	private CompactPerson currentPerson;
 	private void selectPerson(CompactPerson compactPerson)
 	{	synchronized(this)
 		{
@@ -300,11 +361,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		updateSelectedItem(person.getDisplayName()+"("+(person.getGender().equals("m")?"Male":"Female")+")"+"\r\n"
 						+(person.getBiographyList().size()>0?person.getBiographyList().get(0):""), SELECT_FROM_SEARCH);
 		int movieCount =0;
-		ArrayList<CompactMovie> movieList = person.getActedMovieList();
-		if(person.getActedMovieList().size() < person.getDirectedMovieList().size())
-		{
-			movieList = person.getDirectedMovieList();
-		}
+		ArrayList<CompactMovie> movieList = getMovieList(person);
 		for(int i=0;i< movieList.size() && movieCount< PivotPathLayout.MAX_MIDDLE_ITEM;i++)
 		{
 			
@@ -330,12 +387,12 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			ArrayList<CompactPerson> directorList = movie.getDirectors();
 			for(CompactPerson director: directorList)
 			{
-				if(!layout.getElementIds().contains(""+director.getId()))
+				if(!layout.getElementIds().contains(""+director.getId()) && director.getId() != person.getId())
 				{
 					int destination =layout.addBottomElement(""+director.getId(),director.getDisplayName(),source );					
 					layout.addEdge(source, destination);
 				}
-				else
+				else if(director.getId() != person.getId())
 				{
 					int destination =layout.getElementIds().indexOf(""+director.getId());
 					layout.addEdge(source, destination);
@@ -369,10 +426,11 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		}
 		
 		
-		
+		layout.addMainItem(""+person.getId(), person.getName());
 
 		addRecentlyViewed(person);
 		
+		currentPerson = person;
 		this.startSimulation(50);
 		time = System.currentTimeMillis() - time;
 		System.out.println("Total time:"+time);
@@ -557,7 +615,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 				}
 				else
 				{
-					element.getLabel().setColor(Color.gray);
+					element.getLabel().setColor(Color.LIGHT_GRAY);
 				}
 				
 		

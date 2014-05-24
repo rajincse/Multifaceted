@@ -2,9 +2,12 @@ package multifaceted.layout;
 
 
 
+import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Stroke;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
@@ -194,6 +197,19 @@ public class PivotPathLayout {
 		return cnt++;
 	}
 	
+	public int addMainItem(String id, String displayName)
+	{
+		middles++;
+		Point2D.Double position = new Point2D.Double(-4*STEP_MIDDLE_ITEM,450); 
+		PivotElement element = new PivotElement(id, displayName, position, LAYER_MIDDLE);
+		Font font = new Font("Sans-Serif",Font.PLAIN,30);
+		element.getLabel().setFont(font);
+		this.elem.add(element);
+		this.elementId.add(id);
+		this.addLabel(element.getLabel(), true, false);
+		
+		return cnt++;
+	}
 	public void addEdge(int e1, int e2)
 	{
 		PivotElement source = this.elem.get(e1);
@@ -401,6 +417,26 @@ public class PivotPathLayout {
 		g.setColor(c);
 		int radius = 5;
 		g.fillOval((int)x-radius,(int) y-radius, 2*radius, 2*radius);
+	}
+	
+	protected void renderMainItemEdge(Graphics2D g)
+	{
+		// main item edge;
+		float dash1[] = {10.0f};
+	    BasicStroke dashed = new BasicStroke(1.0f,
+	                        BasicStroke.CAP_BUTT,
+	                        BasicStroke.JOIN_MITER,
+	                        10.0f, dash1, 0.0f);
+		int x1=-4*STEP_MIDDLE_ITEM;
+		int y1=450;
+		
+		int x2= (middles-1)*STEP_MIDDLE_ITEM;
+		int y2= 450;
+		Stroke previousStroke = g.getStroke();
+		g.setStroke(dashed);
+		g.drawLine(x1, y1, x2, y2);
+		g.setStroke(previousStroke);
+		System.out.println("Main Item: "+x1+", "+x2);
 	}
 	public void render(Graphics2D g) {
 		g.setColor(Color.black);

@@ -12,7 +12,7 @@ import perspectives.util.Label;
 
 public class PivotPathGroupLayout extends PivotPathLayout{
 	public static final int COEFF_COMPULSIVE_FORCE_WEAK=100;
-	public static final int COEFF_COMPULSIVE_FORCE_STRONG=250;
+	public static final int COEFF_COMPULSIVE_FORCE_STRONG=300;
 	public static final int COEFF_SPRING_LENGTH=200;
 	public static final int COEFF_BOUNDARY_FORCE=100;
 
@@ -284,20 +284,7 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 		double fy=0;
 		Point2D[] gravityPoints1 = group.getGravityPoints();
 		
-		Label label = pivotElement.getLabel();
-		int totalPoints = 5;
-		Point2D[] gravityPoints2 = new Point2D[totalPoints];
-		
-		gravityPoints2[0] = new Point((int)(label.x),(int)(label.y)) ;
-		
-
-		gravityPoints2[1] = new Point((int)(label.x-label.w/2),(int)(label.y - label.h/2)) ;
-		
-		gravityPoints2[2] = new Point((int)(label.x-label.w/2),(int)(label.y + label.h/2)) ;
-		
-		gravityPoints2[3] = new Point((int)(label.x+label.w/2),(int)(label.y - label.h/2)) ;
-		
-		gravityPoints2[4] = new Point((int)(label.x+label.w/2),(int)(label.y + label.h/2)) ;
+		Point2D[] gravityPoints2 = pivotElement.getGravityPoints();
 		
 		for(int i=0;i<gravityPoints1.length;i++)
 		{

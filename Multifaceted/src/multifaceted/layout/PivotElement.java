@@ -4,8 +4,6 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 
-import perspectives.util.Label;
-
 public class PivotElement {
 	protected PivotLabel label;
 	protected Point2D position;
@@ -63,9 +61,6 @@ public class PivotElement {
 	}
 	private void renderDebug(Graphics2D g)
 	{
-		
-			int x = (int)this.getPosition().getX();
-			int y = (int)this.getPosition().getY();
 			
 			int lx = (int)label.x;
 			int ly = (int)label.y;
@@ -74,16 +69,65 @@ public class PivotElement {
 			g.setColor(Color.blue);
 			g.drawRect(lx-lw/2,ly-lh/2,lw,lh);
 			int radius =5;
+			Point2D[] gravityPoints = getGravityPoints();
 			g.setColor(Color.green);
-			g.fillOval(x-radius, y-radius, 2*radius, 2*radius);
+			g.fillOval((int)gravityPoints[0].getX()-radius, (int)gravityPoints[0].getY()-radius, 2*radius, 2*radius);
 			
 			g.setColor(Color.pink);
-			g.fillOval(lx-lw/2-radius, ly-lh/2-radius, 2*radius, 2*radius);
-			g.fillOval(lx-lw/2-radius, ly+lh/2-radius, 2*radius, 2*radius);
-			g.fillOval(lx+lw/2-radius, ly-lh/2-radius, 2*radius, 2*radius);
-			g.fillOval(lx+lw/2-radius, ly+lh/2-radius, 2*radius, 2*radius);
+			for(int i=1;i<gravityPoints.length;i++)
+			{
+				g.fillOval((int)gravityPoints[i].getX()-radius, (int)gravityPoints[i].getY()-radius, 2*radius, 2*radius);
+			}
+			
 			g.setColor(Color.black);
 			g.drawString(this.label.getEdgeCount()+"", lx, ly);
+		
+	}
+	public Point2D[] getGravityPoints()
+	{
+		int totalPoints = 5;
+		Point2D[] gravityPoints = new Point2D[totalPoints];
+		int lx = (int)label.x;
+		int ly = (int)label.y;
+		int lw = (int) label.w;
+		int lh = (int) label.h;
+		
+		gravityPoints[0] = new Point2D.Double(lx, ly);
+		if(layer == PivotPathLayout.LAYER_MIDDLE)
+		{
+			double theta = getLabel().getRotationAngle();
+			//A
+			double x = lx + Math.cos(theta)* lw/2 - Math.sin(theta)*lh/2;
+			double y = ly + Math.sin(theta)* lw/2 + Math.cos(theta)*lh/2;
+			gravityPoints[1] = new Point2D.Double(x,y);
+			//B
+			x = lx + Math.cos(theta)* lw/2 + Math.sin(theta)*lh/2;
+			y = ly + Math.sin(theta)* lw/2 - Math.cos(theta)*lh/2;
+			gravityPoints[2] = new Point2D.Double(x,y);
+			//C
+			x = lx - Math.cos(theta)* lw/2 + Math.sin(theta)*lh/2;
+			y = ly - Math.sin(theta)* lw/2 - Math.cos(theta)*lh/2;
+			gravityPoints[3] = new Point2D.Double(x,y);
+			//D
+			x = lx - Math.cos(theta)* lw/2 - Math.sin(theta)*lh/2;
+			y = ly - Math.sin(theta)* lw/2 + Math.cos(theta)*lh/2;			
+			gravityPoints[4] = new Point2D.Double(x,y);
+		}
+		else
+		{
+			// no rotation
+			//A
+			gravityPoints[1] = new Point2D.Double(lx+lw/2, ly+lh/2);
+			//B
+			gravityPoints[2] = new Point2D.Double(lx+lw/2, ly-lh/2);
+			//C
+			gravityPoints[3] = new Point2D.Double(lx-lw/2, ly-lh/2);
+			//D
+			gravityPoints[4] = new Point2D.Double(lx-lw/2, ly+lh/2);
+		}
+		
+		return gravityPoints;
+		
 		
 	}
 	@Override

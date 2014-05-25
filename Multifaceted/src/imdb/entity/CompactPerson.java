@@ -27,20 +27,7 @@ public class CompactPerson {
 	public String getName() {
 		return name;
 	}
-	public String getDisplayName()
-	{
-		String[] split = this.name.split(",");
-		if(split.length !=2)
-		{
-			return this.name;
-		}
-		else
-		{
-			String displayName=split[1].trim()+" "+split[0].trim();
-			return displayName;
-		}
-		
-	}
+
 
 	public String getGender() {
 		return gender;

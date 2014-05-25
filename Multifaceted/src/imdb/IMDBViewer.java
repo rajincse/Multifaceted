@@ -9,11 +9,16 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+
+import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 
 import eyetrack.EyeTrackerPivotElementDetector;
@@ -59,8 +64,14 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	private static final int MAX_ACTOR=5;
 	private static final int MIN_ACTOR=5;
 	
-	private static final int MAX_SIMULATION =50;
-	private static final int SIMULATION_SPEED =10;
+	private static final int MAX_SIMULATION =5;
+	private static final int SIMULATION_SPEED =40;
+	private static final int TIME_LAPSE =1;
+	
+
+	public static final int IMAGE_SAVE_OFFSET_X =1000;
+	public static final int IMAGE_SAVE_OFFSET_Y =1000;
+	public static final String IMAGE_DIR="C:\\work\\";
 	
 	private IMDBDataSource data;
 	
@@ -358,7 +369,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		
 		Person person = this.data.getPerson(compactPerson);
 		
-		updateSelectedItem(person.getDisplayName()+"("+(person.getGender().equals("m")?"Male":"Female")+")"+"\r\n"
+		updateSelectedItem(person.getName()+"("+(person.getGender().equals("m")?"Male":"Female")+")"+"\r\n"
 						+(person.getBiographyList().size()>0?person.getBiographyList().get(0):""), SELECT_FROM_SEARCH);
 		int movieCount =0;
 		ArrayList<CompactMovie> movieList = getMovieList(person);
@@ -389,7 +400,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			{
 				if(!layout.getElementIds().contains(""+director.getId()) && director.getId() != person.getId())
 				{
-					int destination =layout.addBottomElement(""+director.getId(),director.getDisplayName(),source );					
+					int destination =layout.addBottomElement(""+director.getId(),director.getName(),source );					
 					layout.addEdge(source, destination);
 				}
 				else if(director.getId() != person.getId())
@@ -407,7 +418,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			{
 				if(!layout.getElementIds().contains(""+actor.getId()) && actor.getId() != person.getId())
 				{
-					int destination =layout.addTopElement(""+actor.getId(),actor.getDisplayName(), source);					
+					int destination =layout.addTopElement(""+actor.getId(),actor.getName(), source);					
 					layout.addEdge(source, destination);
 					actorCount++;
 					
@@ -431,7 +442,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		addRecentlyViewed(person);
 		
 		currentPerson = person;
-		this.startSimulation(50);
+		currentImageFileName ="";
+		this.startSimulation(TIME_LAPSE);
 		time = System.currentTimeMillis() - time;
 		System.out.println("Total time:"+time);
 		
@@ -568,6 +580,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		{
 			stopSimulation();
 			simulationCount=0;
+			saveView();
 		}
 		
 		
@@ -628,7 +641,9 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		long time = System.currentTimeMillis();
 		String id = element.getId();
 		String name = element.getLabel().getText();
-		String data = time+"\t"+id+"\t"+name+"\t"+element.getLayer();
+		String data = time+"\t"+id+"\t"+name+"\t"+element.getLayer()
+				+"\t"+(int)(element.getPosition().getX()+IMAGE_SAVE_OFFSET_X)+"\t"+(int)(element.getPosition().getY()+IMAGE_SAVE_OFFSET_Y)
+				+"\t"+currentImageFileName;
 		this.resultText.append(data+"\r\n");
 		System.out.println("##"+data);
 	}
@@ -712,6 +727,28 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			JOptionPane.showMessageDialog(null, "End of Study. Result Saved to "+filePath);
 
 		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private String currentImageFileName="";
+	private void saveView()
+	{		
+		BufferedImage bim = new BufferedImage(2500,2500, BufferedImage.TYPE_INT_ARGB);
+		
+		Graphics2D g = bim.createGraphics();
+		
+		g.translate(IMAGE_SAVE_OFFSET_X,IMAGE_SAVE_OFFSET_Y);
+		this.render(g);
+		
+		
+		String filename = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date())+currentPerson.getName().replace(" ", "_")+ ".PNG";
+		
+		try {
+			ImageIO.write(bim, "PNG", new File(IMAGE_DIR + filename ));
+			currentImageFileName = filename;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

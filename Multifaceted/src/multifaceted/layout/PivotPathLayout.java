@@ -436,7 +436,6 @@ public class PivotPathLayout {
 		g.setStroke(dashed);
 		g.drawLine(x1, y1, x2, y2);
 		g.setStroke(previousStroke);
-		System.out.println("Main Item: "+x1+", "+x2);
 	}
 	public void render(Graphics2D g) {
 		g.setColor(Color.black);

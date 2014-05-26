@@ -1,7 +1,6 @@
 package imdb.analysis;
 
 import java.awt.Color;
-import java.util.Random;
 
 public class AnalysisItem {
 	private String id;

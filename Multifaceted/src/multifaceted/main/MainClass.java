@@ -2,7 +2,7 @@ package multifaceted.main;
 
 import imdb.IMDBDataFactory;
 import imdb.IMDBViewerFactory;
-import imdb.analysis.AnalysisViewerFactory;
+import imdb.analysis.StripViewerFactory;
 import perspectives.base.Environment;
 
 public class MainClass {
@@ -11,7 +11,7 @@ public class MainClass {
 		Environment e = new Environment(false);
 		e.registerDataSourceFactory(new IMDBDataFactory());
 		e.registerViewerFactory(new IMDBViewerFactory());
-		e.registerViewerFactory(new AnalysisViewerFactory());
+		e.registerViewerFactory(new StripViewerFactory());
 		
 	}
 }

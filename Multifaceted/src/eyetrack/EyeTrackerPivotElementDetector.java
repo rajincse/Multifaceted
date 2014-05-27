@@ -13,7 +13,7 @@ public class EyeTrackerPivotElementDetector implements EyeTrackerDataReceiver{
 	double[] nodeScores;
 	double[] nodeScores2;
 	public static final int EDGETHRESHOLD = 50;	
-	public static final double SELECTION_THRESHOLD =0.6;
+	public static final double SELECTION_THRESHOLD =0.009;
 	
 	private ArrayList<PivotElement> elements=null;
 	private boolean blocked = false;

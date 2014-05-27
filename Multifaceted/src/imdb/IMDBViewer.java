@@ -1,5 +1,6 @@
 package imdb;
 
+import imdb.analysis.HeatMapAnalysisViewer;
 import imdb.entity.CompactMovie;
 import imdb.entity.CompactPerson;
 import imdb.entity.Movie;
@@ -17,6 +18,8 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
@@ -53,7 +56,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	private static final String PROPERTY_PERFORMANCE="Debug.Check Performance";
 	private static final String PROPERTY_SHOW_GAZE="Debug.Show Gaze";
 	
-	private static final String PROPERTY_SAVE_RESULT = "Save Result";
+	private static final String PROPERTY_END_STUDY = "End of Study";
 	private static final String PROPERTY_SHOW_LIST_TYPE = "Show List";
 	
 	private static final int SELECT_FROM_SEARCH =0;
@@ -64,14 +67,16 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	private static final int MAX_ACTOR=5;
 	private static final int MIN_ACTOR=5;
 	
-	private static final int MAX_SIMULATION =5;
-	private static final int SIMULATION_SPEED =40;
-	private static final int TIME_LAPSE =1;
+	private static final int MAX_SIMULATION =10;
+	private static final int SIMULATION_SPEED =20;
+	private static final int TIME_LAPSE =10;
 	
 
 	public static final int IMAGE_SAVE_OFFSET_X =1000;
 	public static final int IMAGE_SAVE_OFFSET_Y =1000;
-	public static final String IMAGE_DIR="C:\\work\\";
+	public static final String IMAGE_RESULT_DIR="C:\\work\\";
+	
+	public static final long TIMER_PERIOD=500;
 	
 	private IMDBDataSource data;
 	
@@ -91,6 +96,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	
 	private StringBuffer resultText;
 	
+	private Timer timer =null;
+	
 	public IMDBViewer(String name, IMDBDataSource data) {
 		super(name);
 		this.data = data;
@@ -99,6 +106,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		this.recentlyViewedId  = new ArrayList<Long>();
 		et = new EyeTrackerPivotElementDetector(this);
 		this.resultText = new StringBuffer();
+		this.timer = new Timer("EyeTrack Data Collection Timer");
 		try
 		{
 			
@@ -240,16 +248,17 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			Property<PBoolean> pShowGaze = new Property<PBoolean>(PROPERTY_SHOW_GAZE,new PBoolean(true));
 			addProperty(pShowGaze);
 			
-			Property<PFileOutput> pSaveResult = new Property<PFileOutput>(PROPERTY_SAVE_RESULT, new PFileOutput())
+			Property<PSignal> pEndOfStudy = new Property<PSignal>(PROPERTY_END_STUDY, new PSignal())
 					{
 						@Override
-						protected boolean updating(PFileOutput newvalue) {
+						protected boolean updating(PSignal newvalue) {
 							// TODO Auto-generated method stub
-							saveResult(newvalue.path);
+							saveResult();
+							JOptionPane.showMessageDialog(null, "End of Study");
 							return super.updating(newvalue);
 						}
 					};
-			addProperty(pSaveResult);
+			addProperty(pEndOfStudy);
 			
 			POptions options = getMovieSelectionShowList(movieListSelectFrom);
 			Property<POptions> pShowList = new Property<POptions>(PROPERTY_SHOW_LIST_TYPE, options)
@@ -267,6 +276,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 						}
 					};
 			addProperty(pShowList);
+			startTimer();
+			
 		}catch(Exception e)
 		{
 			e.printStackTrace();
@@ -364,6 +375,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		long time = System.currentTimeMillis();
 		this.stopSimulation();
 		this.layout.init();
+		preSelectionTask();
 		
 		System.out.println("Selected:"+compactPerson);
 		
@@ -522,7 +534,6 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			this.gazeY = y;
 			
 			this.requestRender();
-			layoutScoreInfo();
 		}
 		
 	}
@@ -601,9 +612,32 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		// TODO Auto-generated method stub
 		
 	}
+	
+	private void startTimer()
+	{
+		this.timer.schedule(new TimerTask() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				layoutScoreInfo();
+			}
+		}
+		, 0, TIMER_PERIOD);
+	}
+	
+	private void stopTimer()
+	{
+		this.timer.cancel();
+	}
 
 	private void layoutScoreInfo()
 	{		
+		synchronized(this)
+		{
+			if (isLocked) return;
+		}
+		et.block(true);
 		double[] nodeScore = et.getNodeScore();
 		double[] nodeScore2 = et.getNodeScore2();
 		Color c= new Color(237, 185,188, 150);
@@ -615,8 +649,12 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 				if(nodeScore[i]> EyeTrackerPivotElementDetector.SELECTION_THRESHOLD)
 				{
 					//Selected
-					c= new Color(221, 247,210, 200);
-					addResultData(element);
+					double factor = 1.0;
+					int colorIndex = (int )(nodeScore[i]*factor);
+					colorIndex = Math.min(colorIndex, 9);
+					
+					c= HeatMapAnalysisViewer.getHeatMapColors()[colorIndex];
+					addResultData(element,nodeScore[i]);
 				}
 				else
 				{
@@ -634,14 +672,15 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		
 			}
 		}
+		et.block(false);
 		
 	}
-	private void addResultData(PivotElement element)
+	private void addResultData(PivotElement element, double score)
 	{
 		long time = System.currentTimeMillis();
 		String id = element.getId();
 		String name = element.getLabel().getText();
-		String data = time+"\t"+id+"\t"+name+"\t"+element.getLayer()
+		String data = time+"\t"+id+"\t"+name+"\t"+element.getLayer()+"\t"+String.format("%.2f",score)
 				+"\t"+(int)(element.getPosition().getX()+IMAGE_SAVE_OFFSET_X)+"\t"+(int)(element.getPosition().getY()+IMAGE_SAVE_OFFSET_Y)
 				+"\t"+currentImageFileName;
 		this.resultText.append(data+"\r\n");
@@ -716,41 +755,76 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	private void saveResult(String filePath)
 	{
 		
-		try {
-
-			FileWriter fstream = new FileWriter(new File(filePath), true);
-			BufferedWriter br = new BufferedWriter(fstream);
-
-			br.write(this.resultText.toString());
-
-			br.close();
-			JOptionPane.showMessageDialog(null, "End of Study. Result Saved to "+filePath);
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		
 	}
 	
 	private String currentImageFileName="";
+	private String currentResultFileName ="";
 	private void saveView()
-	{		
-		BufferedImage bim = new BufferedImage(2500,2500, BufferedImage.TYPE_INT_ARGB);
+	{	
+		this.timer.schedule(new TimerTask() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				BufferedImage bim = new BufferedImage(2500,2500, BufferedImage.TYPE_INT_ARGB);
+				
+				Graphics2D g = bim.createGraphics();
+				
+				g.translate(IMAGE_SAVE_OFFSET_X,IMAGE_SAVE_OFFSET_Y);
+				render(g);
+				
+				
+				String filename = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date())+currentPerson.getName().replace(" ", "_")+ ".PNG";
+				
+				try {
+					ImageIO.write(bim, "PNG", new File(IMAGE_RESULT_DIR + filename ));
+					currentImageFileName = filename;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}, 0);
+	
+	}
+	private void preSelectionTask()
+	{
+		saveResult();
+		currentImageFileName ="";
 		
-		Graphics2D g = bim.createGraphics();
-		
-		g.translate(IMAGE_SAVE_OFFSET_X,IMAGE_SAVE_OFFSET_Y);
-		this.render(g);
-		
-		
-		String filename = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date())+currentPerson.getName().replace(" ", "_")+ ".PNG";
-		
-		try {
-			ImageIO.write(bim, "PNG", new File(IMAGE_DIR + filename ));
-			currentImageFileName = filename;
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	}
+	private void saveResult()
+	{
+		if(!resultText.toString().isEmpty())
+		{
+			this.timer.schedule(new TimerTask() {
+				
+				@Override
+				public void run() {
+					// TODO Auto-generated method stub
+					try {
+						if(currentResultFileName.isEmpty())
+						{
+							currentResultFileName = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date())+"_RESULT.txt";
+						}
+
+						FileWriter fstream = new FileWriter(new File(IMAGE_RESULT_DIR+currentResultFileName), true);
+						BufferedWriter br = new BufferedWriter(fstream);
+
+						br.write(resultText.toString());
+
+						br.close();
+						
+						System.out.println("File saved:"+currentResultFileName);
+
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}, 0);
 		}
+		
 	}
 
 }

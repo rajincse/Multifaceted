@@ -648,12 +648,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 				PivotElement element = layout.getElements().get(i);
 				if(nodeScore[i]> EyeTrackerPivotElementDetector.SELECTION_THRESHOLD)
 				{
-					//Selected
-					double factor = 1.0;
-					int colorIndex = (int )(nodeScore[i]*factor);
-					colorIndex = Math.min(colorIndex, 9);
-					
-					c= HeatMapAnalysisViewer.getHeatMapColors()[colorIndex];
+					//Selected					
+					c= HeatMapAnalysisViewer.getHeatMapcolor(nodeScore[i]);
 					addResultData(element,nodeScore[i]);
 				}
 				else

@@ -3,19 +3,26 @@ package imdb.analysis;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
+import javax.imageio.ImageIO;
+import javax.swing.JOptionPane;
 
 import perspectives.base.ObjectInteraction;
 import perspectives.base.Property;
 import perspectives.properties.PFileInput;
+import perspectives.properties.PFileOutput;
 import perspectives.two_d.JavaAwtRenderer;
 import perspectives.util.Label;
-import perspectives.util.Rectangle;
 
 public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRenderer{
 	public static final long CELL_RESOLUTION  = 10000;
 	public static final String PROPERTY_OPEN_FILE = "Open";
+	public static final String PROPERTY_SAVE_IMAGE = "Save Image";
+	
 	public static final Color[] HEATMAP_COLOR = new Color[]
 			{
 				new Color(0,252,67,200),
@@ -53,14 +60,24 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 				protected boolean updating(PFileInput newvalue) {
 					// TODO Auto-generated method stub
 					 processFile(newvalue.path);
-					 createVisualItems();
-					 printInfo();
+//					 createVisualItems();
+//					 printInfo();
 					 requestRender();
 					return super.updating(newvalue);
 				}
 			};
 			addProperty(pOpenFile);
 			
+			Property<PFileOutput> pSaveImage = new Property<PFileOutput>(PROPERTY_SAVE_IMAGE, new PFileOutput())
+					{
+						@Override
+						protected boolean updating(PFileOutput newvalue) {
+							// TODO Auto-generated method stub
+							saveView(newvalue.path);
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pSaveImage);
 			initObjectInteraction();
 		}catch(Exception e)
 		
@@ -147,7 +164,7 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 	@Override
 	public void render(Graphics2D g) {
 		// TODO Auto-generated method stub
-		int x =100;
+		int x =200;
 		int y =100;
 		int gap =3;
 		
@@ -291,7 +308,36 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 		
 	}
 
+	private void saveView(String filePath)
+	{	
+		// TODO Auto-generated method stub
+		
+		int width =timeStamps.size()*15+300;
+		int height = analysisItemList.size()*15 +100;
+		BufferedImage bim = new BufferedImage(width,height, BufferedImage.TYPE_INT_ARGB);
+		
+		Graphics2D g = bim.createGraphics();
+		
+		render(g);
+		
+		
+		
+		String filename = filePath;
+		if(!filename.toUpperCase().endsWith(".PNG"))
+		{
+			filename = filePath+ ".PNG";
+		}
+		
+		try {
+			ImageIO.write(bim, "PNG", new File(filename ));
+			JOptionPane.showMessageDialog(null, "Image saved to "+filename);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	
+		
+	}
 	
 
 }

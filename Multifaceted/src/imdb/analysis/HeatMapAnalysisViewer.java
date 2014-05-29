@@ -149,6 +149,7 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 		// TODO Auto-generated method stub
 		int x =100;
 		int y =100;
+		int gap =3;
 		
 		int step = 12;
 		int i=0;
@@ -168,7 +169,7 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 			}
 			label.render(g);
 			
-			y+= step;
+			y+= step+gap;
 			i++;
 			
 			if(label.w > maxWidth)
@@ -177,10 +178,10 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 			}
 		}
 		
-		x+= maxWidth;
+		x+= maxWidth/2;
 		for(HeatMapTimeStamp timeStamp: timeStamps)
 		{
-			x+= step;
+			x+= step+gap;
 			y = 100;
 			for(AnalysisItem item: analysisItemList.values())
 			{
@@ -190,7 +191,7 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 					cell.setRectangleInfo((int)x, (int)y,(int) step,(int) step);
 					cell.r.render(g);
 				}
-				y+= step;
+				y+= step+gap;
 			}
 		}
 	}
@@ -229,8 +230,9 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 			{
 				HeatMapTimeStamp timeStampItem = timeStamps.peekLast();
 				HeatMapCell cell = HeatMapCell.createInstance(id, name, score, image, x, y);
-				objectInteraction.addItem(cell);
+				
 				timeStampItem.addItem(cell);
+				objectInteraction.addItem(timeStampItem.getCellList().get(id));
 			}
 			else
 			{
@@ -238,8 +240,9 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 				HeatMapTimeStamp timeStampItem = new HeatMapTimeStamp(timeStamp);
 				HeatMapCell cell = HeatMapCell.createInstance(id, name, score, image, x, y);
 				timeStampItem.addItem(cell);
-				objectInteraction.addItem(cell);
+				objectInteraction.addItem(timeStampItem.getCellList().get(id));
 				this.timeStamps.add(timeStampItem);
+				
 			}
 		}
 		

@@ -19,7 +19,7 @@ import perspectives.two_d.JavaAwtRenderer;
 import perspectives.util.Label;
 
 public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRenderer{
-	public static final long CELL_RESOLUTION  = 10000;
+	public static final long CELL_RESOLUTION  = 20000;
 	public static final String PROPERTY_OPEN_FILE = "Open";
 	public static final String PROPERTY_SAVE_IMAGE = "Save Image";
 	
@@ -312,7 +312,7 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 	{	
 		// TODO Auto-generated method stub
 		
-		int width =timeStamps.size()*15+300;
+		int width =timeStamps.size()*15+500;
 		int height = analysisItemList.size()*15 +100;
 		BufferedImage bim = new BufferedImage(width,height, BufferedImage.TYPE_INT_ARGB);
 		

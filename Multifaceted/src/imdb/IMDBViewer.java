@@ -748,11 +748,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		this.setToolTipText(text);
 	}
 	
-	private void saveResult(String filePath)
-	{
-		
-		
-	}
+
 	
 	private String currentImageFileName="";
 	private String currentResultFileName ="";
@@ -811,7 +807,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 						br.write(resultText.toString());
 
 						br.close();
-						
+						resultText.setLength(0);
 						System.out.println("File saved:"+currentResultFileName);
 
 					} catch (IOException e) {

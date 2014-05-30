@@ -55,7 +55,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	private static final String PROPERTY_STEP="Debug.Step";
 	private static final String PROPERTY_PERFORMANCE="Debug.Check Performance";
 	private static final String PROPERTY_SHOW_GAZE="Debug.Show Gaze";
-	
+	private static final String PROPERTY_REFRESH="Refresh";
 	private static final String PROPERTY_END_STUDY = "End of Study";
 	private static final String PROPERTY_SHOW_LIST_TYPE = "Show List";
 	
@@ -276,6 +276,20 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 						}
 					};
 			addProperty(pShowList);
+			
+			Property<PSignal> pRefresh = new Property<PSignal>(PROPERTY_REFRESH, new PSignal())
+					{
+						@Override
+						protected boolean updating(PSignal newvalue) {
+							// TODO Auto-generated method stub
+							if(currentPerson != null)
+							{
+								selectPerson(currentPerson);
+							}
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pRefresh);
 			startTimer();
 			
 		}catch(Exception e)

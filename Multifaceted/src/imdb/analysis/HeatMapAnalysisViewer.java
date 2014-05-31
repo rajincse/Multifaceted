@@ -19,7 +19,7 @@ import perspectives.two_d.JavaAwtRenderer;
 import perspectives.util.Label;
 
 public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRenderer{
-	public static final long CELL_RESOLUTION  = 20000;
+	public static final long CELL_RESOLUTION  = 60000;
 	public static final String PROPERTY_OPEN_FILE = "Open";
 	public static final String PROPERTY_SAVE_IMAGE = "Save Image";
 	
@@ -296,7 +296,7 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 
 	public static Color getHeatMapcolor(double score)
 	{
-		double factor = 2.0;
+		double factor = 3.0;
 		int colorIndex = (int )(score*factor);
 		colorIndex = Math.min(colorIndex, HeatMapAnalysisViewer.HEATMAP_COLOR.length-1);
 		

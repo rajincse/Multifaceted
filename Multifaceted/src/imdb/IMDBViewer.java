@@ -245,7 +245,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 					};
 			addProperty(pPerformance);
 			
-			Property<PBoolean> pShowGaze = new Property<PBoolean>(PROPERTY_SHOW_GAZE,new PBoolean(true));
+			Property<PBoolean> pShowGaze = new Property<PBoolean>(PROPERTY_SHOW_GAZE,new PBoolean(false));
 			addProperty(pShowGaze);
 			
 			Property<PSignal> pEndOfStudy = new Property<PSignal>(PROPERTY_END_STUDY, new PSignal())

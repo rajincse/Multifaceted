@@ -76,7 +76,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	public static final int IMAGE_SAVE_OFFSET_Y =1000;
 	public static final String IMAGE_RESULT_DIR="C:\\work\\";
 	
-	public static final long TIMER_PERIOD=500;
+	public static final long TIMER_PERIOD_GAZE=500;
+	public static final long TIMER_PERIOD_MOUSE_POSITION=50;
 	
 	private IMDBDataSource data;
 	
@@ -98,6 +99,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	
 	private Timer timer =null;
 	
+	private Point mousePosition =null;
+	
 	public IMDBViewer(String name, IMDBDataSource data) {
 		super(name);
 		this.data = data;
@@ -107,6 +110,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		et = new EyeTrackerPivotElementDetector(this);
 		this.resultText = new StringBuffer();
 		this.timer = new Timer("EyeTrack Data Collection Timer");
+		this.mousePosition = new Point(0,0);
 		try
 		{
 			
@@ -634,10 +638,20 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
-				layoutScoreInfo();
+				saveScoreInfo();
 			}
 		}
-		, 0, TIMER_PERIOD);
+		, 0, TIMER_PERIOD_GAZE);
+		
+		this.timer.schedule(new TimerTask() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				addResultData(mousePosition);
+			}
+		}
+		, 0, TIMER_PERIOD_MOUSE_POSITION);
 	}
 	
 	private void stopTimer()
@@ -645,7 +659,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		this.timer.cancel();
 	}
 
-	private void layoutScoreInfo()
+	private void saveScoreInfo()
 	{		
 		synchronized(this)
 		{
@@ -693,10 +707,27 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		String data = time+"\t"+id+"\t"+name+"\t"+element.getLayer()+"\t"+String.format("%.2f",score)
 				+"\t"+(int)(element.getPosition().getX()+IMAGE_SAVE_OFFSET_X)+"\t"+(int)(element.getPosition().getY()+IMAGE_SAVE_OFFSET_Y)
 				+"\t"+currentImageFileName;
-		this.resultText.append(data+"\r\n");
+		synchronized (this) {
+			this.resultText.append(data+"\r\n");
+		}
+		
 		System.out.println("##"+data);
 	}
+	private void addResultData(Point mousePosition)
+	{
+		long time = System.currentTimeMillis();
+		
+		String data = "Mouse\t"+time+"\t"+(mousePosition.x+IMAGE_SAVE_OFFSET_X)+"\t"+(mousePosition.y+IMAGE_SAVE_OFFSET_Y)
+				+"\t"+currentImageFileName;
+		synchronized (this) {
+			this.resultText.append(data+"\r\n");
+		}
+		System.out.println("##"+data);
+	}
+	
 	public boolean mousepressed(int x, int y, int button) {
+		mousePosition.x = x;
+		mousePosition.y = y;
 		if (button == 1)
 		{
 			((ViewerContainer2D)this.getContainer()).rightButtonDown = false;
@@ -714,6 +745,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 
 
 	public boolean mousereleased(int x, int y, int button) {
+		mousePosition.x = x;
+		mousePosition.y = y;
 		if(button ==3)
 		{
 			layout.getObjectInteraction().mouseRelease(x, y);
@@ -724,12 +757,16 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 
 
 	public boolean mousemoved(int x, int y) {
+		mousePosition.x = x;
+		mousePosition.y = y;
 		return layout.getObjectInteraction().mouseMove(x, y);
 		
 	}
 
 
 	public boolean mousedragged(int x, int y, int oldx, int oldy) {
+		mousePosition.x = x;
+		mousePosition.y = y;
 		return layout.getObjectInteraction().mouseMove(x, y);
 	}
 
@@ -821,7 +858,10 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 						br.write(resultText.toString());
 
 						br.close();
-						resultText.setLength(0);
+						synchronized (this) {
+							resultText.setLength(0);
+						}
+						
 						System.out.println("File saved:"+currentResultFileName);
 
 					} catch (IOException e) {

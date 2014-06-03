@@ -214,8 +214,14 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 	}
 
 	@Override
-	protected void processFileLine(String line) {
+	protected void processFileLine(String line) {		
 		String[] split = line.split("\t");
+		if(split.length > 0 && split[0].equalsIgnoreCase("Mouse"))
+		{
+			// Do nothing for mouse lines.
+			return;
+		}
+		
 		if(split.length >= 7)
 		{
 			long timeStamp = Long.parseLong(split[0]);

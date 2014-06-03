@@ -24,22 +24,7 @@ public class HeatMapTimeStamp {
 	public void addItem(HeatMapCell cell)
 	{
 		String id = cell.getItem().getId();
-		if(this.cellList.containsKey(id))
-		{
-			HeatMapCell previousCell = this.cellList.get(id);
-			int count = previousCell.getCount()+1;
-			double scoreValue  = (previousCell.getScore()* previousCell.getCount()+cell.getScore() )/ count;
-			previousCell.setCount(count);
-			previousCell.setScore(scoreValue);
-			if(previousCell.getScreenShot().getImageName().isEmpty() && !cell.getScreenShot().getImageName().isEmpty())
-			{
-				previousCell.setScreenShot(cell.getScreenShot());
-			}
-		}
-		else
-		{
-			this.cellList.put(id, cell);
-		}
+		this.cellList.put(id, cell);
 		
 	}
 	

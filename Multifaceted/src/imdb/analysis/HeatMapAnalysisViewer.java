@@ -6,6 +6,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import javax.imageio.ImageIO;
@@ -15,13 +16,14 @@ import perspectives.base.ObjectInteraction;
 import perspectives.base.Property;
 import perspectives.properties.PFileInput;
 import perspectives.properties.PFileOutput;
+import perspectives.properties.PInteger;
 import perspectives.two_d.JavaAwtRenderer;
 import perspectives.util.Label;
 
 public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRenderer{
-	public static final long CELL_RESOLUTION  = 60000;
 	public static final String PROPERTY_OPEN_FILE = "Open";
 	public static final String PROPERTY_SAVE_IMAGE = "Save Image";
+	public static final String PROPERTY_CELL_RESOLUTION = "Cell Resolution(sec)";
 	
 	public static final Color[] HEATMAP_COLOR = new Color[]
 			{
@@ -49,6 +51,10 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 	public LinkedList<HeatMapTimeStamp> timeStamps = new LinkedList<HeatMapTimeStamp>();
 	protected HashMap<String, AnalysisItem> analysisItemList = new HashMap<String, AnalysisItem>();
 	protected ObjectInteraction objectInteraction = null;
+	protected int cellResolution =60;
+	private ArrayList<Label> labelList = new ArrayList<Label>();
+	private HashMap<AnalysisItem, HashMap<Long, HeatMapVisualItem>> visualItemArray =new HashMap<AnalysisItem, HashMap<Long,HeatMapVisualItem>>();
+	
 	public HeatMapAnalysisViewer(String name) {
 		super(name);
 		// TODO Auto-generated constructor stub
@@ -60,7 +66,7 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 				protected boolean updating(PFileInput newvalue) {
 					// TODO Auto-generated method stub
 					 processFile(newvalue.path);
-//					 createVisualItems();
+					 createVisualItems();
 //					 printInfo();
 					 requestRender();
 					return super.updating(newvalue);
@@ -78,6 +84,19 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 						}
 					};
 			addProperty(pSaveImage);
+			
+			Property<PInteger> pCellResolution = new Property<PInteger>(PROPERTY_CELL_RESOLUTION, new PInteger(cellResolution))
+					{
+						@Override
+						protected boolean updating(PInteger newvalue) {
+							// TODO Auto-generated method stub
+							cellResolution = newvalue.intValue();
+							createVisualItems();
+							requestRender();
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pCellResolution);
 			initObjectInteraction();
 		}catch(Exception e)
 		
@@ -93,11 +112,15 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 			@Override
 			protected void mouseIn(int object) {
 				VisualItem item = objectInteraction.getItem(object) ;
-				if(item instanceof HeatMapCell)
+				if(item instanceof HeatMapVisualItem)
 				{
-					HeatMapCell cell =(HeatMapCell) item;
-					setToolTipText(cell.getItem().getName()+", "+String.format("%.2f",cell.getScore()));
-					requestRender();
+					HeatMapVisualItem cell =(HeatMapVisualItem) item;
+					if(cell.getAverageScore() > 0)
+					{
+						long firstTime = timeStamps.peekFirst().getTimeStamp();
+						setToolTipText(cell.getDisplayString(firstTime));
+					}
+					
 				}
 				
 				
@@ -150,65 +173,28 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 	@Override
 	public boolean mousepressed(int x, int y, int button) {
 		// TODO Auto-generated method stub
-		objectInteraction.mousePress(x, y);
 		return false;
 	}
 
 	@Override
 	public boolean mousereleased(int x, int y, int button) {
 		// TODO Auto-generated method stub
-		objectInteraction.mouseRelease(x, y);
 		return false;
 	}
 
 	@Override
 	public void render(Graphics2D g) {
 		// TODO Auto-generated method stub
-		int x =200;
-		int y =100;
-		int gap =3;
-		
-		int step = 12;
-		int i=0;
-		Color color1 = new Color(223, 218, 242);
-		Color color2 = new Color(244, 220, 245);
-		double maxWidth =-1;
-		for(AnalysisItem item: analysisItemList.values())
+		for(Label label : labelList)
 		{
-			Label label = new Label(x, y, item.getName());
-			if(i%2== 0)
-			{
-				label.setColor(color1);
-			}
-			else
-			{
-				label.setColor(color2);
-			}
 			label.render(g);
-			
-			y+= step+gap;
-			i++;
-			
-			if(label.w > maxWidth)
-			{
-				maxWidth = label.w;
-			}
 		}
 		
-		x+= maxWidth/2;
-		for(HeatMapTimeStamp timeStamp: timeStamps)
+		for(HashMap<Long, HeatMapVisualItem> cellList: visualItemArray.values())
 		{
-			x+= step+gap;
-			y = 100;
-			for(AnalysisItem item: analysisItemList.values())
+			for(HeatMapVisualItem item: cellList.values())
 			{
-				if(timeStamp.getCellList().containsKey(item.getId()))
-				{
-					HeatMapCell cell = timeStamp.getCellList().get(item.getId());
-					cell.setRectangleInfo((int)x, (int)y,(int) step,(int) step);
-					cell.r.render(g);
-				}
-				y+= step+gap;
+				item.render(g);
 			}
 		}
 	}
@@ -249,13 +235,12 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 				analysisItemList.put(id, item);
 			}
 			
-			if(!this.timeStamps.isEmpty() && (timeStamp <= this.timeStamps.peekLast().getTimeStamp()+CELL_RESOLUTION))
+			if(!this.timeStamps.isEmpty() && timeStamp == this.timeStamps.peekLast().getTimeStamp())
 			{
 				HeatMapTimeStamp timeStampItem = timeStamps.peekLast();
 				HeatMapCell cell = HeatMapCell.createInstance(id, name, score, image, x, y);
 				
 				timeStampItem.addItem(cell);
-				objectInteraction.addItem(timeStampItem.getCellList().get(id));
 			}
 			else
 			{
@@ -263,7 +248,6 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 				HeatMapTimeStamp timeStampItem = new HeatMapTimeStamp(timeStamp);
 				HeatMapCell cell = HeatMapCell.createInstance(id, name, score, image, x, y);
 				timeStampItem.addItem(cell);
-				objectInteraction.addItem(timeStampItem.getCellList().get(id));
 				this.timeStamps.add(timeStampItem);
 				
 			}
@@ -295,7 +279,7 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 		int total =objectInteraction.getNumberOfItems();
 		for(int i=0;i<total;i++)
 		{
-			System.out.println("{index:"+i+", item:"+(HeatMapCell)objectInteraction.getItem(i)+"}");
+			System.out.println("{index:"+i+", item:"+(HeatMapVisualItem)objectInteraction.getItem(i)+"}");
 		}
 		
 	}
@@ -311,9 +295,100 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 	@Override
 	protected void createVisualItems() {
 		// TODO Auto-generated method stub
+		initObjectInteraction();
+		labelList.clear();
+		visualItemArray.clear();
 		
+		
+		int x =200;
+		int y =100;
+		int gap =3;
+		
+		int step = 12;
+		int i=0;
+		Color color1 = new Color(223, 218, 242);
+		Color color2 = new Color(244, 220, 245);
+		double maxWidth =-1;
+		
+		for(AnalysisItem item: analysisItemList.values())
+		{
+			Label label = new Label(x, y, item.getName());
+			if(i%2== 0)
+			{
+				label.setColor(color1);
+			}
+			else
+			{
+				label.setColor(color2);
+			}
+			labelList.add(label);
+			visualItemArray.put(item, new HashMap<Long, HeatMapVisualItem>());
+			y+= step+gap;
+			i++;
+			
+			if(label.w > maxWidth)
+			{
+				maxWidth = label.w;
+			}
+		}
+		
+		
+		x+= ((maxWidth/2)+step+gap);
+		HeatMapTimeStamp lastTimeStamp = null;
+		for(HeatMapTimeStamp timeStamp: timeStamps)
+		{
+			y = 100;
+			for(AnalysisItem item: analysisItemList.values())
+			{
+				if(
+						lastTimeStamp == null
+						||
+						(lastTimeStamp != null && timeStamp.getTimeStamp() > lastTimeStamp.getTimeStamp()+ cellResolution * 1000)
+				)
+				{
+					HeatMapVisualItem visualItem = new HeatMapVisualItem(item, timeStamp.getTimeStamp());
+					addScore(item, timeStamp, visualItem);
+					visualItem.setRectangleInfo((int)x, (int)y, (int)step, (int)step);
+					visualItemArray.get(item).put(timeStamp.getTimeStamp(), visualItem);
+					objectInteraction.addItem(visualItem);
+					
+				}
+				else
+				{
+					HeatMapVisualItem visualItem = visualItemArray.get(item).get(lastTimeStamp.getTimeStamp());
+					visualItem.setEndTime(timeStamp.getTimeStamp());
+					addScore(item, timeStamp, visualItem);
+				}
+
+				
+				y+= step+gap;
+			}
+			
+			if(
+					lastTimeStamp == null
+					||
+					(lastTimeStamp != null && timeStamp.getTimeStamp() > lastTimeStamp.getTimeStamp()+ cellResolution * 1000)
+			)
+			{
+				lastTimeStamp = timeStamp;
+				x+= step+gap;
+			}
+		}
 	}
 
+	private void addScore(AnalysisItem item, HeatMapTimeStamp timeStamp, HeatMapVisualItem visualItem)
+	{
+		String id = item.getId();
+		if(timeStamp.getCellList().containsKey(id))
+		{
+			HeatMapCell cell = timeStamp.getCellList().get(id);
+			visualItem.addScore(cell.getScore());
+		}
+		else
+		{
+			visualItem.addScore(0);
+		}
+	}
 	private void saveView(String filePath)
 	{	
 		// TODO Auto-generated method stub

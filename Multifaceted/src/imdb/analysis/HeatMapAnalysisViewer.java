@@ -393,8 +393,8 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 	private void saveView(String filePath)
 	{	
 		// TODO Auto-generated method stub
-		
-		int width =timeStamps.size()*15+500;
+		AnalysisItem item = (AnalysisItem) analysisItemList.values().toArray()[0];
+		int width =visualItemArray.get(item).size()*15+500;
 		int height = analysisItemList.size()*15 +100;
 		BufferedImage bim = new BufferedImage(width,height, BufferedImage.TYPE_INT_ARGB);
 		

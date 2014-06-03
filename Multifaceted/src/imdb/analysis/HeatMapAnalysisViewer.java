@@ -7,6 +7,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import javax.imageio.ImageIO;
@@ -234,7 +235,7 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 			{	
 				analysisItemList.put(id, item);
 			}
-			
+			item.addValue(score);
 			if(!this.timeStamps.isEmpty() && timeStamp == this.timeStamps.peekLast().getTimeStamp())
 			{
 				HeatMapTimeStamp timeStampItem = timeStamps.peekLast();
@@ -298,8 +299,8 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 		initObjectInteraction();
 		labelList.clear();
 		visualItemArray.clear();
-		
-		
+		ArrayList<AnalysisItem> sortedAnalysisItemList = new ArrayList<AnalysisItem>(analysisItemList.values());
+		Collections.sort(sortedAnalysisItemList);
 		int x =200;
 		int y =100;
 		int gap =3;
@@ -310,7 +311,7 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 		Color color2 = new Color(244, 220, 245);
 		double maxWidth =-1;
 		
-		for(AnalysisItem item: analysisItemList.values())
+		for(AnalysisItem item: sortedAnalysisItemList)
 		{
 			Label label = new Label(x, y, item.getName());
 			if(i%2== 0)
@@ -338,7 +339,7 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 		for(HeatMapTimeStamp timeStamp: timeStamps)
 		{
 			y = 100;
-			for(AnalysisItem item: analysisItemList.values())
+			for(AnalysisItem item: sortedAnalysisItemList)
 			{
 				if(
 						lastTimeStamp == null

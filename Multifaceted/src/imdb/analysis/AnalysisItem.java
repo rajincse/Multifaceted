@@ -2,15 +2,17 @@ package imdb.analysis;
 
 import java.awt.Color;
 
-public class AnalysisItem {
+public class AnalysisItem implements Comparable<AnalysisItem>{
 	private String id;
 	private String name;
 	private Color color;
+	private double value;
 	
 	public AnalysisItem(String id, String name)
 	{
 		this.id = id;
 		this.name = name;
+		this.value =0;
 	}
 
 	public String getName() {
@@ -33,10 +35,18 @@ public class AnalysisItem {
 		return id;
 	}
 	
+	public double getValue() {
+		return value;
+	}
+
+	public void addValue(double amount) {
+		this.value += amount;
+	}
+
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		return "{ id:"+id+", name:"+name+", color:"+color+"}";
+		return "{ id:"+id+", name:"+name+", color:"+color+", value:"+String.format("%.2f",value)+"}";
 	}
 	
 	
@@ -53,6 +63,11 @@ public class AnalysisItem {
 			return super.equals(obj);
 		}
 		
+	}
+
+	@Override
+	public int compareTo(AnalysisItem o) {
+		return Double.compare(o.getValue(),this.getValue()); 
 	}
 	
 }

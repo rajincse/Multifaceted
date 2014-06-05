@@ -3,6 +3,7 @@ package imdb;
 import imdb.analysis.HeatMapAnalysisViewer;
 import imdb.entity.CompactMovie;
 import imdb.entity.CompactPerson;
+import imdb.entity.Genre;
 import imdb.entity.Movie;
 import imdb.entity.Person;
 
@@ -464,6 +465,20 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 					break;
 				}
 			}
+			ArrayList<Genre> genreList = movie.getGenreList();
+			for(Genre genre : genreList)
+			{
+				if(!layout.getElementIds().contains(""+genre.getId()))
+				{
+					int destination =layout.addRightElement(""+genre.getId(),genre.getGenreName(),source);
+					layout.addEdge(source, destination);
+				}
+				else
+				{
+					int destination = layout.getElementIds().indexOf(""+genre.getId());
+					layout.addEdge(source, destination);
+				}
+			}
 		}
 		
 		
@@ -711,7 +726,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			this.resultText.append(data+"\r\n");
 		}
 		
-		System.out.println("##"+data);
+//		System.out.println("##"+data);
 	}
 	private void addResultData(Point mousePosition)
 	{
@@ -722,7 +737,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		synchronized (this) {
 			this.resultText.append(data+"\r\n");
 		}
-		System.out.println("##"+data);
+//		System.out.println("##"+data);
 	}
 	
 	public boolean mousepressed(int x, int y, int button) {
@@ -810,7 +825,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
-				BufferedImage bim = new BufferedImage(2500,2500, BufferedImage.TYPE_INT_ARGB);
+				BufferedImage bim = new BufferedImage(3000,3000, BufferedImage.TYPE_INT_ARGB);
 				
 				Graphics2D g = bim.createGraphics();
 				

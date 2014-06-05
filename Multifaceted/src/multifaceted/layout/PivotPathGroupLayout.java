@@ -1,6 +1,7 @@
 package multifaceted.layout;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.Point2D;
@@ -18,6 +19,7 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 
 	HashMap<String, GroupedPivotElement> topGroupedElements = new HashMap<String, GroupedPivotElement>();
 	HashMap<String, GroupedPivotElement> bottomGroupedElements = new HashMap<String, GroupedPivotElement>();
+	HashMap<String, GroupedPivotElement> rightGroupedElements = new HashMap<String, GroupedPivotElement>();
 	
 	HashMap<String, ArrayList<String>> edgeSourceIds = new HashMap<String, ArrayList<String>>();
 	
@@ -33,6 +35,7 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 		
 		topGroupedElements.clear();
 		bottomGroupedElements.clear();
+		rightGroupedElements.clear();
 		edgeSourceIds.clear();
 	}
 	
@@ -83,6 +86,31 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 		else
 		{
 			GroupedPivotElement groupedPivotElement = this.bottomGroupedElements.get(sourceId);
+			groupedPivotElement.addElement(element);
+		}
+		return cnt++;
+	}
+
+	@Override
+	public int addRightElement(String id, String displayName, int sourceIndex) {
+		double x= BOUNDARY_RIGHT;
+
+		Point2D.Double position = new Point2D.Double(x,MIDDLE_Y); 
+		PivotElement element = new PivotElement(id, displayName, position, LAYER_RIGHT);
+		this.elem.add(element);
+		this.elementId.add(id);
+		element.getLabel().setFont(new Font("Sans-Serif",Font.PLAIN,20));
+		this.addLabel(element.getLabel(), false, false);
+		String sourceId = this.elem.get(sourceIndex).getId();
+		if(!this.rightGroupedElements.containsKey(sourceId))
+		{
+			GroupedPivotElement groupedPivotElement = new GroupedPivotElement(element);
+			
+			this.rightGroupedElements.put(sourceId, groupedPivotElement);
+		}
+		else
+		{
+			GroupedPivotElement groupedPivotElement = this.rightGroupedElements.get(sourceId);
 			groupedPivotElement.addElement(element);
 		}
 		return cnt++;
@@ -147,6 +175,17 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 						
 						GroupedPivotElement newGroup = new GroupedPivotElement(destination);
 						this.bottomGroupedElements.put(destination.getId(), newGroup);		
+					}
+				}
+				else if(this.rightGroupedElements.containsKey(sourceId))
+				{
+					GroupedPivotElement group = this.rightGroupedElements.get(sourceId);
+					if(group.getElements().contains(destination))
+					{
+						group.removeElement(destination);
+						
+						GroupedPivotElement newGroup = new GroupedPivotElement(destination);
+						this.rightGroupedElements.put(destination.getId(), newGroup);		
 					}
 				}
 			}
@@ -215,12 +254,71 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 			}
 		}
 
+		for(Entry<String, GroupedPivotElement> group1Entry: this.rightGroupedElements.entrySet())
+		{
+			GroupedPivotElement group1 = group1Entry.getValue();
+			for(Entry<String, GroupedPivotElement> group2Entry: this.rightGroupedElements.entrySet())
+			{
+				if(group1Entry.getKey() != group2Entry.getKey())
+				{
+					
+					GroupedPivotElement group2 = group2Entry.getValue();
+					double[] f = this.computeGroupReplusion(group1, group2);
+					double factor =1;
+					group1.fx+= f[0]*factor;
+					group1.fy+= f[1]*factor;
+					
+					group2.fx-= f[0]*factor;
+					group2.fy-= f[1]*factor;
+				}
+			}
+			for(Entry<String, GroupedPivotElement> group2Entry: this.bottomGroupedElements.entrySet())
+			{
+				if(group1Entry.getKey() != group2Entry.getKey())
+				{
+					
+					GroupedPivotElement group2 = group2Entry.getValue();
+					double[] f = this.computeGroupReplusion(group1, group2);
+					double factor =2;
+					group1.fx+= f[0]*factor;
+					group1.fy+= f[1]*factor;
+					
+					group2.fx-= f[0]*factor;
+					group2.fy-= f[1]*factor;
+				}
+			}
+			for(Entry<String, GroupedPivotElement> group2Entry: this.topGroupedElements.entrySet())
+			{
+				if(group1Entry.getKey() != group2Entry.getKey())
+				{
+					
+					GroupedPivotElement group2 = group2Entry.getValue();
+					double[] f = this.computeGroupReplusion(group1, group2);
+					double factor =2;
+					group1.fx+= f[0]*factor;
+					group1.fy+= f[1]*factor;
+					
+					group2.fx-= f[0]*factor;
+					group2.fy-= f[1]*factor;
+				}
+			}
+			for(PivotElement element : this.elem)
+			{
+				if(element.getLayer()== LAYER_MIDDLE )
+				{
+					double factor =10;
+					double[] f= this.computeGroupToElementRepulsion(group1, element);
+					group1.fx+= f[0]*factor;
+					group1.fy+= f[1]*factor;
+				}
+			}
+		}
 		for (int i=0; i<edges.size(); i++)
 		{
 			PivotEdge edge = this.edges.get(i);
 			String sourceId = edge.getSource().getId();
 			String destinationId = edge.getDestination().getId();
-			
+			int factor =1;
 			GroupedPivotElement group = null;
 			if(this.topGroupedElements.containsKey(sourceId))
 			{
@@ -238,12 +336,22 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 			{
 				group = this.bottomGroupedElements.get(destinationId);
 			}
+			else if(this.rightGroupedElements.containsKey(sourceId))
+			{
+				group = this.rightGroupedElements.get(sourceId);
+				factor = 2;
+			}
+			else if(this.rightGroupedElements.containsKey(destinationId))
+			{
+				group = this.rightGroupedElements.get(destinationId);
+				factor = 2;
+			}
 			else
 			{
 				continue;
 			}
 					
-			int springLength = edge.getSpringLength()* COEFF_SPRING_LENGTH;
+			int springLength =edge.getSpringLength()* COEFF_SPRING_LENGTH * factor;
 			double[] f = compAttraction(edge.getSource().getPosition(), group.getCenterPosition(),springLength);
 
 			group.fx-= f[0];
@@ -265,6 +373,17 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 			double mag = COEFF_BOUNDARY_FORCE * 1/(d*d);
 			group.fy+= mag;
 		}
+		for(GroupedPivotElement group: this.rightGroupedElements.values())
+		{
+			double x = BOUNDARY_RIGHT-STEP_MIDDLE_ITEM;
+			double factor =10;
+			double centerX = group.getCenterPosition().getX();
+			double d = centerX - x;
+			double mag = COEFF_BOUNDARY_FORCE * factor/(d*d);
+			group.fx+= mag;
+			System.out.println ("centerX :"+centerX+", x:"+x+", d:"+d+", mag:"+mag);
+			
+		}
 		
 		for(GroupedPivotElement group: this.topGroupedElements.values())
 		{
@@ -275,7 +394,10 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 		{
 			group.applyForces();
 		}
-		
+		for(GroupedPivotElement group: this.rightGroupedElements.values())
+		{
+			group.applyForces();
+		}
 	}
 	
 	protected double[] computeGroupToElementRepulsion(GroupedPivotElement group, PivotElement pivotElement)

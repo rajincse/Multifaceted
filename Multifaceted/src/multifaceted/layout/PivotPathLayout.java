@@ -24,11 +24,14 @@ public class PivotPathLayout {
 	public static final int STEP_MIDDLE_ITEM =50;
 	public static final int TOP_Y =0;
 	public static final int BOTTOM_Y=700;
+	public static final int MIDDLE_Y=450;
 	
 	public static final int LAYER_TOP=0;
 	public static final int LAYER_MIDDLE=1;
 	public static final int LAYER_BOTTOM=2;
+	public static final int LAYER_RIGHT=3;
 	
+	public static final int BOUNDARY_RIGHT = 850;
 	
 	private LayoutViewerInterface viewer;
 	
@@ -99,7 +102,7 @@ public class PivotPathLayout {
 						
 					viewer.callRequestRender();
 					
-					if(objects.length ==1 && elem.get(objects[0]).getLayer() != LAYER_MIDDLE)
+					if(objects.length ==1 && elem.get(objects[0]).getLayer() != LAYER_MIDDLE && elem.get(objects[0]).getLayer() != LAYER_RIGHT)
 					{
 						viewer.selectItem(elem.get(objects[0]).getId(), elem.get(objects[0]).getLabel().getText());
 					}
@@ -178,7 +181,7 @@ public class PivotPathLayout {
 	public int addMiddleElement(PivotElement element)
 	{
 		middles++;
-		Point2D.Double position = new Point2D.Double(middles*STEP_MIDDLE_ITEM,450); 
+		Point2D.Double position = new Point2D.Double(middles*STEP_MIDDLE_ITEM,MIDDLE_Y); 
 		element.setPosition(position);
 		element.setLayer(LAYER_MIDDLE);
 		this.elem.add(element);
@@ -189,18 +192,29 @@ public class PivotPathLayout {
 	public int addMiddleElement(String id, String displayName)
 	{
 		middles++;
-		Point2D.Double position = new Point2D.Double(middles*STEP_MIDDLE_ITEM,450); 
+		Point2D.Double position = new Point2D.Double(middles*STEP_MIDDLE_ITEM,MIDDLE_Y); 
 		PivotElement element = new PivotElement(id, displayName, position, LAYER_MIDDLE);
 		this.elem.add(element);
 		this.elementId.add(id);
 		this.addLabel(element.getLabel(), true, false);
 		return cnt++;
 	}
+	public int addRightElement(String id, String displayName, int sourceIndex)
+	{
+		double x= BOUNDARY_RIGHT;
+
+		Point2D.Double position = new Point2D.Double(x,MIDDLE_Y); 
+		PivotElement element = new PivotElement(id, displayName, position, LAYER_RIGHT);
+		this.elem.add(element);
+		this.elementId.add(id);
+		this.addLabel(element.getLabel(), false, false);
+		return cnt++;
+	}
 	
 	public int addMainItem(String id, String displayName)
 	{
 		middles++;
-		Point2D.Double position = new Point2D.Double(-4*STEP_MIDDLE_ITEM,450); 
+		Point2D.Double position = new Point2D.Double(-4*STEP_MIDDLE_ITEM,MIDDLE_Y); 
 		PivotElement element = new PivotElement(id, displayName, position, LAYER_MIDDLE);
 		Font font = new Font("Sans-Serif",Font.PLAIN,30);
 		element.getLabel().setFont(font);
@@ -267,19 +281,31 @@ public class PivotPathLayout {
 	//boundary forces
 		for (int i=0; i<elem.size(); i++)
 		{
-			if (this.elem.get(i).getLayer() == LAYER_MIDDLE) continue;
 			
-			double y = 300;
-			if (this.elem.get(i).getLayer() == LAYER_BOTTOM) y = 600;
 			
-			double d = elem.get(i).getPosition().getY() - y;
-			
-			double mag = COEFF_BOUNDARY_FORCE * 1/(d*d);
-			
-			if (this.elem.get(i).getLayer() == LAYER_TOP)
-				fy[i] -= mag;
-			else fy[i] += mag;
-			
+			if(this.elem.get(i).getLayer() == LAYER_RIGHT)
+			{
+				double x = BOUNDARY_RIGHT;
+				double d = elem.get(i).getPosition().getX() - x;
+				double mag = COEFF_BOUNDARY_FORCE * 100/(d*d);
+				fx[i] += mag;
+
+			}
+			else
+			{
+				if (this.elem.get(i).getLayer() == LAYER_MIDDLE || this.elem.get(i).getLayer() == LAYER_RIGHT) continue;
+				
+				double y = 300;
+				if (this.elem.get(i).getLayer() == LAYER_BOTTOM) y = 600;
+				
+				double d = elem.get(i).getPosition().getY() - y;
+				
+				double mag = COEFF_BOUNDARY_FORCE * 1/(d*d);
+				
+				if (this.elem.get(i).getLayer() == LAYER_TOP)
+					fy[i] -= mag;
+				else fy[i] += mag;
+			}
 		}
 		
 		for (int i=0; i<fx.length; i++)

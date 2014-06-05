@@ -50,7 +50,8 @@ CREATE TABLE movie_genre
 	movie_id INT,
 	genre_id INT
 )ENGINE = MyISAM DEFAULT CHARSET=latin1;
-
+ALTER TABLE movie_genre ADD KEY idx_movie_id (movie_id);
+ALTER TABLE movie_genre ADD KEY idx_genre_id (genre_id);
 INSERT INTO movie_genre( movie_id, genre_id)
 SELECT 
 	T.id, 

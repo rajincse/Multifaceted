@@ -49,6 +49,18 @@ public class IMDBSmallMySql extends IMDBMySql{
     }
 
     @Override
+    protected String getQueryGetGenre(long movieId) {
+        String query ="SELECT G.id , "
+                    +"		G.genre "
+                    +"FROM  "
+                    +"movie_genre AS MG "
+                    +" INNER JOIN genre AS G ON MG.genre_id = G.id "
+                    +"WHERE  "
+                    +"MG.movie_id = "+movieId+" ;";
+        return query;
+    }
+
+    @Override
     protected String getQuerySearchPerson(String searchKey) {
         
         String query = "SELECT   "

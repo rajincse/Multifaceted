@@ -11,14 +11,25 @@ public class Movie extends CompactMovie{
 	
 	protected ArrayList<CompactPerson> actors =null;
 	protected ArrayList<CompactPerson> directors =null;
+        protected  ArrayList<Genre> genreList = null;
+
+    
 	
 	
-	public Movie(long id, String title, int year, double rating,  ArrayList<CompactPerson> actors,  ArrayList<CompactPerson> directors )
+	public Movie(
+                long id, 
+                String title,
+                int year,
+                double rating,
+                ArrayList<CompactPerson> actors,
+                ArrayList<CompactPerson> directors,
+                ArrayList<Genre> genreList)
 	{
 		super(id,title,year);
         this.rating = rating;
 		this.actors = actors;
 		this.directors = directors;
+        this.genreList = genreList;
 		
 	}
 	
@@ -44,6 +55,13 @@ public class Movie extends CompactMovie{
 	public void setDirectors(ArrayList<CompactPerson> directors) {
 		this.directors = directors;
 	}
+    public ArrayList<Genre> getGenreList() {
+        return genreList;
+    }
+
+    public void setGenreList(ArrayList<Genre> genreList) {
+        this.genreList = genreList;
+    }
 	public static Type getType()
 	{
 		return new TypeToken<Movie>(){}.getType();

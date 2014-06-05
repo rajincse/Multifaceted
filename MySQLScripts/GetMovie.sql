@@ -35,6 +35,13 @@ WHERE
 T.id =  2652712
 ORDER BY COALESCE(C.nr_order,1000);
 
+SELECT id, info 
+FROM 
+movie_info 
+WHERE 
+movie_id = 2652712 
+AND info_type_id =3;
+
 -- Imdb small
 USE imdb_small;
 
@@ -63,3 +70,10 @@ WHERE
 T.id =  2652712
 ORDER BY C.nr_order;
 
+SELECT G.id ,
+		G.genre
+FROM 
+movie_genre AS MG
+ INNER JOIN genre AS G ON MG.genre_id = G.id
+WHERE 
+MG.movie_id = 2652712 ;

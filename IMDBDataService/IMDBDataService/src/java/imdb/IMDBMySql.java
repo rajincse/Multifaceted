@@ -4,6 +4,7 @@ package imdb;
 import db.mysql.DatabaseHelper;
 import imdb.entity.CompactMovie;
 import imdb.entity.CompactPerson;
+import imdb.entity.Genre;
 import imdb.entity.Movie;
 import imdb.entity.Person;
 import java.util.ArrayList;
@@ -69,7 +70,16 @@ public class IMDBMySql extends DatabaseHelper{
                                 +"ORDER BY COALESCE(C.nr_order,1000);";
             return query;
         }
-        
+        protected String getQueryGetGenre(long movieId)
+        {
+            String query ="SELECT id, info "
+                            +"FROM "
+                            +"movie_info "
+                            +"WHERE "
+                            +"movie_id = "+movieId+" "
+                            +"AND info_type_id =3;";
+            return query;
+        }
         protected String getQuerySearchPerson(String searchKey)
         {
             String query ="SELECT   "
@@ -159,7 +169,17 @@ public class IMDBMySql extends DatabaseHelper{
                         directorIdList.add(id);
                     }
                 }
-                Movie movie = new Movie(movieId, title, year, rating, actorList, directorList);
+                query  = this.getQueryGetGenre(movieId);
+                table = this.getData(query);
+                ArrayList<Genre> genreList = new ArrayList<Genre>();
+                for(int row=0;row<table.getRowCount();row++)
+                {
+                    long id =Long.parseLong( table.getValueAt(row, 0).toString());
+                    String name = table.getValueAt(row, 1).toString();
+                    Genre genre = new Genre(id, name);
+                    genreList.add(genre);
+                }
+                Movie movie = new Movie(movieId, title, year, rating, actorList, directorList, genreList);
 		return movie;
 	}
 	

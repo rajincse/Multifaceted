@@ -448,20 +448,24 @@ public class PivotPathLayout {
 	protected void renderMainItemEdge(Graphics2D g)
 	{
 		// main item edge;
-		float dash1[] = {10.0f};
-	    BasicStroke dashed = new BasicStroke(1.0f,
-	                        BasicStroke.CAP_BUTT,
-	                        BasicStroke.JOIN_MITER,
-	                        10.0f, dash1, 0.0f);
-		int x1=-4*STEP_MIDDLE_ITEM;
-		int y1=450;
+		if( middles > 1)
+		{
+			float dash1[] = {10.0f};
+		    BasicStroke dashed = new BasicStroke(1.0f,
+		                        BasicStroke.CAP_BUTT,
+		                        BasicStroke.JOIN_MITER,
+		                        10.0f, dash1, 0.0f);
+			int x1=-4*STEP_MIDDLE_ITEM;
+			int y1=450;
+			
+			int x2= (middles-1)*STEP_MIDDLE_ITEM;
+			int y2= 450;
+			Stroke previousStroke = g.getStroke();
+			g.setStroke(dashed);
+			g.drawLine(x1, y1, x2, y2);
+			g.setStroke(previousStroke);
+		}
 		
-		int x2= (middles-1)*STEP_MIDDLE_ITEM;
-		int y2= 450;
-		Stroke previousStroke = g.getStroke();
-		g.setStroke(dashed);
-		g.drawLine(x1, y1, x2, y2);
-		g.setStroke(previousStroke);
 	}
 	public void render(Graphics2D g) {
 		g.setColor(Color.black);

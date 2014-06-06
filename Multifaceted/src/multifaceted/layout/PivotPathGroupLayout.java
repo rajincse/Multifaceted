@@ -3,13 +3,10 @@ package multifaceted.layout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
-
-import perspectives.util.Label;
 
 public class PivotPathGroupLayout extends PivotPathLayout{
 	public static final int COEFF_COMPULSIVE_FORCE_WEAK=100;
@@ -381,7 +378,6 @@ public class PivotPathGroupLayout extends PivotPathLayout{
 			double d = centerX - x;
 			double mag = COEFF_BOUNDARY_FORCE * factor/(d*d);
 			group.fx+= mag;
-			System.out.println ("centerX :"+centerX+", x:"+x+", d:"+d+", mag:"+mag);
 			
 		}
 		

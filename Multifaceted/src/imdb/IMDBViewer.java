@@ -6,6 +6,7 @@ import imdb.entity.CompactPerson;
 import imdb.entity.Genre;
 import imdb.entity.Movie;
 import imdb.entity.Person;
+import imdb.entity.SearchItem;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -37,7 +38,6 @@ import perspectives.base.Property;
 import perspectives.base.Task;
 import perspectives.base.Viewer;
 import perspectives.properties.PBoolean;
-import perspectives.properties.PFileOutput;
 import perspectives.properties.POptions;
 import perspectives.properties.PSignal;
 import perspectives.properties.PString;
@@ -47,6 +47,7 @@ import perspectives.two_d.ViewerContainer2D;
 
 public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerInterface , EyeTrackerViewer{
 
+	private static final String PROPERTY_SEARCH="Search";
 	private static final String PROPERTY_SEARCH_ACTOR="Search Actor";
 	private static final String PROPERTY_SEARCH_RESULT = "Search Result";
 	private static final String PROPERTY_SELECTED_ITEM="Selected Item";
@@ -82,10 +83,10 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	
 	private IMDBDataSource data;
 	
-	private ArrayList<CompactPerson> recentlyViewed = null;
+	private ArrayList<SearchItem> recentlyViewed = null;
 	private ArrayList<Long> recentlyViewedId = null;
-	private ArrayList<CompactPerson> personList = null;
 	
+	private ArrayList<SearchItem> searchResult = null;
 	private PivotPathLayout layout =null;
 	
 	private EyeTrackerPivotElementDetector et = null;
@@ -102,11 +103,13 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	
 	private Point mousePosition =null;
 	
+	private SearchItem currentItem;
+	
 	public IMDBViewer(String name, IMDBDataSource data) {
 		super(name);
 		this.data = data;
 		this.layout = new PivotPathGroupLayout(this);
-		this.recentlyViewed = new ArrayList<CompactPerson>();
+		this.recentlyViewed = new ArrayList<SearchItem>();
 		this.recentlyViewedId  = new ArrayList<Long>();
 		et = new EyeTrackerPivotElementDetector(this);
 		this.resultText = new StringBuffer();
@@ -115,7 +118,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		try
 		{
 			
-			Property<PString> pSearch = new Property<PString>(PROPERTY_SEARCH_ACTOR, new PString(""))
+			Property<PString> pSearch = new Property<PString>(PROPERTY_SEARCH, new PString(""))
 					{
 							@Override
 							protected boolean updating(PString newvalue) {
@@ -140,6 +143,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 					};
 			addProperty(pSearch);
 			
+			Property<PBoolean> pSearchActor = new Property<PBoolean>(PROPERTY_SEARCH_ACTOR, new PBoolean(true));
+			addProperty(pSearchActor);
 			
 			Property<PSignal> pSelect = new Property<PSignal>(PROPERTY_SELECT, new PSignal())
 					{
@@ -154,10 +159,10 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 									if(selectFrom == SELECT_FROM_SEARCH)
 									{
 										int selectedIndex = ((POptions)getProperty(PROPERTY_SEARCH_RESULT).getValue()).selectedIndex;
-										if(personList != null && selectedIndex < personList.size())
+										if(searchResult != null && selectedIndex < searchResult.size())
 										{
-											CompactPerson person = personList.get(selectedIndex);
-											selectPerson(person);
+											SearchItem item = searchResult.get(selectedIndex);
+											select(item);
 										}
 									}
 									else if(selectFrom == SELECT_FROM_RECENTLY_VIEWED)
@@ -166,8 +171,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 										if(recentlyViewed != null && selectedIndex < recentlyViewed.size())
 										{
 											int index = recentlyViewed.size()-selectedIndex-1;
-											CompactPerson person = recentlyViewed.get(index);
-											selectPerson(person);
+											SearchItem item = recentlyViewed.get(index);
+											select(item);
 										}
 									}
 									
@@ -199,8 +204,8 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 										int index = recentlyViewed.size()-selectedIndex-1;
 										if(index >=0 && index < recentlyViewed.size())
 										{	
-											CompactPerson person = recentlyViewed.get(index);
-											selectPerson(person);
+											SearchItem item = recentlyViewed.get(index);
+											select(item);
 										}
 									
 									}
@@ -275,7 +280,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 							if(selectionIndex != movieListSelectFrom)
 							{
 								movieListSelectFrom= 1- movieListSelectFrom;
-								selectPerson(currentPerson);
+								select(currentItem);
 							}
 							return super.updating(newvalue);
 						}
@@ -287,9 +292,9 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 						@Override
 						protected boolean updating(PSignal newvalue) {
 							// TODO Auto-generated method stub
-							if(currentPerson != null)
+							if(currentItem != null)
 							{
-								selectPerson(currentPerson);
+								select(currentItem);
 							}
 							return super.updating(newvalue);
 						}
@@ -319,18 +324,32 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		
 		return p;
 	}
+	private ArrayList<SearchItem> getSearchResult(String searchKey)
+	{
+		ArrayList<SearchItem> search=null;
+		if(isSearchActorOn())
+		{
+			ArrayList<CompactPerson> personList = this.data.searchPerson(searchKey);
+			search = new ArrayList<SearchItem>(personList);
+		}
+		else
+		{
+			ArrayList<CompactMovie> movieList = this.data.searchMovie(searchKey);
+			search = new ArrayList<SearchItem>(movieList);
+		}
+		return  search;
+	}
 	private void searchTask(String searchKey)
 	{
 		System.out.println("Search");
-		
-		personList = this.data.searchPerson(searchKey);
-		if(personList!= null && !personList.isEmpty())
+		searchResult = getSearchResult(searchKey);
+		if(searchResult != null && !searchResult.isEmpty())
 		{
-			String[] resultList = new String[personList.size()];
-			for(int i=0;i<personList.size();i++)
+			String[] resultList = new String[searchResult.size()];
+			for(int i=0;i<searchResult.size();i++)
 			{
-				resultList[i]= personList.get(i).toString();	
-				System.out.println(resultList[i]+" "+personList.get(i).getId());
+				resultList[i]= searchResult.get(i).toString();	
+				System.out.println(resultList[i]+" "+searchResult.get(i).getId());
 			}
 			removeProperty(PROPERTY_SEARCH_RESULT);
 			Property<POptions> pResult = new Property<POptions>(PROPERTY_SEARCH_RESULT, new POptions(resultList))
@@ -349,8 +368,12 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	}
 	private void resultListUpdated(POptions newvalue)
 	{
-		String item = personList.get(newvalue.selectedIndex).toString();
-		updateSelectedItem(item, SELECT_FROM_SEARCH);
+		if(searchResult != null && !searchResult.isEmpty())
+		{
+			String item = searchResult.get(newvalue.selectedIndex).toString();
+			updateSelectedItem(item, SELECT_FROM_SEARCH);
+		}
+		
 	}
 	
 	private ArrayList<CompactMovie> getMovieList(Person person)
@@ -384,7 +407,18 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		
 		return movieList;
 	}
-	private CompactPerson currentPerson;
+	private void select(SearchItem item )
+	{
+		if(item instanceof CompactPerson)
+		{
+			selectPerson((CompactPerson)item);
+		}
+		else if(item instanceof CompactMovie)
+		{
+			selectMovie((CompactMovie) item);
+		}
+	}
+	
 	private void selectPerson(CompactPerson compactPerson)
 	{	synchronized(this)
 		{
@@ -392,8 +426,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		}
 		
 		long time = System.currentTimeMillis();
-		this.stopSimulation();
-		this.layout.init();
+
 		preSelectionTask();
 		
 		System.out.println("Selected:"+compactPerson);
@@ -486,9 +519,10 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 
 		addRecentlyViewed(person);
 		
-		currentPerson = person;
-		currentImageFileName ="";
-		this.startSimulation(TIME_LAPSE);
+		currentItem = person;
+		
+		postSelectionTask();
+		
 		time = System.currentTimeMillis() - time;
 		System.out.println("Total time:"+time);
 		
@@ -504,20 +538,108 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	{
 		et.registerElements(layout.getElements());
 	}
-	private void selectMovie(CompactMovie movie)
+	private void selectMovie(CompactMovie compactMovie)
 	{
-		
-	}
-	private void addRecentlyViewed(CompactPerson person)
-	{
-		if(recentlyViewedId.contains(person.getId()))
+		synchronized(this)
 		{
-			int index = recentlyViewedId.indexOf(person.getId());
-			recentlyViewedId.remove(person.getId());
+			isLocked = true;
+		}
+		
+		long time = System.currentTimeMillis();
+
+		preSelectionTask();
+		
+		System.out.println("Selected:"+compactMovie);
+		
+		Movie movie = this.data.getMovie(compactMovie);
+		
+		
+		MovieElement movieElement = new MovieElement(""+compactMovie.getId(), 
+														compactMovie.getTitle(),
+														movie.getRating()/2,
+														movie.getYear());
+		int source = layout.addMiddleElement(movieElement);
+		
+	
+		ArrayList<CompactPerson> directorList = movie.getDirectors();
+		for(CompactPerson director: directorList)
+		{
+			if(!layout.getElementIds().contains(""+director.getId()) )
+			{
+				int destination =layout.addBottomElement(""+director.getId(),director.getName(),source );					
+				layout.addEdge(source, destination);
+			}
+			else
+			{
+				int destination =layout.getElementIds().indexOf(""+director.getId());
+				layout.addEdge(source, destination);
+			}
+			 
+			
+		}
+		
+		ArrayList<CompactPerson> actorList = movie.getActors();
+		int actorCount=0;
+		for(CompactPerson actor: actorList)
+		{
+			if(!layout.getElementIds().contains(""+actor.getId()))
+			{
+				int destination =layout.addTopElement(""+actor.getId(),actor.getName(), source);					
+				layout.addEdge(source, destination);
+				actorCount++;
+				
+			}
+			else 
+			{
+				int destination = layout.getElementIds().indexOf(""+actor.getId());
+				layout.addEdge(source, destination);
+			}
+			
+			if(actorCount >=MAX_ACTOR)
+			{
+				break;
+			}
+		}
+		ArrayList<Genre> genreList = movie.getGenreList();
+		for(Genre genre : genreList)
+		{
+			if(!layout.getElementIds().contains(""+genre.getId()))
+			{
+				int destination =layout.addRightElement(""+genre.getId(),genre.getGenreName(),source);
+				layout.addEdge(source, destination);
+			}
+			else
+			{
+				int destination = layout.getElementIds().indexOf(""+genre.getId());
+				layout.addEdge(source, destination);
+			}
+		}
+		addRecentlyViewed(compactMovie);
+		
+		currentItem = compactMovie;
+		
+		postSelectionTask();
+		
+		time = System.currentTimeMillis() - time;
+		System.out.println("Total time:"+time);
+		
+		synchronized(this)
+		{
+			isLocked = false;
+		}
+		
+		registerEyetrackPoints();
+	}
+	private void addRecentlyViewed(SearchItem item)
+	{
+		if(recentlyViewedId.contains(item.getId()))
+		{
+			int index = recentlyViewedId.indexOf(item.getId());
+			recentlyViewedId.remove(item.getId());
 			recentlyViewed.remove(index);
 		}
-		this.recentlyViewed.add(person);
-		this.recentlyViewedId.add(person.getId());
+		this.recentlyViewed.add(item);
+		this.recentlyViewedId.add(item.getId());
 		updateRecentlyViewed();
 	}
 			
@@ -527,18 +649,18 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		{
 			removeProperty(PROPERTY_RECENTLY_VIEWED);
 			int total = this.recentlyViewed.size();
-			String[] personList = new String[total];
+			String[] searchList = new String[total];
 			
 			for(int i=0;i<total;i++)
 			{
-				personList[i] = this.recentlyViewed.get(total-i-1).getName();
+				searchList[i] = this.recentlyViewed.get(total-i-1).getDisplayText();
 			}
-			POptions options = new POptions(personList);
+			POptions options = new POptions(searchList);
 			Property<POptions> pRecentlyViewed = new Property<POptions>(PROPERTY_RECENTLY_VIEWED, options)
 					{	
 						@Override
 						protected boolean updating(POptions newvalue) {
-							String item = recentlyViewed.get(recentlyViewed.size()- newvalue.selectedIndex-1).getName();
+							String item = recentlyViewed.get(recentlyViewed.size()- newvalue.selectedIndex-1).getDisplayText();
 							updateSelectedItem(item, SELECT_FROM_RECENTLY_VIEWED);
 							return super.updating(newvalue);
 						}
@@ -585,7 +707,11 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		PBoolean showGaze = (PBoolean)this.getProperty(PROPERTY_SHOW_GAZE).getValue();
 		return showGaze.boolValue();
 	}
-	
+	private boolean isSearchActorOn()
+	{
+		PBoolean searchActor = (PBoolean)this.getProperty(PROPERTY_SEARCH_ACTOR).getValue();
+		return searchActor.boolValue();
+	}
 	public void render(Graphics2D g) {
 		synchronized(this)
 		{
@@ -833,7 +959,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 				render(g);
 				
 				
-				String filename = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date())+currentPerson.getName().replace(" ", "_")+ ".PNG";
+				String filename = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date())+currentItem.getDisplayText().replace(" ", "_")+ ".PNG";
 				
 				try {
 					ImageIO.write(bim, "PNG", new File(IMAGE_RESULT_DIR + filename ));
@@ -848,9 +974,17 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	}
 	private void preSelectionTask()
 	{
+		this.stopSimulation();
+		this.layout.init();
 		saveResult();
 		currentImageFileName ="";
 		
+	}
+	
+	private void postSelectionTask()
+	{
+		currentImageFileName ="";
+		this.startSimulation(TIME_LAPSE);
 	}
 	private void saveResult()
 	{

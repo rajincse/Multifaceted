@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 import com.google.gson.reflect.TypeToken;
 
-public class CompactMovie {
+public class CompactMovie implements SearchItem{
 	protected long id;
 	
 	protected String title;
@@ -44,5 +44,15 @@ public class CompactMovie {
 	public String toString() {
 		return this.title+" ("+this.year+")";
 			
+	}
+	@Override
+	public int getSearchItemType() {
+		// TODO Auto-generated method stub
+		return TYPE_MOVIE;
+	}
+	@Override
+	public String getDisplayText() {
+		// TODO Auto-generated method stub
+		return getTitle();
 	}
 }

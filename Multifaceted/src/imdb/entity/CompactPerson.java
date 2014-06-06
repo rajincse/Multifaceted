@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 import com.google.gson.reflect.TypeToken;
 
-public class CompactPerson {
+public class CompactPerson implements SearchItem{
 	protected long id ;
 	
 
@@ -49,5 +49,15 @@ public class CompactPerson {
 		return name+", "+(gender.equalsIgnoreCase("m")?"Male":"Female");
 		
 		
+	}
+	@Override
+	public int getSearchItemType() {
+		// TODO Auto-generated method stub
+		return TYPE_PERSON;
+	}
+	@Override
+	public String getDisplayText() {
+		// TODO Auto-generated method stub
+		return getName();
 	}
 }

@@ -23,6 +23,7 @@ public class IMDBSmallMySql extends IMDBMySql{
                         +"FROM movie AS T "
                         +"WHERE   "
                         +" T.title LIKE '%"+searchKey+"%' "
+                        +" ORDER BY T.rating DESC "
                         +"LIMIT 0,"+Configuration.getQueryLimit()+" ; ";
         return query;
     }

@@ -13,8 +13,11 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -38,6 +41,7 @@ import perspectives.base.Property;
 import perspectives.base.Task;
 import perspectives.base.Viewer;
 import perspectives.properties.PBoolean;
+import perspectives.properties.PFileInput;
 import perspectives.properties.POptions;
 import perspectives.properties.PSignal;
 import perspectives.properties.PString;
@@ -60,6 +64,10 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	private static final String PROPERTY_REFRESH="Refresh";
 	private static final String PROPERTY_END_STUDY = "End of Study";
 	private static final String PROPERTY_SHOW_LIST_TYPE = "Show List";
+	private static final String PROPERTY_LOAD="Load";
+	
+	private static final int TYPE_PERSON =0;
+	private static final int TYPE_MOVIE =1;
 	
 	private static final int SELECT_FROM_SEARCH =0;
 	private static final int SELECT_FROM_RECENTLY_VIEWED =1;
@@ -300,6 +308,17 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 						}
 					};
 			addProperty(pRefresh);
+			
+			Property<PFileInput> pLoad = new Property<PFileInput>(PROPERTY_LOAD, new PFileInput())
+					{
+						@Override
+						protected boolean updating(PFileInput newvalue) {
+							// TODO Auto-generated method stub
+							loadFile(newvalue.path);
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pLoad);
 			startTimer();
 			
 		}catch(Exception e)
@@ -627,6 +646,51 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			isLocked = false;
 		}
 		
+	}
+	private void loadFile(String filePath)
+	{
+		try {
+			File file = new File(filePath);
+			FileReader fStream;
+			fStream = new FileReader(file);		
+			BufferedReader bufferedReader = new BufferedReader(fStream);
+			
+			String line = bufferedReader.readLine();
+			while(line != null)
+			{
+				String[] split = line.split("\t");
+				if(split.length==3)
+				{
+					long id = Long.parseLong(split[0]);
+					int type = Integer.parseInt(split[1]);
+					String name = split[2];
+					
+					if(type == TYPE_MOVIE)
+					{
+						CompactMovie movie = new CompactMovie(id, name, 0);
+						addRecentlyViewed(movie);
+					}
+					else if(type == TYPE_PERSON)
+					{
+						CompactPerson person = new CompactPerson(id, name ,"");
+						addRecentlyViewed(person);
+					}
+				}
+				 
+				line = bufferedReader.readLine();
+			}
+			
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 	private void addRecentlyViewed(SearchItem item)
 	{

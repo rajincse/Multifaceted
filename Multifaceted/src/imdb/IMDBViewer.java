@@ -48,7 +48,7 @@ import perspectives.two_d.ViewerContainer2D;
 public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerInterface , EyeTrackerViewer{
 
 	private static final String PROPERTY_SEARCH="Search";
-	private static final String PROPERTY_SEARCH_ACTOR="Search Actor";
+	private static final String PROPERTY_SEARCH_PERSON="Search Person";
 	private static final String PROPERTY_SEARCH_RESULT = "Search Result";
 	private static final String PROPERTY_SELECTED_ITEM="Selected Item";
 	private static final String PROPERTY_SELECT="Select";
@@ -143,7 +143,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 					};
 			addProperty(pSearch);
 			
-			Property<PBoolean> pSearchActor = new Property<PBoolean>(PROPERTY_SEARCH_ACTOR, new PBoolean(true));
+			Property<PBoolean> pSearchActor = new Property<PBoolean>(PROPERTY_SEARCH_PERSON, new PBoolean(true));
 			addProperty(pSearchActor);
 			
 			Property<PSignal> pSelect = new Property<PSignal>(PROPERTY_SELECT, new PSignal())
@@ -531,7 +531,6 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			isLocked = false;
 		}
 		
-		registerEyetrackPoints();
 	}
 	
 	private void registerEyetrackPoints()
@@ -628,7 +627,6 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			isLocked = false;
 		}
 		
-		registerEyetrackPoints();
 	}
 	private void addRecentlyViewed(SearchItem item)
 	{
@@ -709,7 +707,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	}
 	private boolean isSearchActorOn()
 	{
-		PBoolean searchActor = (PBoolean)this.getProperty(PROPERTY_SEARCH_ACTOR).getValue();
+		PBoolean searchActor = (PBoolean)this.getProperty(PROPERTY_SEARCH_PERSON).getValue();
 		return searchActor.boolValue();
 	}
 	public void render(Graphics2D g) {
@@ -984,6 +982,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	private void postSelectionTask()
 	{
 		currentImageFileName ="";
+		registerEyetrackPoints();
 		this.startSimulation(TIME_LAPSE);
 	}
 	private void saveResult()

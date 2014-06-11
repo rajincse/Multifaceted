@@ -715,7 +715,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 			
 			for(int i=0;i<total;i++)
 			{
-				searchList[i] = this.recentlyViewed.get(total-i-1).getDisplayText();
+				searchList[i] = this.recentlyViewed.get(total-i-1).getDisplayText().trim();
 			}
 			POptions options = new POptions(searchList);
 			Property<POptions> pRecentlyViewed = new Property<POptions>(PROPERTY_RECENTLY_VIEWED, options)

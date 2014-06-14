@@ -428,6 +428,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	}
 	private void select(SearchItem item )
 	{
+		et.block(true);
 		if(item instanceof CompactPerson)
 		{
 			selectPerson((CompactPerson)item);
@@ -436,6 +437,7 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 		{
 			selectMovie((CompactMovie) item);
 		}
+		et.block(false);
 	}
 	
 	private void selectPerson(CompactPerson compactPerson)
@@ -987,12 +989,14 @@ public class IMDBViewer extends Viewer implements JavaAwtRenderer, LayoutViewerI
 	@Override
 	public void selectItem(String id, String name) {
 		// TODO Auto-generated method stub
+		et.block(true);
 		CompactPerson person = new CompactPerson(Long.parseLong(id), name, "");
 		int val = JOptionPane.showConfirmDialog(null, "Are you sure to select "+name+"?", "Confirmation?", JOptionPane.YES_NO_OPTION);
 		if(val == JOptionPane.YES_OPTION)
 		{
 			selectPerson(person);
 		}
+		et.block(false);
 		
 	}
 

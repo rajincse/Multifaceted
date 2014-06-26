@@ -25,6 +25,7 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 	public static final String PROPERTY_OPEN_FILE = "Open";
 	public static final String PROPERTY_SAVE_IMAGE = "Save Image";
 	public static final String PROPERTY_CELL_RESOLUTION = "Cell Resolution(sec)";
+	public static final long INVALID_TIMESTAMP =-1;
 	
 	public static final Color[] HEATMAP_COLOR = new Color[]
 			{
@@ -49,13 +50,13 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 				new Color(252,0,0,200)
 			};
 	
-	public LinkedList<HeatMapTimeStamp> timeStamps = new LinkedList<HeatMapTimeStamp>();
+	public ArrayList<HeatMapTimeStamp> timeStamps = new ArrayList<HeatMapTimeStamp>();
 	protected HashMap<String, AnalysisItem> analysisItemList = new HashMap<String, AnalysisItem>();
 	protected ObjectInteraction objectInteraction = null;
 	protected int cellResolution =60;
 	private ArrayList<Label> labelList = new ArrayList<Label>();
 	private HashMap<AnalysisItem, HashMap<Long, HeatMapVisualItem>> visualItemArray =new HashMap<AnalysisItem, HashMap<Long,HeatMapVisualItem>>();
-	
+	private long minTimeStamp =INVALID_TIMESTAMP;
 	public HeatMapAnalysisViewer(String name) {
 		super(name);
 		// TODO Auto-generated constructor stub
@@ -66,6 +67,8 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 				 @Override
 				protected boolean updating(PFileInput newvalue) {
 					// TODO Auto-generated method stub
+					 minTimeStamp = INVALID_TIMESTAMP;
+					 System.out.println(newvalue.path);
 					 processFile(newvalue.path);
 					 createVisualItems();
 //					 printInfo();
@@ -118,7 +121,7 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 					HeatMapVisualItem cell =(HeatMapVisualItem) item;
 					if(cell.getAverageScore() > 0)
 					{
-						long firstTime = timeStamps.peekFirst().getTimeStamp();
+						long firstTime = timeStamps.get(0).getTimeStamp();
 						setToolTipText(cell.getDisplayString(firstTime));
 					}
 					
@@ -211,7 +214,15 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 		
 		if(split.length >= 7)
 		{
+//			System.out.println(line);
+			
 			long timeStamp = Long.parseLong(split[0]);
+			if(minTimeStamp == INVALID_TIMESTAMP)
+			{
+				minTimeStamp = timeStamp;
+			}
+			long offsetTimeStamp = timeStamp - minTimeStamp;
+			
 			
 			String id = split[1];
 			String name = split[2];
@@ -236,17 +247,28 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 				analysisItemList.put(id, item);
 			}
 			item.addValue(score);
-			if(!this.timeStamps.isEmpty() && timeStamp == this.timeStamps.peekLast().getTimeStamp())
+//			if(!this.timeStamps.isEmpty() && offsetTimeStamp == this.timeStamps.peekLast().getTimeStamp())
+			Long offsetTimeStampLongValue = new Long(offsetTimeStamp);
+			if(!this.timeStamps.isEmpty() && this.timeStamps.contains(offsetTimeStampLongValue))
 			{
-				HeatMapTimeStamp timeStampItem = timeStamps.peekLast();
+				HeatMapTimeStamp timeStampItem = timeStamps.get(timeStamps.indexOf(offsetTimeStampLongValue));
 				HeatMapCell cell = HeatMapCell.createInstance(id, name, score, image, x, y);
 				
 				timeStampItem.addItem(cell);
 			}
+			else if(!this.timeStamps.isEmpty())
+			{
+				int index = searchPosition(offsetTimeStamp);
+				HeatMapTimeStamp timeStampItem = new HeatMapTimeStamp(offsetTimeStamp);
+				HeatMapCell cell = HeatMapCell.createInstance(id, name, score, image, x, y);
+				timeStampItem.addItem(cell);
+				this.timeStamps.add(index, timeStampItem);
+				
+			}
 			else
 			{
 				
-				HeatMapTimeStamp timeStampItem = new HeatMapTimeStamp(timeStamp);
+				HeatMapTimeStamp timeStampItem = new HeatMapTimeStamp(offsetTimeStamp);
 				HeatMapCell cell = HeatMapCell.createInstance(id, name, score, image, x, y);
 				timeStampItem.addItem(cell);
 				this.timeStamps.add(timeStampItem);
@@ -254,6 +276,24 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 			}
 		}
 		
+	}
+	private int searchPosition(long offsetTimeStamp)
+	{
+		int lastIndex = timeStamps.size()-1;
+		long previousTime =timeStamps.get(lastIndex).getTimeStamp();
+		for(int i=0;i<timeStamps.size();i++)
+		{
+			long current = timeStamps.get(i).getTimeStamp();
+			if(offsetTimeStamp> previousTime && offsetTimeStamp<= current)
+			{
+				return i;
+			}
+			else
+			{
+				previousTime = current;
+			}
+		}
+		return lastIndex;
 	}
 
 	@Override
@@ -287,7 +327,7 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 
 	public static Color getHeatMapcolor(double score)
 	{
-		double factor = 3.0;
+		double factor = 50.0;
 		int colorIndex = (int )(score*factor);
 		colorIndex = Math.min(colorIndex, HeatMapAnalysisViewer.HEATMAP_COLOR.length-1);
 		

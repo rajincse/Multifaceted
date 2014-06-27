@@ -247,29 +247,29 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 				analysisItemList.put(id, item);
 			}
 			item.addValue(score);
-//			if(!this.timeStamps.isEmpty() && offsetTimeStamp == this.timeStamps.peekLast().getTimeStamp())
-			Long offsetTimeStampLongValue = new Long(offsetTimeStamp);
-			if(!this.timeStamps.isEmpty() && this.timeStamps.contains(offsetTimeStampLongValue))
+			SearchableTimeStamp offsetTimeStampLongValue = new SearchableTimeStamp(offsetTimeStamp);
+			if(!this.timeStamps.isEmpty() 
+					&& this.timeStamps.contains(offsetTimeStampLongValue))
 			{
 				HeatMapTimeStamp timeStampItem = timeStamps.get(timeStamps.indexOf(offsetTimeStampLongValue));
-				HeatMapCell cell = HeatMapCell.createInstance(id, name, score, image, x, y);
+				HeatMapCell cell = HeatMapCell.createInstance(item, score, image, x, y);
 				
 				timeStampItem.addItem(cell);
 			}
 			else if(!this.timeStamps.isEmpty())
 			{
 				int index = searchPosition(offsetTimeStamp);
+				
 				HeatMapTimeStamp timeStampItem = new HeatMapTimeStamp(offsetTimeStamp);
-				HeatMapCell cell = HeatMapCell.createInstance(id, name, score, image, x, y);
+				HeatMapCell cell = HeatMapCell.createInstance(item, score, image, x, y);
 				timeStampItem.addItem(cell);
 				this.timeStamps.add(index, timeStampItem);
-				
 			}
 			else
 			{
 				
 				HeatMapTimeStamp timeStampItem = new HeatMapTimeStamp(offsetTimeStamp);
-				HeatMapCell cell = HeatMapCell.createInstance(id, name, score, image, x, y);
+				HeatMapCell cell = HeatMapCell.createInstance(item, score, image, x, y);
 				timeStampItem.addItem(cell);
 				this.timeStamps.add(timeStampItem);
 				
@@ -293,7 +293,7 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 				previousTime = current;
 			}
 		}
-		return lastIndex;
+		return lastIndex+1;
 	}
 
 	@Override
@@ -381,6 +381,10 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 			y = 100;
 			for(AnalysisItem item: sortedAnalysisItemList)
 			{
+				if(item.getId().equals("555201"))
+				{
+					System.out.println("Peter fonda");
+				}
 				if(
 						lastTimeStamp == null
 						||
@@ -399,6 +403,7 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 					HeatMapVisualItem visualItem = visualItemArray.get(item).get(lastTimeStamp.getTimeStamp());
 					visualItem.setEndTime(timeStamp.getTimeStamp());
 					addScore(item, timeStamp, visualItem);
+					System.out.println(visualItem);
 				}
 
 				

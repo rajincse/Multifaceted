@@ -56,7 +56,7 @@ public class AnalysisItem implements Comparable<AnalysisItem>{
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		return "{ id:"+id+", name:"+name+", color:"+color+", value:"+String.format("%.2f",value)+"}";
+		return "{ id:"+id+", name:'"+name+"', color:"+color+", value:"+String.format("%.2f",value)+"}";
 	}
 	
 	

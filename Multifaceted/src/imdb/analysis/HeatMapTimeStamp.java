@@ -28,33 +28,7 @@ public class HeatMapTimeStamp {
 		
 	}
 	
-	public void addItem(String id, String name, double score, String imageName, int x, int y)
-	{
-		HeatMapCell cell = HeatMapCell.createInstance(id, name, score, imageName, x, y);
-		this.addItem(cell);
-	}
-	@Override
-	public boolean equals(Object obj) {
-		if(obj instanceof Long)
-		{
-			Long timestamp = (Long) obj;
-			
-			if(timestamp.longValue()== this.getTimeStamp())
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		}
-		else
-		{
-			return super.equals(obj);
-		}
 	
-		
-	}
 	@Override
 	public String toString() {
 		String msg="{ Timestamp:"+timeStamp+", list:[";

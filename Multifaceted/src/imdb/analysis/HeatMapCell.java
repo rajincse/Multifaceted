@@ -29,14 +29,13 @@ public class HeatMapCell{
 		this.screenShot = screenShot;
 	}
 
-	
-	public static HeatMapCell createInstance(String id, String name, double score, String imageName, int x, int y)
+	public static HeatMapCell createInstance(AnalysisItem item, double score, String imageName, int x, int y)
 	{
 		ScreenShot screenShot  = new ScreenShot(imageName, x, y);
-		AnalysisItem item = new AnalysisItem(id,name);
 		HeatMapCell cell = new HeatMapCell(item, score, screenShot);
 		return cell;
 	}
+
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub

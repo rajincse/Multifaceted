@@ -18,6 +18,10 @@ public class HeatMapCell{
 		return item;
 	}
 
+	public void addScore(double score)
+	{
+		this.score+= score;
+	}
 	public double getScore() {
 		return score;
 	}

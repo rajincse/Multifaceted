@@ -119,7 +119,7 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 				if(item instanceof HeatMapVisualItem)
 				{
 					HeatMapVisualItem cell =(HeatMapVisualItem) item;
-					if(cell.getAverageScore() > 0)
+					if(cell.getTotalScore() > 0)
 					{
 						long firstTime = timeStamps.get(0).getTimeStamp();
 						setToolTipText(cell.getDisplayString(firstTime));
@@ -252,9 +252,18 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 					&& this.timeStamps.contains(offsetTimeStampLongValue))
 			{
 				HeatMapTimeStamp timeStampItem = timeStamps.get(timeStamps.indexOf(offsetTimeStampLongValue));
-				HeatMapCell cell = HeatMapCell.createInstance(item, score, image, x, y);
+				if(timeStampItem.getCellList().containsKey(id))
+				{
+					HeatMapCell cell = timeStampItem.getCellList().get(id);
+					cell.addScore(score);
+				}
+				else
+				{
+					HeatMapCell cell = HeatMapCell.createInstance(item, score, image, x, y);
+					
+					timeStampItem.addItem(cell);
+				}
 				
-				timeStampItem.addItem(cell);
 			}
 			else if(!this.timeStamps.isEmpty())
 			{
@@ -327,7 +336,7 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 
 	public static Color getHeatMapcolor(double score)
 	{
-		double factor = 50.0;
+		double factor = 100.0;
 		int colorIndex = (int )(score*factor);
 		colorIndex = Math.min(colorIndex, HeatMapAnalysisViewer.HEATMAP_COLOR.length-1);
 		
@@ -376,15 +385,12 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 		
 		x+= ((maxWidth/2)+step+gap);
 		HeatMapTimeStamp lastTimeStamp = null;
+		double maxScore=-1;
 		for(HeatMapTimeStamp timeStamp: timeStamps)
 		{
 			y = 100;
 			for(AnalysisItem item: sortedAnalysisItemList)
 			{
-				if(item.getId().equals("555201"))
-				{
-					System.out.println("Peter fonda");
-				}
 				if(
 						lastTimeStamp == null
 						||
@@ -396,6 +402,10 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 					visualItem.setRectangleInfo((int)x, (int)y, (int)step, (int)step);
 					visualItemArray.get(item).put(timeStamp.getTimeStamp(), visualItem);
 					objectInteraction.addItem(visualItem);
+					if(visualItem.getTotalScore() > maxScore)
+					{
+						maxScore = visualItem.getTotalScore();
+					}
 					
 				}
 				else
@@ -403,7 +413,10 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 					HeatMapVisualItem visualItem = visualItemArray.get(item).get(lastTimeStamp.getTimeStamp());
 					visualItem.setEndTime(timeStamp.getTimeStamp());
 					addScore(item, timeStamp, visualItem);
-					System.out.println(visualItem);
+					if(visualItem.getTotalScore() > maxScore)
+					{
+						maxScore = visualItem.getTotalScore();
+					}
 				}
 
 				
@@ -418,6 +431,19 @@ public class HeatMapAnalysisViewer extends AnalysisViewer implements JavaAwtRend
 			{
 				lastTimeStamp = timeStamp;
 				x+= step+gap;
+			}
+		}
+		normalize(maxScore);
+		System.out.println("Max "+maxScore);
+	}
+	private void normalize(double maxScore)
+	{
+		for(HashMap<Long, HeatMapVisualItem> cellList: visualItemArray.values())
+		{
+			for(HeatMapVisualItem item: cellList.values())
+			{
+				item.setTotalScore(item.getTotalScore()/maxScore);
+//				System.out.println(item+" score:"+item.getTotalScore());
 			}
 		}
 	}

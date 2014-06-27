@@ -6,7 +6,6 @@ public class AnalysisItem implements Comparable<AnalysisItem>{
 	public static final int COMPARE_MODE_VALUE =0;
 	public static final int COMPARE_MODE_COUNT =1;
 	
-	public static final int COMPARE_MODE= COMPARE_MODE_COUNT;
 	private String id;
 	private String name;
 	private Color color;
@@ -77,7 +76,8 @@ public class AnalysisItem implements Comparable<AnalysisItem>{
 
 	@Override
 	public int compareTo(AnalysisItem o) {
-		if(COMPARE_MODE == COMPARE_MODE_VALUE)
+		int compareMode = COMPARE_MODE_COUNT;
+		if(compareMode == COMPARE_MODE_VALUE)
 		{
 			return Double.compare(o.getValue(),this.getValue());
 		}

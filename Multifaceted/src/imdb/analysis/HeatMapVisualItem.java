@@ -43,18 +43,30 @@ public class HeatMapVisualItem extends RectangleItem{
 		this.item = item;
 	}
 	public double getAverageScore() {
-		return totalScore/totalCount;
+		return totalScore/totalCount;		
+	}
+	public double getTotalScore()
+	{
+		return totalScore;
+	}
+	public void setTotalScore(double score)
+	{
+		this.totalScore  = score;
+		updateColor();
 	}
 	
 	public void addScore(double score)
 	{
 		totalScore+= score;
 		totalCount++;
+		updateColor();
+		
+	}
+	private void updateColor() {
 		if(totalScore >0)
 		{
-			this.r.setColor(HeatMapAnalysisViewer.getHeatMapcolor(getAverageScore()));
+			this.r.setColor(HeatMapAnalysisViewer.getHeatMapcolor(getTotalScore()));
 		}
-		
 	}
 	
 	public void render(Graphics2D g)
@@ -74,19 +86,19 @@ public class HeatMapVisualItem extends RectangleItem{
 
 	public String getDisplayString()
 	{
-		return item.getName()+", "+String.format("%.2f",getAverageScore());
+		return item.getName()+", "+String.format("%.2f",getTotalScore());
 	}
 	public String getDisplayString(long fromTime)
 	{
 		long t1 = (startTime-fromTime)/1000;
 		long t2 = (endTime - fromTime)/1000;
 				
-		return item.getName()+", "+String.format("%.2f",getAverageScore())+":["+t1+", "+t2+"]";
+		return item.getName()+", "+String.format("%.2f",getTotalScore())+":["+t1+", "+t2+"]";
 	}
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		return item.getName()+", "+String.format("%.2f",getAverageScore())+":["+startTime+", "+endTime+"]";
+		return item.getName()+", "+String.format("%.2f",getTotalScore())+":["+startTime+", "+endTime+"]";
 	}
 	
 }

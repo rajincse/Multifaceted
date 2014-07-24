@@ -15,7 +15,6 @@ import com.google.gson.reflect.TypeToken;
 import perspectives.base.DataSource;
 import perspectives.base.Property;
 import perspectives.properties.PString;
-import sun.misc.Perf.GetPerfAction;
 
 public class IMDBDataSource extends DataSource{
 

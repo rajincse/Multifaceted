@@ -1,6 +1,11 @@
 package imdb.analysis;
 
+import imdb.IMDBDataSource;
 import imdb.IMDBViewer;
+import imdb.entity.CompactMovie;
+import imdb.entity.CompactPerson;
+import imdb.entity.Genre;
+import imdb.entity.Movie;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -16,17 +21,31 @@ public class ProbabilityViewer extends AnalysisViewer implements JavaAwtRenderer
 	public static final int INVALID =-1;
 	public static final int TOTAL_CATEGORIES =4;
 	public static final String PROPERTY_OPEN_FILE = "Open";
+	
+	public static final int TYPE_ACTOR=0;
+	public static final int TYPE_MOVIE=1;
+	public static final int TYPE_DIRECTOR=2;
+	public static final int TYPE_GENRE=3;
 	public static final String[] CATEGORIES ={"Actor","Movie", "Director","Genre"};
+	
 	public static final double THRESHOLD = 0.6;
 	
 	private int [][] transitionMatrix ;
 	private int[] categoryCount ;
+	
 	private int previousCategory;
-	private long previousTimestamp;
+	private long previousId;
+	
+	private int currentCategory;
+	private long currentId;
+	private long currentTimestamp;
+	private double currentScore;
 	private String geneSequence;
 	
-	public ProbabilityViewer(String name) {
+	private IMDBDataSource data;
+	public ProbabilityViewer(String name, IMDBDataSource data) {
 		super(name);
+		this.data = data;
 		init();
 		try
 		{
@@ -37,6 +56,7 @@ public class ProbabilityViewer extends AnalysisViewer implements JavaAwtRenderer
 					// TODO Auto-generated method stub
 					 init();
 					 processFile(newvalue.path);
+					 postProcessFile();
 					 createVisualItems();
 					 printInfo();
 					 requestRender();
@@ -53,10 +73,16 @@ public class ProbabilityViewer extends AnalysisViewer implements JavaAwtRenderer
 
 	private void init()
 	{
-		transitionMatrix = new int[TOTAL_CATEGORIES][TOTAL_CATEGORIES];
+		transitionMatrix = new int[TOTAL_CATEGORIES][2*TOTAL_CATEGORIES];
 		categoryCount = new int[TOTAL_CATEGORIES];
 		previousCategory=INVALID;
-		previousTimestamp = INVALID;
+		previousId = INVALID;
+		
+		currentTimestamp = INVALID;
+		currentScore = Double.MIN_VALUE;
+		currentCategory = INVALID;
+		currentId = INVALID;
+		
 		geneSequence ="";
 	}
 	@Override
@@ -133,25 +159,151 @@ public class ProbabilityViewer extends AnalysisViewer implements JavaAwtRenderer
 			{
 				image = split[7];
 			}
-			if(score >= THRESHOLD && time != previousTimestamp)
+			
+			int category = getCategory(layer, x);
+			if(score>= THRESHOLD && category != INVALID)
 			{
-				int category = getCategory(layer, x);
-				if(category != INVALID)
+				if(time != currentTimestamp)
 				{
-					categoryCount[category]++;
-					geneSequence +=CATEGORIES[category].charAt(0);
+					if(previousCategory != INVALID && currentCategory!= INVALID  )
+					{
+						if(isConnected(previousId, previousCategory, currentId, currentCategory))
+						{
+							transitionMatrix[previousCategory][TOTAL_CATEGORIES+currentCategory]++;
+						}
+						else
+						{
+							transitionMatrix[previousCategory][currentCategory]++;
+						}
+						
+					}
+					
+					
+					previousCategory = currentCategory;
+					currentCategory = category;
+					
+					previousId = currentId;
+					currentId = Long.parseLong(id);
+					
+					currentScore = score;
+					if(previousCategory != INVALID)
+					{
+						categoryCount[previousCategory]++;
+						geneSequence +=CATEGORIES[previousCategory].charAt(0);
+					}
 				}
-				if(previousCategory != INVALID && category!= INVALID  )
+				else if(time == currentTimestamp && score > currentScore)
 				{
-					transitionMatrix[previousCategory][category]++;
+					currentCategory = category;
+					currentScore = score;
 				}
 				
-				previousCategory = category;
+				currentTimestamp = time;
 			}
 			
-			previousTimestamp = time;
 			
 		}
+	}
+	
+	private boolean isConnected(long previousId, int previousCategory, long currentId, int currentCategory)
+	{
+		if(previousCategory == TYPE_ACTOR && currentCategory == TYPE_MOVIE)
+		{
+			CompactPerson actor = new CompactPerson(previousId, "", "m");
+			Movie movie = this.data.getMovie(new CompactMovie(currentId, "", 0));
+			
+			if(movie.getActors()!=null&& movie.getActors().contains(actor))
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else if(previousCategory == TYPE_MOVIE && currentCategory == TYPE_ACTOR)
+		{
+			Movie movie = this.data.getMovie(new CompactMovie(previousId, "", 0));
+			CompactPerson actor = new CompactPerson(currentId, "", "m");
+			
+			if(movie.getActors()!=null&& movie.getActors().contains(actor))
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else if(previousCategory == TYPE_DIRECTOR && currentCategory == TYPE_MOVIE)
+		{
+			CompactPerson director = new CompactPerson(previousId, "", "m");
+			Movie movie = this.data.getMovie(new CompactMovie(currentId, "", 0));
+			
+			if(movie.getDirectors()!=null && movie.getDirectors().contains(director))
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else if(previousCategory == TYPE_MOVIE && currentCategory == TYPE_DIRECTOR)
+		{
+			Movie movie = this.data.getMovie(new CompactMovie(previousId, "", 0));
+			CompactPerson director = new CompactPerson(currentId, "", "m");
+			
+			if(movie.getDirectors()!=null && movie.getDirectors().contains(director))
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else if(previousCategory == TYPE_GENRE && currentCategory == TYPE_MOVIE)
+		{
+			Genre genre = new Genre(previousId, "");
+			Movie movie = this.data.getMovie(new CompactMovie(currentId, "", 0));
+			
+			if(movie.getGenreList() != null && movie.getGenreList().contains(genre))
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else if(previousCategory == TYPE_MOVIE && currentCategory == TYPE_GENRE)
+		{	
+			Movie movie = this.data.getMovie(new CompactMovie(previousId, "", 0));
+			Genre genre = new Genre(currentId, "");
+			
+			if(movie.getGenreList() != null && movie.getGenreList().contains(genre))
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			return false;
+		}
+		
+	}
+	private void postProcessFile()
+	{
+		categoryCount[currentCategory]++;
+		geneSequence +=CATEGORIES[currentCategory].charAt(0);
+		
+		transitionMatrix[previousCategory][currentCategory]++;
+		
 	}
 	private int getCategory(int layer, int x)
 	{

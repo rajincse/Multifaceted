@@ -28,6 +28,22 @@ public class Genre {
     }
 
     @Override
+    public boolean equals(Object obj) {
+    	// TODO Auto-generated method stub
+    	if(obj instanceof Genre)
+    	{
+    		if(((Genre)obj).getId() == this.id)
+    		{
+    			return true;
+    		}
+    		else
+    		{
+    			return false;
+    		}
+    	}
+    	return super.equals(obj);
+    }
+    @Override
     public String toString() {
         return "{ id :"+id+", genreName:"+genreName+"}";
     }

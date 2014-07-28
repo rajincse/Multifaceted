@@ -71,6 +71,7 @@ public class Movie extends CompactMovie{
 		return new TypeToken<ArrayList<Movie>>(){}.getType();
 	}
 	
+	
 	@Override
 	public String toString() {
 		return super.toString()+", "+String.format("%.2f", this.rating)

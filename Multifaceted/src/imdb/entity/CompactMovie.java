@@ -50,6 +50,23 @@ public class CompactMovie implements SearchItem{
 		// TODO Auto-generated method stub
 		return TYPE_MOVIE;
 	}
+	
+	@Override
+    public boolean equals(Object obj) {
+    	// TODO Auto-generated method stub
+    	if(obj instanceof CompactMovie)
+    	{
+    		if(((CompactMovie)obj).getId() == this.id)
+    		{
+    			return true;
+    		}
+    		else
+    		{
+    			return false;
+    		}
+    	}
+    	return super.equals(obj);
+    }
 	@Override
 	public String getDisplayText() {
 		// TODO Auto-generated method stub

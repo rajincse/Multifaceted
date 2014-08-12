@@ -7,8 +7,8 @@ import eyerecommend.utility.Util;
 
 public class RectangleItem implements RecommendItem{
 	
-	private int index;
-	private Rectangle rect;
+	protected int index;
+	protected Rectangle rect;
 	public RectangleItem(int index, int x, int y, int width, int height)
 	{
 		this(index, new Rectangle(x, y, width, height));

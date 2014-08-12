@@ -3,8 +3,6 @@ package eyerecommend;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
-import java.util.ArrayList;
-import java.util.concurrent.PriorityBlockingQueue;
 
 import eyerecommend.item.RecommendItem;
 
@@ -12,7 +10,7 @@ public class RecommendationEngine implements EyeTrackerDataReceiver{
 	protected EyeTrackerViewer viewer;
 	protected EyeTrackServer server;
 	protected boolean blocked = false;
-	protected PriorityBlockingQueue<RecommendItem> elements;
+	protected RecommendItem[] elements;
 	
 	public RecommendationEngine(EyeTrackerViewer viewer)
 	{
@@ -26,13 +24,13 @@ public class RecommendationEngine implements EyeTrackerDataReceiver{
 		this.server = new EyeTrackServer(this, port);
 	}
 	
-	public void registerItems(ArrayList<RecommendItem> elements)
+	public void registerItems(RecommendItem[] elements)
 	{
 		synchronized(this)
 		{
 			if (blocked) return;
 		}
-		this.elements = new PriorityBlockingQueue<RecommendItem>(elements);
+		this.elements = elements;
 	}
 	public void block(boolean block)
 	{
@@ -64,6 +62,20 @@ public class RecommendationEngine implements EyeTrackerDataReceiver{
 	public void processScreenPoint(Point screenPoint)
 	{		
 		viewer.gazeDetected(screenPoint.x, screenPoint.y);
+		int maxIndex =-1;
+		double maxValue = Double.MIN_VALUE;
+		for(RecommendItem item: elements)
+		{
+			double posterior = item.getPosteriorProbability(screenPoint);
+			double prior = item.getPriorProbability();
+			double score = posterior * prior;
+			if(score > maxValue)
+			{
+				maxValue = score;
+				maxIndex = item.getIndex();
+			}
+		}
+		this.viewer.recommendationFound(maxIndex);
 	}
 
 	@Override

@@ -8,4 +8,5 @@ public interface EyeTrackerViewer {
 	public Point getEyeTrackOffset();
 	public AffineTransform getTransform();
 	public double getZoom();
+	public void recommendationFound(int index);
 }

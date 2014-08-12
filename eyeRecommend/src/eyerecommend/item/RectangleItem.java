@@ -1,17 +1,22 @@
 package eyerecommend.item;
 
+import java.awt.Rectangle;
+import java.awt.geom.Point2D;
+
+import eyerecommend.utility.Util;
+
 public class RectangleItem implements RecommendItem{
-	private double score;
+	
 	private int index;
-	public RectangleItem(int index, double score)
+	private Rectangle rect;
+	public RectangleItem(int index, int x, int y, int width, int height)
+	{
+		this(index, new Rectangle(x, y, width, height));
+	}
+	public RectangleItem(int index, Rectangle rect)
 	{
 		this.index = index;
-		this.score = score;
-	}
-	@Override
-	public int compareTo(RecommendItem other) {
-		// TODO Auto-generated method stub
-		return Double.compare(this.getPosteriorProbability()* this.getPriorProbability(), other.getPosteriorProbability()* other.getPriorProbability());
+		this.rect = rect;
 	}
 
 	@Override
@@ -20,10 +25,15 @@ public class RectangleItem implements RecommendItem{
 		return this.index;
 	}
 
+	public Rectangle getRect() {
+		return rect;
+	}
 	@Override
-	public double getPosteriorProbability() {
+	public double getPosteriorProbability(Point2D gazePosition) {
 		// TODO Auto-generated method stub
-		return this.score;
+		return Util.gaussianDistribution(gazePosition.getX(), this.rect.getCenterX(), this.rect.getWidth()/2)
+				*
+				Util.gaussianDistribution(gazePosition.getY(), this.rect.getCenterY(), this.rect.getHeight()/2);
 	}
 
 	@Override
@@ -35,6 +45,6 @@ public class RectangleItem implements RecommendItem{
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		return "{index:"+this.index+", score:"+score+"}";
+		return "{index:"+this.index+"}";
 	}
 }

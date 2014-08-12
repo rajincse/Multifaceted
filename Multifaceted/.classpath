@@ -3,6 +3,7 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/perspectives.jar"/>
-	<classpathentry kind="lib" path="lib/gson-2.2.4.jar"/>
+	<classpathentry kind="lib" path="lib/gson-2.2.4.jar"/>	
+	<classpathentry kind="lib" path="E:/Rajin/Development/SVNProjects/MF/trunk/Multifaceted/lib/eyeRecommned.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

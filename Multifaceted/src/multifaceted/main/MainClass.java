@@ -6,6 +6,7 @@ import imdb.analysis.HeatMapAnalysisViewerFactory;
 import imdb.analysis.ProbabilityViewerFactory;
 import imdb.analysis.StripViewerFactory;
 import perspectives.base.Environment;
+import pivotpath.PivotPathViewerFactory;
 import recommend.RecommendViewerFactory;
 
 public class MainClass {
@@ -19,5 +20,6 @@ public class MainClass {
 		e.registerViewerFactory(new HeatMapAnalysisViewerFactory());
 		e.registerViewerFactory(new ProbabilityViewerFactory());
 		e.registerViewerFactory(new RecommendViewerFactory());
+		e.registerViewerFactory(new PivotPathViewerFactory());
 	}
 }

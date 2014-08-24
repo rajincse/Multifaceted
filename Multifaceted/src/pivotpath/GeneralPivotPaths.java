@@ -1,29 +1,23 @@
 package pivotpath;
+
 import java.awt.BasicStroke;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.Shape;
-import java.awt.color.ColorSpace;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
-import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
-import java.awt.geom.QuadCurve2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
 import perspectives.base.Animation;
-import perspectives.base.ObjectInteraction.RectangleItem;
+import perspectives.base.Viewer;
 import perspectives.util.SplineFactory;
-
-import perspectives.base.*;
 
 
 class GeneralCurve
@@ -300,8 +294,6 @@ class LabelInfoBit extends InfoBit
 			g.setColor(hoveredColor);
 		else
 			g.setColor(color);
-		
-		
 		
 		g.setFont(font.deriveFont((float)(scale*10.)));
 		w = g.getFontMetrics().stringWidth(label)+g.getFontMetrics().stringWidth("ww");		
@@ -739,6 +731,7 @@ public class GeneralPivotPaths {
 				final String keyFinal = elem2.get(j).facetName + "\t" + elem1.get(j);
 				
 				Point2D newPos = new Point2D.Double(elem2.get(j).getGroup().getItemX(elem2.get(j)), elem2.get(j).getGroup().getItemY(elem2.get(j)));
+				double newScale = elem2.get(j).scale;
 				
                 viewer.createAnimation(new Animation.PositionAnimation(new Point2D.Double(old.x,old.y), newPos, 2000) {
                     public void step(Point2D p) {
@@ -754,6 +747,15 @@ public class GeneralPivotPaths {
                     	savedPosFinal.remove(keyFinal);
                     	viewer.requestRender();
                     }
+                });
+                
+                viewer.createAnimation(new Animation.DoubleAnimation(old.items.get(0).scale, newScale, 2000) {
+                    public void step(double s) {                  
+                    	
+                    	old.items.get(0).setScale(s);         	
+                        viewer.requestRender();
+                    }
+                 
                 });
 			}
 		}

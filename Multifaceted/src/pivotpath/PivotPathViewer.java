@@ -504,7 +504,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 			{
 				movieCount++;
 			}
-			data[i] = movie.getTitle();
+			data[i] = movie.getTitle()+"\t"+(int)movie.getRating();
 		
 			ArrayList<CompactPerson> directorList = movie.getDirectors();
 			ArrayList<CompactPerson> actorList = movie.getActors();
@@ -525,6 +525,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 			{
 				attribute[i][index] = new String[]{STR_ACTOR, actor.getName()};
 				index++;
+				count++;
 				if(count >=MAX_ACTOR)
 				{
 					break;
@@ -758,7 +759,12 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 			if (isLocked) return;
 		}
 		et.block(true);
-		pivotPaths.render(g);
+		
+		if(!pivotPaths.data.isEmpty())
+		{
+			pivotPaths.render(g);
+		}
+		
 		if(isShowGazeOn())
 		{
 			drawEyeGaze(g);
@@ -780,13 +786,14 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 	@Override
 	public void simulate() {
 
+		System.out.println("Simulate");
 		
 		
 		for (int i=0; i<1; i++)
 		pivotPaths.computeIteration();
 		
 		this.requestRender();
-		
+		saveView();
 		super.simulate();
 //		for (int i=0; i<SIMULATION_SPEED; i++)
 //		{
@@ -1039,7 +1046,8 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 	{
 		currentImageFileName ="";
 		registerEyetrackPoints();
-		this.startSimulation(TIME_LAPSE);
+		saveView();
+//		this.startSimulation(TIME_LAPSE);
 	}
 	private void saveResult()
 	{

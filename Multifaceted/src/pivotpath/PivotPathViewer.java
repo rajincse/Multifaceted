@@ -1,8 +1,6 @@
 package pivotpath;
 
 import imdb.IMDBDataSource;
-import imdb.MovieElement;
-import imdb.analysis.HeatMapAnalysisViewer;
 import imdb.entity.CompactMovie;
 import imdb.entity.CompactPerson;
 import imdb.entity.Genre;
@@ -33,16 +31,8 @@ import java.util.TimerTask;
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 
-import com.sun.org.apache.bcel.internal.generic.ACONST_NULL;
-
-import eyetrack.EyeTrackerPivotElementDetector;
-import eyetrack.EyeTrackerViewer;
-
 import multifaceted.layout.LayoutViewerInterface;
 import multifaceted.layout.PivotElement;
-import multifaceted.layout.PivotPathGroupLayout;
-import multifaceted.layout.PivotPathLayout;
-
 import perspectives.base.Property;
 import perspectives.base.Task;
 import perspectives.base.Viewer;
@@ -54,6 +44,8 @@ import perspectives.properties.PString;
 import perspectives.properties.PText;
 import perspectives.two_d.JavaAwtRenderer;
 import perspectives.two_d.ViewerContainer2D;
+import eyetrack.EyeTrackerPivotElementDetector;
+import eyetrack.EyeTrackerViewer;
 
 public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutViewerInterface , EyeTrackerViewer{
 

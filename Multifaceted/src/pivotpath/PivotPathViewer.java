@@ -129,9 +129,9 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 		this.pivotPaths = new MoviePivotPaths("Movies", new Rectangle2D.Double(0,0,1000,300))
 		{
 			@Override
-			public void transition(String facet, String value)
+			public void transition(String facet, String value, String id)
 			{
-				pivotPathTransition();
+				selectItem(id, value);
 			}
 		};
 		pivotPaths.addSlot(new Point2D[]{new Point2D.Double(0, -300),  new Point2D.Double(0,50), new Point2D.Double(1000,50), new Point2D.Double(1000,-300), new Point2D.Double(0,-300)}, new Color(200,200,0,100));
@@ -343,10 +343,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 		}
 		
 	}
-	private void pivotPathTransition()
-	{
-		
-	}
+	
 	private POptions getMovieSelectionShowList(int selectionIndex)
 	{
 		POptions options= new POptions(new String[]{"Acted Movie", "Directed Movie"});
@@ -494,9 +491,10 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 			}
 			else
 			{
-				movieCount++;
+				movieCount++;		
 			}
-			data[i] = movie.getTitle()+"\t"+(int)movie.getRating();
+			int dataIndex = movieCount-1;
+			data[dataIndex] = movie.getTitle()+"\t"+(int)movie.getRating();
 		
 			ArrayList<CompactPerson> directorList = movie.getDirectors();
 			ArrayList<CompactPerson> actorList = movie.getActors();
@@ -504,18 +502,18 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 			ArrayList<Genre> genreList = movie.getGenreList();
 			
 			int totalTuples = directorList.size()+actorCount+genreList.size();
-			attribute[i] = new String[totalTuples][2];
+			attribute[dataIndex] = new String[totalTuples][3];
 			int index=0;
 			
 			for(CompactPerson director: directorList)
 			{
-				attribute[i][index] = new String[]{STR_DIRECTOR, director.getName()};
+				attribute[dataIndex][index] = new String[]{STR_DIRECTOR, director.getName(),""+director.getId()};
 				index++;
 			}
 			int count =0;
 			for(CompactPerson actor: actorList)
 			{
-				attribute[i][index] = new String[]{STR_ACTOR, actor.getName()};
+				attribute[dataIndex][index] = new String[]{STR_ACTOR, actor.getName(),""+actor.getId()};
 				index++;
 				count++;
 				if(count >=MAX_ACTOR)
@@ -525,7 +523,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 			}
 			for(Genre genre : genreList)
 			{
-				attribute[i][index] = new String[]{STR_GENRE, genre.getGenreName()};
+				attribute[dataIndex][index] = new String[]{STR_GENRE, genre.getGenreName(),""+genre.getId()};
 				index++;
 			}
 		}
@@ -549,7 +547,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 	
 	private void registerEyetrackPoints()
 	{
-		//et.registerElements(layout.getElements());
+//		et.registerElements(layout.getElements());
 	}
 	private void selectMovie(CompactMovie compactMovie)
 	{
@@ -569,7 +567,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 		Movie movie = this.data.getMovie(compactMovie);
 		
 		
-		data[0] = movie.getTitle();
+		data[0] = movie.getTitle()+"\t"+(int)movie.getRating();
 		
 		ArrayList<CompactPerson> directorList = movie.getDirectors();
 		ArrayList<CompactPerson> actorList = movie.getActors();
@@ -577,18 +575,18 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 		ArrayList<Genre> genreList = movie.getGenreList();
 		
 		int totalTuples = directorList.size()+actorCount+genreList.size();
-		attribute[0] = new String[totalTuples][2];
+		attribute[0] = new String[totalTuples][3];
 		int index=0;
 	
 		for(CompactPerson director: directorList)
 		{
-			attribute[0][index] = new String[]{STR_DIRECTOR, director.getName()};
+			attribute[0][index] = new String[]{STR_DIRECTOR, director.getName(),""+director.getId()};
 			index++;
 		}
 		int count =0;
 		for(CompactPerson actor: actorList)
 		{
-			attribute[0][index] = new String[]{STR_ACTOR, actor.getName()};
+			attribute[0][index] = new String[]{STR_ACTOR, actor.getName(),""+actor.getId()};
 			index++;
 			if(count >=MAX_ACTOR)
 			{
@@ -597,7 +595,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 		}
 		for(Genre genre : genreList)
 		{
-			attribute[0][index] = new String[]{STR_GENRE, genre.getGenreName()};
+			attribute[0][index] = new String[]{STR_GENRE, genre.getGenreName(),""+genre.getId()};
 			index++;
 		}
 
@@ -916,21 +914,20 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 	public boolean mousepressed(int x, int y, int button) {
 		mousePosition.x = x;
 		mousePosition.y = y;
-		this.pivotPaths.mouseClicked(x, y);
+		
+		if (button == 1)
+		{
+			((ViewerContainer2D)this.getContainer()).rightButtonDown = false;
+			
+			et.processScreenPoint(new Point(x,y));
+
+			return true;
+		}
+		else if(button ==3)
+		{
+			this.pivotPaths.mouseClicked(x, y);
+		}
 		return false;
-//		if (button == 1)
-//		{
-//			((ViewerContainer2D)this.getContainer()).rightButtonDown = false;
-//			
-////			et.processScreenPoint(new Point(x,y));
-//
-//			return true;
-//		}
-//		else if(button ==3)
-//		{
-//			layout.getObjectInteraction().mousePress(x, y);
-//		}
-//		return false;
 	}
 
 
@@ -949,7 +946,11 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 	public boolean mousemoved(int x, int y) {
 		mousePosition.x = x;
 		mousePosition.y = y;
-		this.pivotPaths.mouseMoved(x,y);
+		if(this.pivotPaths.groups != null)
+		{
+			this.pivotPaths.mouseMoved(x,y);
+		}
+		
 		return false;
 		
 	}
@@ -1039,6 +1040,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 		currentImageFileName ="";
 		registerEyetrackPoints();
 		saveView();
+		this.requestRender();
 //		this.startSimulation(TIME_LAPSE);
 	}
 	private void saveResult()

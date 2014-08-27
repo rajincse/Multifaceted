@@ -220,7 +220,7 @@ abstract class InfoBit
 	
 	public String id;
 	
-	
+	public String value;
 	public InfoBitGroup getGroup()
 	{
 		return group;
@@ -246,6 +246,14 @@ abstract class InfoBit
 	public InfoBit(String id)
 	{
 		this.id = id;
+		this.value = id;
+		connections = new ArrayList<InfoBit>();
+	}
+	
+	public InfoBit(String id, String value)
+	{
+		this.id = id;
+		this.value = value;
 		connections = new ArrayList<InfoBit>();
 	}
 	
@@ -279,7 +287,13 @@ class LabelInfoBit extends InfoBit
 	
 	Font font = new Font("Helvetica",Font.PLAIN,12);
 	
-	
+	public LabelInfoBit(String label,String id)
+	{
+		super(id, label);
+		this.label = label;
+		w = -1;
+		h = -1;
+	}
 	public LabelInfoBit(String label)
 	{
 		super(label);
@@ -613,7 +627,7 @@ public class GeneralPivotPaths {
 		{
 			newdata.add("\t"+data[i]);
 			for (int j=0; j<attributes[i].length; j++)
-				newdata.add(attributes[i][j][0] + "\t" + attributes[i][j][1]);
+				newdata.add(attributes[i][j][0] + "\t" + attributes[i][j][1]+"\t"+ attributes[i][j][2]);
 		}
 		
 		
@@ -674,7 +688,7 @@ public class GeneralPivotPaths {
 			{
 				String facetName = attributes[i][j][0];
 				String value = attributes[i][j][1];
-				
+				String id = attributes[i][j][2];
 				InfoBit infoBit = null;
 				
 				if (!facetMap.containsKey(facetName))
@@ -697,7 +711,7 @@ public class GeneralPivotPaths {
 				
 				if (infoBit == null)
 				{
-					infoBit = createInfoBit(facetName, value);
+					infoBit = createInfoBit(facetName, value, id);
 					facet.add(value);
 					infoBits.get(f).add(infoBit);
 					
@@ -812,7 +826,12 @@ public class GeneralPivotPaths {
 		b.facetName = facetName;
 		return b;
 	}
-	
+	protected InfoBit createInfoBit(String facetName, String value, String id)
+	{
+		LabelInfoBit b = new LabelInfoBit(value, id);
+		b.facetName = facetName;
+		return b;
+	}
 	protected boolean equalsValue(String v1, String v2)
 	{
 		return v1.equals(v2);
@@ -1254,7 +1273,7 @@ public class GeneralPivotPaths {
 		{
 			int index = groups.get(i).mouseHovered(x, y);
 			if (index >= 0)
-				hovered = groups.get(i).items.get(index).facetName + "\t" + groups.get(i).items.get(index).id;
+				hovered = groups.get(i).items.get(index).facetName +"\t" + groups.get(i).items.get(index).value+ "\t" + groups.get(i).items.get(index).id;
 			
 		}
 		for (int i=0; i<dataGroups.size(); i++)
@@ -1269,10 +1288,10 @@ public class GeneralPivotPaths {
 	public void mouseClicked(int x, int y)
 	{
 		if (hovered != null)
-			transition(hovered.split("\t")[0], hovered.split("\t")[1]);
+			transition(hovered.split("\t")[0], hovered.split("\t")[1],hovered.split("\t")[2]);
 	}
 	
-	public void transition(String facet, String value)
+	public void transition(String facet, String value, String id)
 	{
 		
 	}

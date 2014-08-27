@@ -569,8 +569,9 @@ public class RecommendedMovieElementViewer extends Viewer implements JavaAwtRend
 			RectangleItem item = new RectangleItem(i,(int) label.x, (int)label.y,(int) label.w, (int)label.h);
 			elementArray[i] = item;
 		}
-		et.registerItems(elementArray);
 		et.block(false);
+		et.registerItems(elementArray);
+		
 	}
 	private void selectMovie(CompactMovie compactMovie)
 	{

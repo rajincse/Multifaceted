@@ -476,8 +476,8 @@ class MainInfoBitGroup extends InfoBitGroup
 		double w = items.get(i).getWidth();
 		double h = items.get(i).getHeight();
 		double r = angle;		
-		x += w/2;
-		y += h/2;	
+//		x += w/2;
+//		y += h/2;	
 		
 		a.translate(x, y);			
 		a.rotate(r);
@@ -494,6 +494,7 @@ class MainInfoBitGroup extends InfoBitGroup
 	
 	public void render(Graphics2D g)
 	{
+		
 		for (int i=0; i<items.size(); i++)
 		{
 			int x = (int)getItemX(i);
@@ -502,8 +503,8 @@ class MainInfoBitGroup extends InfoBitGroup
 			double h = items.get(i).getHeight();
 			double r = angle;
 			
-			x += w/2;
-			y += h/2;			
+//			x += w/2;
+//			y += h/2;			
 
 			g.translate(x, y);			
 			g.rotate(r);
@@ -525,8 +526,8 @@ class MainInfoBitGroup extends InfoBitGroup
 			double y = (int)getItemY(i);
 			double w =  items.get(i).getWidth();
 			double h =  items.get(i).getHeight();			
-			x += w/2;
-			y += h/2;	
+//			x += w/2;
+//			y += h/2;	
 			
 			AffineTransform at = new AffineTransform();	
 

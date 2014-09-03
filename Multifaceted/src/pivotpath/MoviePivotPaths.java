@@ -1,8 +1,10 @@
 package pivotpath;
+import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D.Double;
+import java.util.ArrayList;
 
 
 class ActorInfoBit extends LabelInfoBit
@@ -24,6 +26,7 @@ class ActorInfoBit extends LabelInfoBit
 
 class MovieInfoBit extends LabelInfoBit
 {
+	public static final int MAX_LEN =32;
 	int stars;
 	public MovieInfoBit(String label)
 	{
@@ -44,7 +47,18 @@ class MovieInfoBit extends LabelInfoBit
 	@Override
 	public void render(Graphics2D g, boolean hovered)
 	{
-		super.render(g, hovered);
+		if (hovered)
+			g.setColor(hoveredColor);
+		else
+			g.setColor(color);
+		
+		g.setFont(font.deriveFont((float)(scale*10.)));
+		w = g.getFontMetrics().stringWidth(label)+g.getFontMetrics().stringWidth("ww");		
+		
+		g.fillRect(0, 0, (int)getWidth(), (int)getHeight());
+		
+		g.setColor(new Color(0,0,0,200));
+		drawString(g);
 		g.setColor(Color.gray);
 		g.drawString(""+stars, (int)this.getWidth()-(int)(scale*6), (int)(-scale*5.5));
 		
@@ -60,6 +74,74 @@ class MovieInfoBit extends LabelInfoBit
 		g.drawPolygon(starx, stary, 10);
 		g.setColor(Color.yellow);
 		g.fillPolygon(starx, stary, 10);
+	}
+	public void drawString(Graphics2D g)
+	{
+		String[] labelLines = getMultilineLabels();
+		for(int i=0;i<labelLines.length;i++)
+		{
+			g.drawString(labelLines[i], g.getFontMetrics().stringWidth("w"), (int)(getHeight()*0.8* (i+1)/ labelLines.length));
+		}
+		
+		
+	}
+	private String[] getMultilineLabels()
+	{
+		if(label.length()< MAX_LEN)
+		{
+			return new String[]{label};
+		}
+		else
+		{
+			String[] split = label.split(" ");
+			ArrayList<String> lines = new ArrayList<String>();
+			String line ="";
+			for(String str: split)
+			{
+				if(line.length() + str.length() < MAX_LEN)
+				{
+					line+= " "+str;
+				}
+				else
+				{
+					lines.add(line);
+					line = str;
+				}
+			}
+			lines.add(line);
+			String[] lineArray = new String[lines.size()];
+			for(int i=0;i<lineArray.length;i++)
+			{
+				lineArray[i] = lines.get(i);
+			}
+			
+			return lineArray;
+		}
+	}
+	@Override
+	public double getWidth() {
+		
+	
+		Canvas c = new Canvas();
+		font = font.deriveFont((float)(scale*10.));
+		String[] labelLines = getMultilineLabels();
+		String maxLengthLine="";
+		for(String line: labelLines)
+		{
+			if(line.length()> maxLengthLine.length())
+			{
+				maxLengthLine = line;
+			}
+		}
+		w = c.getFontMetrics(font).stringWidth(maxLengthLine)+c.getFontMetrics(font).stringWidth("ww");	
+		return w;
+		
+	}
+
+	@Override
+	public double getHeight() {
+		String[] labelLines = getMultilineLabels();
+		return 10*scale*labelLines.length;
 	}
 }
 

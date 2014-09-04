@@ -15,7 +15,12 @@ class ActorInfoBit extends LabelInfoBit
 		this.color = new Color(230,230,230,100);
 		this.hoveredColor = new Color(180,180,180,150);
 	}
-	
+	public ActorInfoBit(String label, String id)
+	{
+		super(label, id);
+		this.color = new Color(230,230,230,100);
+		this.hoveredColor = new Color(180,180,180,150);
+	}
 	@Override
 	public Line2D[] getEdgeAnchors() {
 		return new Line2D.Double[]{new Line2D.Double(getWidth()/2,0,getWidth()/2,-100),
@@ -31,6 +36,15 @@ class MovieInfoBit extends LabelInfoBit
 	public MovieInfoBit(String label)
 	{
 		super(label.split("\t")[0]);
+		stars = Integer.parseInt(label.split("\t")[1]);
+		this.color = new Color(200,200,100,100);
+		this.hoveredColor = new Color(250,100,100,150);
+		scale = 1.5;
+	}
+	
+	public MovieInfoBit(String label, String id)
+	{
+		super(label.split("\t")[0], id);
 		stars = Integer.parseInt(label.split("\t")[1]);
 		this.color = new Color(200,200,100,100);
 		this.hoveredColor = new Color(250,100,100,150);
@@ -155,7 +169,12 @@ class DirectorInfoBit extends LabelInfoBit
 		this.color = new Color(250,150,150,100);
 		this.hoveredColor = new Color(200,100,100,150);
 	}
-	
+	public DirectorInfoBit(String label, String id)
+	{
+		super(label, id);
+		this.color = new Color(250,150,150,100);
+		this.hoveredColor = new Color(200,100,100,150);
+	}
 	@Override
 	public Line2D[] getEdgeAnchors() {
 		return new Line2D.Double[]{new Line2D.Double(getWidth()/2,0,getWidth()/2,-100),
@@ -172,7 +191,12 @@ class GenreInfoBit extends LabelInfoBit
 		this.color = new Color(150,150,250,100);
 		this.hoveredColor = new Color(100,100,200,150);
 	}
-	
+	public GenreInfoBit(String label, String id)
+	{
+		super(label, id);
+		this.color = new Color(150,150,250,100);
+		this.hoveredColor = new Color(100,100,200,150);
+	}
 	@Override
 	public Line2D[] getEdgeAnchors() {
 		return new Line2D.Double[]{new Line2D.Double(getWidth()/2,0,getWidth()/2,-100),
@@ -190,17 +214,17 @@ public class MoviePivotPaths extends GeneralPivotPaths
 	}
 	
 	@Override
-	protected InfoBit createInfoBit(String facetName, String value)
+	protected InfoBit createInfoBit(String facetName, String value, String id)
 	{
 		InfoBit b = null;
 		if (facetName.equals("actor"))
-			b = new ActorInfoBit(value);
+			b = new ActorInfoBit(value, id);
 		else if (facetName.equals("director"))
-			b = new DirectorInfoBit(value);
+			b = new DirectorInfoBit(value, id);
 		else if (facetName.equals("genre"))
-			b = new GenreInfoBit(value);
+			b = new GenreInfoBit(value, id);
 		else
-			b = new LabelInfoBit(value);
+			b = new LabelInfoBit(value, id);
 		b.facetName = facetName;
 		return b;
 	}

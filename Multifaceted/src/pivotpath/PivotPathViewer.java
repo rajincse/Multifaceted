@@ -44,7 +44,8 @@ import perspectives.properties.PString;
 import perspectives.properties.PText;
 import perspectives.two_d.JavaAwtRenderer;
 import perspectives.two_d.ViewerContainer2D;
-import eyetrack.EyeTrackerPivotElementDetector;
+import eyetrack.EyeTrackerItem;
+import eyetrack.EyeTrackerLabelDetector;
 import eyetrack.EyeTrackerViewer;
 
 public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutViewerInterface , EyeTrackerViewer{
@@ -99,7 +100,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 	
 	private ArrayList<SearchItem> searchResult = null;
 	
-	private EyeTrackerPivotElementDetector et = null;
+	private EyeTrackerLabelDetector et = null;
 	
 	private boolean isLocked = false;
 	
@@ -121,7 +122,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 		this.data = data;		
 		this.recentlyViewed = new ArrayList<SearchItem>();
 		this.recentlyViewedId  = new ArrayList<Long>();
-		et = new EyeTrackerPivotElementDetector(this);
+		et = new EyeTrackerLabelDetector(this);
 		this.resultText = new StringBuffer();
 		this.timer = new Timer("EyeTrack Data Collection Timer");
 		this.mousePosition = new Point(0,0);
@@ -541,7 +542,17 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 	
 	private void registerEyetrackPoints()
 	{
-//		et.registerElements(layout.getElements());
+		ArrayList<EyeTrackerItem> elements = new ArrayList<EyeTrackerItem>();
+		for(InfoBitGroup group: this.pivotPaths.groups)
+		{
+			elements.addAll(group.getItems());
+		}
+		
+		for(InfoBitGroup group: this.pivotPaths.dataGroups)
+		{
+			elements.addAll(group.getItems());
+		}
+		et.registerElements(elements);
 	}
 	private void selectMovie(CompactMovie compactMovie)
 	{
@@ -755,7 +766,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 	private void drawEyeGaze(Graphics2D g)
 	{
 		double zoom = this.getZoom();
-		int et =(int)( EyeTrackerPivotElementDetector.EDGETHRESHOLD/ zoom);
+		int et =(int)( EyeTrackerLabelDetector.EDGETHRESHOLD/ zoom);
 		g.setColor(new Color(255,0,0,120));
 		g.fillOval(this.gazeX-5, this.gazeY-5, 10, 10);
 		g.drawOval(this.gazeX-et, this.gazeY-et, et*2, et*2);

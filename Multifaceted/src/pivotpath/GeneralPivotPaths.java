@@ -15,6 +15,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import multifaceted.Util;
+
+import eyetrack.EyeTrackerItem;
+
 import perspectives.base.Animation;
 import perspectives.base.Viewer;
 import perspectives.util.SplineFactory;
@@ -208,7 +212,7 @@ class ForceContainer
 	}
 }
 
-abstract class InfoBit
+abstract class InfoBit implements EyeTrackerItem
 {
 	String facetName;
 	
@@ -286,7 +290,7 @@ class LabelInfoBit extends InfoBit
 	protected Color hoveredColor = new Color(200,200,0,100);
 	
 	Font font = new Font("Helvetica",Font.PLAIN,12);
-	
+	protected double score =0;
 	public LabelInfoBit(String label,String id)
 	{
 		super(id, label);
@@ -317,8 +321,25 @@ class LabelInfoBit extends InfoBit
 		g.setColor(new Color(0,0,0,200));
 		g.drawString(label, g.getFontMetrics().stringWidth("w"), (int)(getHeight()*0.8));
 		
+		renderDebug(g);
+	}
+
+	public void renderDebug(Graphics2D g)
+	{
+		String score =""+this.score;// String.format("%.6f", this.score);
+		
+		Color previousColor = g.getColor();
+
+		g.setColor(new Color(32,87,176,128));
+		g.drawString(score, (int)getWidth()+g.getFontMetrics().stringWidth("w"), (int)(getHeight()*0.8));
+		
+		g.setColor(previousColor);
 		
 		
+		Util.drawCircle(0, 0, Color.green, g);
+		Util.drawCircle((int)getWidth(), 0, Color.blue, g);
+		Util.drawCircle(0,(int)getHeight(), Color.red, g);
+		Util.drawCircle((int)getWidth(), (int)getHeight(), Color.black, g);
 	}
 
 	@Override
@@ -346,6 +367,43 @@ class LabelInfoBit extends InfoBit
 				new Line2D.Double(getWidth()/2,0,getWidth()/2,-50),
 				new Line2D.Double(getWidth()/2,getHeight(),getWidth()/2,getHeight()+50)};
 		
+	}
+	@Override
+	public void setScore(double score) {
+		this.score = score;
+		
+	}
+	@Override
+	public double getScore() {
+		// TODO Auto-generated method stub
+		return score;
+	}
+	@Override
+	public double computeScore(Point2D gazePosition) {
+		
+		double x = this.group.getItemX(this);
+		double y = this.group.getItemY(this);
+		
+		double distance = Util.distanceToRectangle(x, y, getWidth(),getHeight(), gazePosition);
+		if(distance == 0)
+		{
+			score =1;
+		}
+		else
+		{	
+			double cx = x+getWidth()/2;
+			double cy = y+getHeight()/2;
+			
+			cx = 0;
+			cy = 0;
+			
+			double gpx = gazePosition.getX() - x - getWidth()/2;
+			double gpy = gazePosition.getY() - y - getHeight()/2;
+			
+			score = Util.gaussianDistribution(gpx, cx, getWidth()) 
+					* Util.gaussianDistribution(gpy, cy, getHeight()); 
+		}
+		return score;
 	}
 
 }
@@ -424,7 +482,10 @@ class InfoBitGroup
 	}
 	
 	
-	
+	public ArrayList<InfoBit> getItems()
+	{
+		return this.items;
+	}
 	public double getItemX(InfoBit item)
 	{
 		int i = items.indexOf(item);

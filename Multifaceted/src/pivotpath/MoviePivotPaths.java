@@ -74,6 +74,8 @@ class MovieInfoBit extends LabelInfoBit
 		g.drawPolygon(starx, stary, 10);
 		g.setColor(Color.yellow);
 		g.fillPolygon(starx, stary, 10);
+		
+		renderDebug(g);
 	}
 	public void drawString(Graphics2D g)
 	{

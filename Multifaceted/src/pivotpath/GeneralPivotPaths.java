@@ -378,6 +378,8 @@ class LabelInfoBit extends InfoBit
 		
 		double x = this.group.getItemX(this);
 		double y = this.group.getItemY(this);
+		double width = getWidth();
+		double height = getHeight();
 		Point2D point = Util.getTransformedPoint(-x, -y, 0, gazePosition);
 		if(this.group instanceof MainInfoBitGroup)
 		{
@@ -385,33 +387,15 @@ class LabelInfoBit extends InfoBit
 
 			double r = MainInfoBitGroup.TILT_ANGLE;
 			
-			at.translate(getWidth()/2, getHeight()/2);
+			at.translate(width/2, height/2);
 			at.rotate(-r);			
 			at.translate(-x, -y);
 			
 			point = at.transform(gazePosition, point);
 		}
 		
+		score = Util.getRectangleToGazeScore(0,0,width, height, point);
 		
-		double distance = Util.distanceToRectangle(0, 0, getWidth(),getHeight(), point);
-		if(distance == 0)
-		{
-			score =1;
-		}
-		else
-		{	
-			double cx = x+getWidth()/2;
-			double cy = y+getHeight()/2;
-			
-			cx = 0;
-			cy = 0;
-			
-			double gpx = gazePosition.getX() - x - getWidth()/2;
-			double gpy = gazePosition.getY() - y - getHeight()/2;
-			
-			score = Util.gaussianDistribution(gpx, cx, getWidth()) 
-					* Util.gaussianDistribution(gpy, cy, getHeight()); 
-		}
 		return score;
 	}
 

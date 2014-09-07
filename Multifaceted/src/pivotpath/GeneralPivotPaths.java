@@ -335,11 +335,6 @@ class LabelInfoBit extends InfoBit
 		
 		g.setColor(previousColor);
 		
-		
-		Util.drawCircle(0, 0, Color.green, g);
-		Util.drawCircle((int)getWidth(), 0, Color.blue, g);
-		Util.drawCircle(0,(int)getHeight(), Color.red, g);
-		Util.drawCircle((int)getWidth(), (int)getHeight(), Color.black, g);
 	}
 
 	@Override
@@ -383,8 +378,22 @@ class LabelInfoBit extends InfoBit
 		
 		double x = this.group.getItemX(this);
 		double y = this.group.getItemY(this);
+		Point2D point = Util.getTransformedPoint(-x, -y, 0, gazePosition);
+		if(this.group instanceof MainInfoBitGroup)
+		{
+			AffineTransform at = new AffineTransform();	
+
+			double r = MainInfoBitGroup.TILT_ANGLE;
+			
+			at.translate(getWidth()/2, getHeight()/2);
+			at.rotate(-r);			
+			at.translate(-x, -y);
+			
+			point = at.transform(gazePosition, point);
+		}
 		
-		double distance = Util.distanceToRectangle(x, y, getWidth(),getHeight(), gazePosition);
+		
+		double distance = Util.distanceToRectangle(0, 0, getWidth(),getHeight(), point);
 		if(distance == 0)
 		{
 			score =1;
@@ -525,7 +534,7 @@ class InfoBitGroup
 
 class MainInfoBitGroup extends InfoBitGroup
 {
-	double angle = Math.PI/4;
+	public static final double TILT_ANGLE = Math.PI/4;
 	public Line2D[] getItemEdgeAnchor(int i)
 	{
 		Line2D[] anchors = items.get(i).getEdgeAnchors();
@@ -536,9 +545,7 @@ class MainInfoBitGroup extends InfoBitGroup
 		int y = (int)getItemY(i);
 		double w = items.get(i).getWidth();
 		double h = items.get(i).getHeight();
-		double r = angle;		
-//		x += w/2;
-//		y += h/2;	
+		double r = TILT_ANGLE;		
 		
 		a.translate(x, y);			
 		a.rotate(r);
@@ -562,10 +569,8 @@ class MainInfoBitGroup extends InfoBitGroup
 			int y = (int)getItemY(i);			
 			double w = items.get(i).getWidth();
 			double h = items.get(i).getHeight();
-			double r = angle;
-			
-//			x += w/2;
-//			y += h/2;			
+			double r = TILT_ANGLE;
+				
 
 			g.translate(x, y);			
 			g.rotate(r);
@@ -587,12 +592,10 @@ class MainInfoBitGroup extends InfoBitGroup
 			double y = (int)getItemY(i);
 			double w =  items.get(i).getWidth();
 			double h =  items.get(i).getHeight();			
-//			x += w/2;
-//			y += h/2;	
 			
 			AffineTransform at = new AffineTransform();	
 
-			double r = angle;
+			double r = TILT_ANGLE;
 			
 			//at.translate(ax, ay);
 			at.translate(w/2, h/2);

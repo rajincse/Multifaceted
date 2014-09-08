@@ -124,50 +124,12 @@ public class Util {
 		return d;
 	}
 	
-	public static double getRectangleToGazeScore(double x, double y, double w, double h, Point2D p)
+	public static double getRectangleToGazeScore(double x, double y, double w, double h, double deviation, Point2D p)
 	{
 		double score=0;
-		Point2D transformedPoint = getTransformedPoint(-x, -y, 0, p);
-		Rectangle rect = new Rectangle(0,0, (int)w, (int)h);
-		int rectangleSide = getRectangleSide(rect, transformedPoint);
-		double deviationX=0;
-		double deviationY=0;
-		switch(rectangleSide)
-		{
-			case RECT_SIDE_INSIDE:
-				score=1;
-				break;
-			case RECT_SIDE_TOP_LEFT:
-				score = getGaussianScore(transformedPoint, 0, 0, w, h);
-				break;
-			case RECT_SIDE_TOP:
-				deviationX = Math.max(w-transformedPoint.getX(), transformedPoint.getX());
-				score = getGaussianScore(transformedPoint, transformedPoint.getX(), 0, deviationX, h);
-				break;
-			case RECT_SIDE_TOP_RIGHT:
-				score = getGaussianScore(transformedPoint, w,0 , w, h);
-				break;
-			case RECT_SIDE_RIGHT:
-				deviationY = Math.max(w-transformedPoint.getY(), transformedPoint.getY());
-				score = getGaussianScore(transformedPoint, w, transformedPoint.getY(), w, deviationY);
-				break;
-			case RECT_SIDE_BOTTOM_RIGHT:
-				score = getGaussianScore(transformedPoint, w, h, w, h);
-				break;
-			case RECT_SIDE_BOTTOM:
-				deviationX = Math.max(w-transformedPoint.getX(), transformedPoint.getX());
-				score = getGaussianScore(transformedPoint, transformedPoint.getX(), h, deviationX, h);
-				break;
-			case RECT_SIDE_BOTTOM_LEFT:
-				score = getGaussianScore(transformedPoint, 0, h, w, h);
-				break;
-			case RECT_SIDE_LEFT:
-				deviationY = Math.max(w-transformedPoint.getY(), transformedPoint.getY());
-				score = getGaussianScore(transformedPoint, 0, transformedPoint.getY(), w, deviationY);
-				break;
-			default:
-				
-		}
+		
+		double distance = distanceToRectangle(x, y, w, h, p);
+		score =gaussianDistribution(distance, 0, deviation)*  Math.sqrt(2 * Math.PI);
 		return score;
 	}
 	public static double getGaussianScore(Point2D gazePosition, double meanX, double meanY, double deviationX, double deviationY)

@@ -95,7 +95,7 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 			nodeScores[i] = Math.max(0, nodeScores[i]-0.05);	//node scores decay over time
 			if (nodeScores[i] < 0) nodeScores[i] = 0;
 			
-			double d = element.computeScore(gazePoint);
+			double d = element.computeScore(gazePoint, et);
 												
 			if (d <= et)
 			{				

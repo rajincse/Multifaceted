@@ -181,6 +181,12 @@ class DirectorInfoBit extends LabelInfoBit
 				new Line2D.Double(getWidth()/2,getHeight(),getWidth()/2,getHeight()+100)};
 		
 	}
+	@Override
+	public void setScale(double d) {
+		// TODO Auto-generated method stub
+		
+		super.setScale(d*1.5);
+	}
 }
 
 class GenreInfoBit extends LabelInfoBit
@@ -202,6 +208,11 @@ class GenreInfoBit extends LabelInfoBit
 		return new Line2D.Double[]{new Line2D.Double(getWidth()/2,0,getWidth()/2,-100),
 				new Line2D.Double(getWidth()/2,getHeight(),getWidth()/2,getHeight()+100)};
 		
+	}
+	@Override
+	public void setScale(double d) {
+		// TODO Auto-generated method stub
+		super.setScale(d*0.75);
 	}
 }
 

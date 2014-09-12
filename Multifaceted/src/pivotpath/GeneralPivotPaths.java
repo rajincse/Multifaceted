@@ -374,7 +374,7 @@ class LabelInfoBit extends InfoBit
 		return score;
 	}
 	@Override
-	public double computeScore(Point2D gazePosition, double deviation) {
+	public double computeScore(Point2D gazePosition, double zoom) {
 		
 		double x = this.group.getItemX(this);
 		double y = this.group.getItemY(this);
@@ -393,7 +393,8 @@ class LabelInfoBit extends InfoBit
 			
 			point = at.transform(gazePosition, point);
 		}
-		score =Util.getRectangleToGazeScore(0, 0, width, height, deviation, point);
+		
+		score =Util.getRectangleToGazeScore(0, 0, width, height,point, zoom);
 		
 		return score;
 	}

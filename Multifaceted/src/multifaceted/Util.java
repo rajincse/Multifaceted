@@ -7,6 +7,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 
+import eyetrack.EyeTrackerLabelDetector;
+
 public class Util {
 	public static final int RECT_SIDE_INSIDE =0;
 	public static final int RECT_SIDE_TOP_LEFT =1;
@@ -124,11 +126,11 @@ public class Util {
 		return d;
 	}
 	
-	public static double getRectangleToGazeScore(double x, double y, double w, double h, double deviation, Point2D p)
+	public static double getRectangleToGazeScore(double x, double y, double w, double h, Point2D p, double zoom)
 	{
 		double score=0;
-		
-		double distance = distanceToRectangle(x, y, w, h, p);
+		double deviation = EyeTrackerLabelDetector.EDGETHRESHOLD/zoom;
+		double distance = distanceToRectangle(x, y, w, h, p)*zoom;
 		score =gaussianDistribution(distance, 0, deviation)*  Math.sqrt(2 * Math.PI);
 		return score;
 	}

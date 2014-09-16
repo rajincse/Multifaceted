@@ -9,6 +9,10 @@
         <servlet-name>DataServlet</servlet-name>
         <servlet-class>imdb.DataServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>DataExportServlet</servlet-name>
+        <servlet-class>imdb.DataExportServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>QueryServlet</servlet-name>
         <url-pattern>/QueryServlet</url-pattern>
@@ -16,6 +20,10 @@
     <servlet-mapping>
         <servlet-name>DataServlet</servlet-name>
         <url-pattern>/DataServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>DataExportServlet</servlet-name>
+        <url-pattern>/DataExportServlet</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>

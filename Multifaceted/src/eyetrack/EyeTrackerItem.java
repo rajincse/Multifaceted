@@ -1,9 +1,20 @@
 package eyetrack;
 
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 
-public interface EyeTrackerItem {
+import eyetrack.probability.StateAction;
+
+public interface EyeTrackerItem{
+	public static int TYPE_INVALID =-1;
+	public static int TYPE_ACTOR =StateAction.STATE_ACTOR;
+	public static int TYPE_MOVIE =StateAction.STATE_MOVIE;
+	public static int TYPE_DIRECTOR =StateAction.STATE_DIRECTOR;
+	public static int TYPE_GENRE =StateAction.STATE_GENRE;
+	public int getType();
+	public String getId ();
 	public void setScore(double score);
 	public double getScore();
-	public double computeScore(Point2D gazePosition, double zoomFactor);
+	public double getGazeScore(Point2D gazePosition, double zoomFactor);
+	public ArrayList<StateAction> getActions(ArrayList<StateAction> stateActions);
 }

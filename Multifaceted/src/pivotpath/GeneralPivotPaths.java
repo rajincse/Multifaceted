@@ -18,6 +18,7 @@ import java.util.HashSet;
 import multifaceted.Util;
 
 import eyetrack.EyeTrackerItem;
+import eyetrack.probability.StateAction;
 
 import perspectives.base.Animation;
 import perspectives.base.Viewer;
@@ -374,7 +375,7 @@ class LabelInfoBit extends InfoBit
 		return score;
 	}
 	@Override
-	public double computeScore(Point2D gazePosition, double zoom) {
+	public double getGazeScore(Point2D gazePosition, double zoom) {
 		
 		double x = this.group.getItemX(this);
 		double y = this.group.getItemY(this);
@@ -397,6 +398,69 @@ class LabelInfoBit extends InfoBit
 		score =Util.getRectangleToGazeScore(0, 0, width, height,point, zoom);
 		
 		return score;
+	}
+	
+	
+	
+	@Override
+	public String getId() {
+		// TODO Auto-generated method stub
+		return this.id;
+	}
+	@Override
+	public int getType() {
+		// TODO Auto-generated method stub
+		return EyeTrackerItem.TYPE_INVALID;
+	}
+	@Override
+	public ArrayList<StateAction> getActions(ArrayList<StateAction> stateActions) {
+		if(stateActions != null)
+		{
+			for(StateAction stateAction: stateActions)
+			{
+				int action = StateAction.getAction(this, isConnected(stateAction.getPreviousItem()));
+				stateAction.setAction(action);
+			}
+			return stateActions;
+		}
+		else
+		{
+			ArrayList<StateAction> EmptyStateActions = new ArrayList<StateAction>();
+			StateAction stateAction = new StateAction(null, 1);
+			int action = StateAction.getAction(this, false);
+			stateAction.setAction(action);
+			return EmptyStateActions;
+		}
+	}
+	
+	protected boolean isConnected(EyeTrackerItem element)
+	{
+		boolean connected = false;
+		if(element != null)
+		{
+			for(InfoBit infoBit : this.connections)
+			{
+				if(infoBit.id.equals(element.getId()))
+				{
+					connected = true;
+					break;
+				}
+			}
+		}
+		return connected;
+	}
+	@Override
+	public boolean equals(Object obj) {
+		// TODO Auto-generated method stub
+		if(obj instanceof EyeTrackerItem)
+		{
+			EyeTrackerItem item = (EyeTrackerItem) obj;
+			if(item.getId().equalsIgnoreCase(this.getId()))
+			{
+				return true;
+			}
+		}
+		return super.equals(obj);
 	}
 
 }

@@ -6,6 +6,8 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D.Double;
 import java.util.ArrayList;
 
+import eyetrack.EyeTrackerItem;
+
 
 class ActorInfoBit extends LabelInfoBit
 {
@@ -26,6 +28,11 @@ class ActorInfoBit extends LabelInfoBit
 		return new Line2D.Double[]{new Line2D.Double(getWidth()/2,0,getWidth()/2,-100),
 				new Line2D.Double(getWidth()/2,getHeight(),getWidth()/2,getHeight()+100)};
 		
+	}
+	@Override
+	public int getType() {
+		// TODO Auto-generated method stub
+		return EyeTrackerItem.TYPE_ACTOR;
 	}
 }
 
@@ -159,6 +166,11 @@ class MovieInfoBit extends LabelInfoBit
 		String[] labelLines = getMultilineLabels();
 		return 10*scale*labelLines.length;
 	}
+	@Override
+	public int getType() {
+		// TODO Auto-generated method stub
+		return EyeTrackerItem.TYPE_MOVIE;
+	}
 }
 
 class DirectorInfoBit extends LabelInfoBit
@@ -187,6 +199,11 @@ class DirectorInfoBit extends LabelInfoBit
 		
 		super.setScale(d*1.5);
 	}
+	@Override
+	public int getType() {
+		// TODO Auto-generated method stub
+		return EyeTrackerItem.TYPE_DIRECTOR;
+	}
 }
 
 class GenreInfoBit extends LabelInfoBit
@@ -213,6 +230,11 @@ class GenreInfoBit extends LabelInfoBit
 	public void setScale(double d) {
 		// TODO Auto-generated method stub
 		super.setScale(d*0.75);
+	}
+	@Override
+	public int getType() {
+		// TODO Auto-generated method stub
+		return EyeTrackerItem.TYPE_GENRE;
 	}
 }
 

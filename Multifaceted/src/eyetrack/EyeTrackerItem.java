@@ -17,4 +17,7 @@ public interface EyeTrackerItem{
 	public double getScore();
 	public double getGazeScore(Point2D gazePosition, double zoomFactor);
 	public ArrayList<StateAction> getActions(ArrayList<StateAction> stateActions);
+	//Debug
+	public void setGazeScore(double gazeScore);
+	public void setProbability(double probability);
 }

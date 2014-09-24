@@ -36,6 +36,7 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 	public void registerElements(ArrayList<EyeTrackerItem> elements)
 	{
 		this.elements = elements;
+		this.probabilityManager.setPreviousElement(null);
 	}
 	@Override
 	public void processGaze(Point gazePoint, double pupilDiameter) {
@@ -100,6 +101,8 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 			double probability = probabilityManager.getProbability(actions);
 			double score = gazeScore* probability;
 			element.setScore(score);
+			element.setGazeScore(gazeScore);
+			element.setProbability(probability);
 			scoreHistoryTime.add(score);
 		
 		}
@@ -161,6 +164,7 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 		while(!priorityQueue.isEmpty())
 		{
 			SortingItem item = priorityQueue.poll();
+			item.setValue(item.getValue());
 			previousElements.add(item.getItem());
 			count++;
 			if(count >= maxCount)

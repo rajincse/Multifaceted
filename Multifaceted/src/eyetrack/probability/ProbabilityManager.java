@@ -14,25 +14,23 @@ public class ProbabilityManager {
 	public ProbabilityManager()
 	{
 		this.probabilityTable =  StateAction.PROBABILITY_TABLE;
+		this.previousElements = null;
 	}
 
 	public ArrayList<StateAction> getPreviousStateActions() {
 		if(previousElements != null)
 		{
-			double maxScore = Double.MIN_NORMAL;
+			double totalScore = 0;
 			for(EyeTrackerItem item: previousElements)
 			{
 				double score =item.getScore(); 
-				if(score > maxScore)
-				{
-					maxScore = score;
-				}
+				totalScore += score;
 			}
 			
 			ArrayList<StateAction> previousStateActions = new ArrayList<StateAction>();
 			for(EyeTrackerItem item: previousElements)
 			{
-				double normalizedScore =item.getScore()/ maxScore; 
+				double normalizedScore =item.getScore()/ totalScore; 
 				StateAction stateAction = new StateAction(item, normalizedScore);
 				previousStateActions.add(stateAction);
 			}
@@ -53,6 +51,7 @@ public class ProbabilityManager {
 		int state = StateAction.STATE_INVALID;
 		for(StateAction stateAction : actions)
 		{
+			stateAction.toString();
 			if(stateAction.getPreviousItem() == null)
 			{
 				state = StateAction.STATE_INIT;

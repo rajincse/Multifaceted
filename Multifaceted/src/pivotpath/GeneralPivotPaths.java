@@ -327,15 +327,21 @@ class LabelInfoBit extends InfoBit
 
 	public void renderDebug(Graphics2D g)
 	{
-		String score =""+this.score;// String.format("%.6f", this.score);
-		
 		Color previousColor = g.getColor();
-
+		
+		String gazeScore = Util.formatNum(this.gazeScore);	
 		g.setColor(new Color(32,87,176,128));
-		g.drawString(score, (int)getWidth()+g.getFontMetrics().stringWidth("w"), (int)(getHeight()*0.8));
+		g.drawString("   "+gazeScore, (int)getWidth(), 0);
+		
+		String probability = Util.formatNum(this.probability);		
+		g.setColor(new Color(240,55,55,128));
+		g.drawString("X"+probability, (int)getWidth(), (int)(getHeight()*0.8));
+		
+		String score =Util.formatNum(this.score);
+		g.setColor(new Color(44,120,34,200));
+		g.drawString("="+score, (int)getWidth(), (int)(getHeight()*1.6));
 		
 		g.setColor(previousColor);
-		
 	}
 
 	@Override
@@ -425,11 +431,12 @@ class LabelInfoBit extends InfoBit
 		}
 		else
 		{
-			ArrayList<StateAction> EmptyStateActions = new ArrayList<StateAction>();
+			ArrayList<StateAction> emptyStateActions = new ArrayList<StateAction>();
 			StateAction stateAction = new StateAction(null, 1);
 			int action = StateAction.getAction(this, false);
 			stateAction.setAction(action);
-			return EmptyStateActions;
+			emptyStateActions.add(stateAction);
+			return emptyStateActions;
 		}
 	}
 	
@@ -462,7 +469,24 @@ class LabelInfoBit extends InfoBit
 		}
 		return super.equals(obj);
 	}
+	private double gazeScore;
+	private double probability;
+	@Override
+	public void setGazeScore(double gazeScore) {
+		// TODO Auto-generated method stub
+		this.gazeScore = gazeScore;
+	}
+	@Override
+	public void setProbability(double probability) {
+		// TODO Auto-generated method stub
+		this.probability = probability;
+	}
 
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return "{"+this.getType()+this.label+"}";
+	}
 }
 
 class InfoBitGroup

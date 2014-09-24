@@ -914,7 +914,6 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 	public boolean mousepressed(int x, int y, int button) {
 		mousePosition.x = x;
 		mousePosition.y = y;
-		System.out.println(x+"\t"+y);
 		if (button == 1)
 		{
 			((ViewerContainer2D)this.getContainer()).rightButtonDown = false;
@@ -978,6 +977,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 	public void selectItem(String id, String name) {
 		// TODO Auto-generated method stub
 		et.block(true);
+		System.out.println(id+" "+name);
 		CompactPerson person = new CompactPerson(Long.parseLong(id), name, "");
 		int val = JOptionPane.showConfirmDialog(null, "Are you sure to select "+name+"?", "Confirmation?", JOptionPane.YES_NO_OPTION);
 		if(val == JOptionPane.YES_OPTION)

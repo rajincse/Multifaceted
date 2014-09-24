@@ -102,5 +102,9 @@ public class StateAction {
 		this.normalizedProbability = normalizedProbability;
 	}
 	
-	
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return "{"+previousItem+", "+action+", "+normalizedProbability+"}";
+	}
 }

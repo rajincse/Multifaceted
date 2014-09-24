@@ -6,6 +6,7 @@ import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
+import java.text.DecimalFormat;
 
 import eyetrack.EyeTrackerLabelDetector;
 
@@ -141,5 +142,32 @@ public class Util {
 	public static double gaussianDistribution(double value, double mean, double deviation)
 	{	
 		return Math.exp(-1.0* (value - mean) * (value - mean) / (2 * deviation * deviation) ) / (deviation * Math.sqrt(2 * Math.PI));
+	}
+	
+	public static String formatNum(double number) {
+		int MAX_LENGTH = 9;
+		int digitsAvailable =2;
+	    if (Math.abs(number) < Math.pow(10, digitsAvailable)
+	            && Math.abs(number) > Math.pow(10, -digitsAvailable)) {
+	        String format = "0.";
+	        double temp = number;
+	        for (int i = 0; i < digitsAvailable; i++) {
+	            if ((temp /= 10) < 1) {
+	                format += "#";
+	            }
+	        }
+	        return new DecimalFormat(format).format(number);
+	    }
+	    String format = "0.";
+	    for (int i = 0; i < digitsAvailable; i++) {
+	            format += "#";
+	    }
+	    String r = new DecimalFormat(format + "E0").format(number);
+	    int lastLength = r.length() + 1;
+	    while (r.length() > MAX_LENGTH && lastLength > r.length()) {
+	        lastLength = r.length();
+	        r = r.replaceAll("\\.?[0-9]E", "E");
+	    }
+	    return r;
 	}
 }

@@ -25,6 +25,12 @@ public class SortingItem implements Comparable<SortingItem> {
 	@Override
 	public int compareTo(SortingItem o) {
 		// TODO Auto-generated method stub
-		return Double.compare(this.getValue(), o.getValue());
+		return Double.compare( o.getValue(), this.getValue());
+	}
+	
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return "{"+this.item+", "+this.getValue()+"}";
 	}
 }

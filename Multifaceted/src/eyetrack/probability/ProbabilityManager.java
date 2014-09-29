@@ -17,6 +17,10 @@ public class ProbabilityManager {
 		this.previousElements = null;
 	}
 
+	public ArrayList<EyeTrackerItem> getPreviousElements()
+	{
+		return this.previousElements;
+	}
 	public ArrayList<StateAction> getPreviousStateActions() {
 		if(previousElements != null)
 		{

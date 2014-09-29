@@ -38,6 +38,10 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 		this.elements = elements;
 		this.probabilityManager.setPreviousElement(null);
 	}
+	public ArrayList<EyeTrackerItem> getTopElements()
+	{
+		return this.probabilityManager.getPreviousElements();
+	}
 	@Override
 	public void processGaze(Point gazePoint, double pupilDiameter) {
 		// TODO Auto-generated method stub

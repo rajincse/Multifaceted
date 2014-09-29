@@ -1,6 +1,7 @@
 package pivotpath;
 
 import imdb.IMDBDataSource;
+import imdb.analysis.HeatMapAnalysisViewer;
 import imdb.entity.CompactMovie;
 import imdb.entity.CompactPerson;
 import imdb.entity.Genre;
@@ -31,6 +32,7 @@ import java.util.TimerTask;
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 
+import multifaceted.Util;
 import multifaceted.layout.LayoutViewerInterface;
 import multifaceted.layout.PivotElement;
 import perspectives.base.Property;
@@ -336,7 +338,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 						}
 					};
 			addProperty(pLoad);
-			startTimer();
+//			startTimer();
 			
 		}catch(Exception e)
 		{
@@ -721,7 +723,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 			
 			this.requestRender();
 		}
-		
+		this.saveScoreInfo();
 	}
 	@Override
 	public AffineTransform getTransform() {
@@ -852,36 +854,41 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 			if (isLocked) return;
 		}
 		et.block(true);
-//		double[] nodeScore = et.getNodeScore();
-//		double[] nodeScore2 = et.getNodeScore2();
-//		Color c= new Color(237, 185,188, 150);
-//		if(nodeScore != null && nodeScore2 != null)
-//		{
-//			for(int i=0;i<layout.getElements().size();i++)
-//			{
-//				PivotElement element = layout.getElements().get(i);
-//				if(nodeScore[i]> EyeTrackerPivotElementDetector.SELECTION_THRESHOLD)
-//				{
-//					//Selected					
-//					c= HeatMapAnalysisViewer.getHeatMapcolor(nodeScore[i]);
-//					addResultData(element,nodeScore[i]);
-//				}
-//				else
-//				{
-//					c= new Color(237, 185,188, 150);
-//				}
-//				if(this.isShowGazeOn())
-//				{
-//					element.getLabel().setColor(c);
-//				}
-//				else
-//				{
-//					element.getLabel().setColor(Color.LIGHT_GRAY);
-//				}
-//				
-//		
-//			}
-//		}
+		Color c= new Color(237, 185,188, 150);
+		if(this.et.getTopElements() != null && this.isShowGazeOn())
+		{
+			for(InfoBitGroup group: this.pivotPaths.groups)
+			{
+				for(InfoBit bit: group.getItems())
+				{
+					((LabelInfoBit)bit).color = Util.getColor(bit.getType());
+				}
+			}
+			
+			for(InfoBitGroup group: this.pivotPaths.dataGroups)
+			{
+				for(InfoBit bit: group.getItems())
+				{
+					((LabelInfoBit)bit).color = Util.getColor(bit.getType());
+				}
+			}
+			ArrayList<EyeTrackerItem> topelements = et.getTopElements();
+			int elementsSize = topelements.size();
+			for(int i=0;i<elementsSize;i++)
+			{
+				EyeTrackerItem element = this.et.getTopElements().get(i);
+				
+				int colorLength = HeatMapAnalysisViewer.HEATMAP_COLOR.length;
+				int colorIndex =colorLength -( i * (colorLength-1) /elementsSize)-1;
+				
+				((LabelInfoBit)element).color = HeatMapAnalysisViewer.HEATMAP_COLOR[colorIndex];
+				
+//				addResultData(element,nodeScore[i]);
+				
+
+		
+			}
+		}
 		et.block(false);
 		
 	}

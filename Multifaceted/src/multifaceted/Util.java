@@ -8,6 +8,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.text.DecimalFormat;
 
+import eyetrack.EyeTrackerItem;
 import eyetrack.EyeTrackerLabelDetector;
 
 public class Util {
@@ -169,5 +170,31 @@ public class Util {
 	        r = r.replaceAll("\\.?[0-9]E", "E");
 	    }
 	    return r;
+	}
+	
+	public static Color getColor(int type)
+	{
+		if(type== EyeTrackerItem.TYPE_ACTOR)
+		{
+			return  new Color(230,230,230,100);
+		}
+		else if(type== EyeTrackerItem.TYPE_MOVIE)
+		{
+			return  new Color(200,200,100,100);
+		}
+		else if(type== EyeTrackerItem.TYPE_DIRECTOR)
+		{
+			return new Color(200,100,100,150);
+		}	
+		else if(type== EyeTrackerItem.TYPE_GENRE)
+		{
+			return  new Color(150,150,250,100);
+		}	
+		else
+		{
+			return Color.black;
+		}
+			
+		
 	}
 }

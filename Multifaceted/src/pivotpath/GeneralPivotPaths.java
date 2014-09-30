@@ -718,6 +718,7 @@ public class GeneralPivotPaths {
 	ArrayList<String> data = new ArrayList<String>();
 	
 	Viewer viewer;
+	PivotPathViewerInterface pivotPathViewer= null;
 	
 	HashMap<String, InfoBitGroup> savedPositions;
 	
@@ -897,6 +898,10 @@ public class GeneralPivotPaths {
                     {
                     	savedPosFinal.remove(keyFinal);
                     	viewer.requestRender();
+                    	if(pivotPathViewer != null)
+                    	{
+                    		pivotPathViewer.callSaveView();
+                    	}
                     }
                 });
                 
@@ -1193,14 +1198,21 @@ public class GeneralPivotPaths {
 		g.setStroke(new BasicStroke(1));
 		for (int i=0; i<splineShapes.length; i++)
 		{
-			InfoBitGroup g1 = splineTargets[i][0].getGroup();
-			InfoBitGroup g2 = splineTargets[i][1].getGroup();
-			if ( (g1.hovered >=0 && g1.items.get(g1.hovered) == splineTargets[i][0]) ||
-					(g2.hovered >=0 && g2.items.get(g2.hovered) == splineTargets[i][1]))
-				g.setColor(Color.red);
-			else
-				g.setColor(splineColors[i]);
-			g.draw(splineShapes[i]);
+			try
+			{
+				InfoBitGroup g1 = splineTargets[i][0].getGroup();
+				InfoBitGroup g2 = splineTargets[i][1].getGroup();
+				if ( (g1.hovered >=0 && g1.items.get(g1.hovered) == splineTargets[i][0]) ||
+						(g2.hovered >=0 && g2.items.get(g2.hovered) == splineTargets[i][1]))
+					g.setColor(Color.red);
+				else
+					g.setColor(splineColors[i]);
+				g.draw(splineShapes[i]);
+			}
+			catch(Exception ex)
+			{
+				ex.printStackTrace();
+			}
 			
 			//splineShapes[i].render(g);
 		}
@@ -1213,6 +1225,16 @@ public class GeneralPivotPaths {
 		
 		for (int i=0; i<dataGroups.size(); i++)
 			dataGroups.get(i).render(g);
+//		renderDebug(g);
+	}
+	private void renderDebug(Graphics2D g)
+	{
+		Color prevColor = g.getColor();
+		g.setColor(Color.CYAN);
+		int width =10;
+		g.drawRect((int)mainBounds.getMinX()-width, (int)mainBounds.getMinY()-width, (int)mainBounds.getWidth()+2*width,(int)mainBounds.getHeight()+2*width);
+		
+		g.setColor(prevColor);
 	}
 	
 	

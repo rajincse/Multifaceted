@@ -34,7 +34,6 @@ import javax.swing.JOptionPane;
 
 import multifaceted.Util;
 import multifaceted.layout.LayoutViewerInterface;
-import multifaceted.layout.PivotElement;
 import perspectives.base.Property;
 import perspectives.base.Task;
 import perspectives.base.Viewer;
@@ -50,7 +49,7 @@ import eyetrack.EyeTrackerItem;
 import eyetrack.EyeTrackerLabelDetector;
 import eyetrack.EyeTrackerViewer;
 
-public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutViewerInterface , EyeTrackerViewer{
+public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPathViewerInterface , EyeTrackerViewer{
 
 	private static final String PROPERTY_SEARCH="Search";
 	private static final String PROPERTY_SEARCH_PERSON="Search Person";
@@ -88,8 +87,8 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 	private static final int TIME_LAPSE =10;
 	
 
-	public static final int IMAGE_SAVE_OFFSET_X =1000;
-	public static final int IMAGE_SAVE_OFFSET_Y =1000;
+	public static final int IMAGE_SAVE_OFFSET_X =100;
+	public static final int IMAGE_SAVE_OFFSET_Y =300;
 	public static final String IMAGE_RESULT_DIR="C:\\work\\";
 	
 	public static final long TIMER_PERIOD_GAZE=500;
@@ -134,14 +133,17 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 			@Override
 			public void transition(String facet, String value, String id)
 			{
-				selectItem(id, value);
+				if(!facet.trim().equals("") && !facet.equals(STR_GENRE))
+				{
+					selectItem(id, value);
+				}
 			}
 		};
 		pivotPaths.addSlot(new Point2D[]{new Point2D.Double(0, -300),  new Point2D.Double(0,50), new Point2D.Double(1000,50), new Point2D.Double(1000,-300), new Point2D.Double(0,-300)}, new Color(200,200,0,100));
 		pivotPaths.addSlot(new Point2D[]{new Point2D.Double(0, 300),  new Point2D.Double(0,600), new Point2D.Double(1000,600), new Point2D.Double(1000,300), new Point2D.Double(0,300)}, new Color(200,200,0,100));
 		
 		pivotPaths.viewer = this;
-
+		pivotPaths.pivotPathViewer = this;
 		
 		try
 		{	
@@ -338,7 +340,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 						}
 					};
 			addProperty(pLoad);
-//			startTimer();
+			startTimer();
 			
 		}catch(Exception e)
 		{
@@ -723,7 +725,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 			
 			this.requestRender();
 		}
-		this.saveScoreInfo();
+//		this.saveScoreInfo();
 	}
 	@Override
 	public AffineTransform getTransform() {
@@ -847,6 +849,27 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 		this.timer.cancel();
 	}
 
+	private void setPreviousColors()
+	{
+		for(InfoBitGroup group: this.pivotPaths.groups)
+		{
+			for(InfoBit bit: group.getItems())
+			{
+				if(bit instanceof LabelInfoBit)
+				{
+					((LabelInfoBit)bit).color = Util.getColor(bit.getType());
+				}
+			}
+		}
+		
+		for(InfoBitGroup group: this.pivotPaths.dataGroups)
+		{
+			for(InfoBit bit: group.getItems())
+			{
+				((LabelInfoBit)bit).color = Util.getColor(bit.getType());
+			}
+		}
+	}
 	private void saveScoreInfo()
 	{		
 		synchronized(this)
@@ -854,51 +877,46 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 			if (isLocked) return;
 		}
 		et.block(true);
-		Color c= new Color(237, 185,188, 150);
-		if(this.et.getTopElements() != null && this.isShowGazeOn())
+		if(this.et.getTopElements() != null )
 		{
-			for(InfoBitGroup group: this.pivotPaths.groups)
+			if(isShowGazeOn())
 			{
-				for(InfoBit bit: group.getItems())
-				{
-					((LabelInfoBit)bit).color = Util.getColor(bit.getType());
-				}
+				this.setPreviousColors();
 			}
 			
-			for(InfoBitGroup group: this.pivotPaths.dataGroups)
-			{
-				for(InfoBit bit: group.getItems())
-				{
-					((LabelInfoBit)bit).color = Util.getColor(bit.getType());
-				}
-			}
 			ArrayList<EyeTrackerItem> topelements = et.getTopElements();
 			int elementsSize = topelements.size();
 			for(int i=0;i<elementsSize;i++)
 			{
 				EyeTrackerItem element = this.et.getTopElements().get(i);
+				if(element instanceof LabelInfoBit)
+				{
+					LabelInfoBit labelInfoBit = (LabelInfoBit) element;
+					int colorLength = HeatMapAnalysisViewer.HEATMAP_COLOR.length;
+					int colorIndex =colorLength -( i * (colorLength-1) /elementsSize)-1;
+					
+					if(isShowGazeOn())
+					{
+						labelInfoBit.color = HeatMapAnalysisViewer.HEATMAP_COLOR[colorIndex];
+					}
+					
+					
+					addResultData(labelInfoBit, labelInfoBit.getScore());
+				}
 				
-				int colorLength = HeatMapAnalysisViewer.HEATMAP_COLOR.length;
-				int colorIndex =colorLength -( i * (colorLength-1) /elementsSize)-1;
-				
-				((LabelInfoBit)element).color = HeatMapAnalysisViewer.HEATMAP_COLOR[colorIndex];
-				
-//				addResultData(element,nodeScore[i]);
-				
-
-		
 			}
 		}
 		et.block(false);
 		
 	}
-	private void addResultData(PivotElement element, double score)
+	private void addResultData(LabelInfoBit element, double score)
 	{
+		
 		long time = System.currentTimeMillis();
 		String id = element.getId();
-		String name = element.getLabel().getText();
-		String data = time+"\t"+id+"\t"+name+"\t"+element.getLayer()+"\t"+String.format("%.2f",score)
-				+"\t"+(int)(element.getPosition().getX()+IMAGE_SAVE_OFFSET_X)+"\t"+(int)(element.getPosition().getY()+IMAGE_SAVE_OFFSET_Y)
+		String name = element.label;		
+		String data = time+"\t"+id+"\t"+name+"\t"+element.getType()+"\t"+String.format("%.2f",score)
+				+"\t"+(int)(element.group.getItemX(element)+IMAGE_SAVE_OFFSET_X)+"\t"+(int)(element.group.getItemY(element)+IMAGE_SAVE_OFFSET_Y)
 				+"\t"+currentImageFileName;
 		synchronized (this) {
 			this.resultText.append(data+"\r\n");
@@ -912,9 +930,9 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 		
 		String data = "Mouse\t"+time+"\t"+(mousePosition.x+IMAGE_SAVE_OFFSET_X)+"\t"+(mousePosition.y+IMAGE_SAVE_OFFSET_Y)
 				+"\t"+currentImageFileName;
-		synchronized (this) {
-			this.resultText.append(data+"\r\n");
-		}
+//		synchronized (this) {
+//			this.resultText.append(data+"\r\n");
+//		}
 //		System.out.println("##"+data);
 	}
 	
@@ -940,10 +958,6 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 	public boolean mousereleased(int x, int y, int button) {
 		mousePosition.x = x;
 		mousePosition.y = y;
-//		if(button ==3)
-//		{
-//			layout.getObjectInteraction().mouseRelease(x, y);
-//		}
 		
 		return false;
 	}
@@ -966,17 +980,12 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 		mousePosition.x = x;
 		mousePosition.y = y;
 		return false;
-//		return layout.getObjectInteraction().mouseMove(x, y);
 	}
 
 
 
 	public void callRequestRender() {
-		// TODO Auto-generated method stub
-		
-		this.requestRender();
-		
-		
+		this.requestRender();		
 	}
 
 
@@ -1000,7 +1009,12 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 		// TODO Auto-generated method stub
 		this.setToolTipText(text);
 	}
-	
+	@Override
+	public void callSaveView() {
+		// TODO Auto-generated method stub
+		System.out.println("Save view called");
+		saveView();
+	}
 
 	
 	private String currentImageFileName="";
@@ -1012,7 +1026,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
-				BufferedImage bim = new BufferedImage(3000,3000, BufferedImage.TYPE_INT_ARGB);
+				BufferedImage bim = new BufferedImage(1200,1000, BufferedImage.TYPE_INT_ARGB);
 				
 				Graphics2D g = bim.createGraphics();
 				
@@ -1036,8 +1050,8 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, LayoutVi
 	private void preSelectionTask()
 	{
 //		this.stopSimulation();
-//		this.layout.init();
-//		saveResult();
+
+		saveResult();
 		currentImageFileName ="";
 		
 	}

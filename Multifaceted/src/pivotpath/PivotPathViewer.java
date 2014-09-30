@@ -1012,7 +1012,6 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	@Override
 	public void callSaveView() {
 		// TODO Auto-generated method stub
-		System.out.println("Save view called");
 		saveView();
 	}
 

@@ -898,10 +898,6 @@ public class GeneralPivotPaths {
                     {
                     	savedPosFinal.remove(keyFinal);
                     	viewer.requestRender();
-                    	if(pivotPathViewer != null)
-                    	{
-                    		pivotPathViewer.callSaveView();
-                    	}
                     }
                 });
                 
@@ -938,6 +934,11 @@ public class GeneralPivotPaths {
                 {
                 	savedPosFinal.remove(keyFinal);
                 	viewer.requestRender();
+
+                	if(pivotPathViewer != null)
+                	{
+                		pivotPathViewer.callSaveView();
+                	}
                 }
             });
 		}

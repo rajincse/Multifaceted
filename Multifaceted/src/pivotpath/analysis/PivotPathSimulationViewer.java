@@ -1,12 +1,5 @@
 package pivotpath.analysis;
 
-import imdb.analysis.AnalysisItem;
-import imdb.analysis.HeatMapCell;
-import imdb.analysis.HeatMapTimeStamp;
-import imdb.analysis.SearchableTimeStamp;
-import imdb.entity.CompactMovie;
-import imdb.entity.CompactPerson;
-
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -28,16 +21,18 @@ import perspectives.base.Property;
 import perspectives.base.Viewer;
 import perspectives.properties.PFileInput;
 import perspectives.properties.PSignal;
+import perspectives.properties.PString;
 import perspectives.two_d.JavaAwtRenderer;
 
 public class PivotPathSimulationViewer extends Viewer implements JavaAwtRenderer{
 	public static final int INVALID =-1;
 	private static final String PROPERTY_LOAD ="Load";
 	private static final String PROPERTY_NEXT ="Next";
+	private static final String PROPERTY_SEEK ="Seek";
 	private static final String PROPERTY_START ="Start";
 	private static final String PROPERTY_STOP ="Stop";
 	
-	private static final long TIME_LAPSE = 10;
+	private static final long TIME_LAPSE = 20;
 	
 	private ArrayList<PivotPathFrame> frameList = null;
 	private HashMap<String, BufferedImage> imageList=null;
@@ -94,10 +89,42 @@ public class PivotPathSimulationViewer extends Viewer implements JavaAwtRenderer
 					}
 				};
 		addProperty(pStop);
+		
+		Property<PString> pSeek = new Property<PString>(PROPERTY_SEEK, new PString(""))
+				{
+						@Override
+						protected boolean updating(PString newvalue) {
+							// TODO Auto-generated method stub
+							String time = newvalue.stringValue();
+							if(!time.isEmpty())
+							{
+								try
+								{
+									Long timestamp = Long.parseLong(time);
+									PivotPathFrame frame = new PivotPathFrame(timestamp);
+									if(frameList!= null &&frameList.contains(frame))
+									{
+										frameIndex = frameList.indexOf(frame);
+										requestRender();
+									}
+									
+								}
+								catch(Exception ex)
+								{
+									
+								}
+							}
+							
+							
+							return super.updating(newvalue);
+						}
+				};
+		addProperty(pSeek);
 	}
 
 	private void startTimer()
 	{
+		this.timer = new Timer();
 		this.timer.schedule(new TimerTask() {
 			
 			@Override
@@ -176,6 +203,7 @@ public class PivotPathSimulationViewer extends Viewer implements JavaAwtRenderer
 					return image;
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
+					System.out.println("Error reading:"+directory+"/"+fileName);
 					e.printStackTrace();
 				}
 				
@@ -223,14 +251,16 @@ public class PivotPathSimulationViewer extends Viewer implements JavaAwtRenderer
 			long timeStamp = Long.parseLong(split[1]);
 			int x = Integer.parseInt(split[2]);
 			int y = Integer.parseInt(split[3]);
+			int rad = Integer.parseInt(split[4]);
 			String imageFile ="";
-			if(split.length == 5)
+			if(split.length == 6)
 			{
-				imageFile = split[4];
+				imageFile = split[5];
 			}
 			if(currentFrame!= null && currentFrame.getTimestamp() == timeStamp)
 			{
 				currentFrame.setGazePosition(new Point2D.Double(x,y));
+				currentFrame.setGazeRadius(rad);
 				if(currentFrame.getImage() == null && !imageFile.isEmpty())
 				{
 					currentFrame.setImage(getImage(imageFile));
@@ -240,6 +270,7 @@ public class PivotPathSimulationViewer extends Viewer implements JavaAwtRenderer
 			{
 				currentFrame = new PivotPathFrame(timeStamp);
 				currentFrame.setGazePosition(new Point(x,y));
+				currentFrame.setGazeRadius(rad);
 				if(currentFrame.getImage() == null && !imageFile.isEmpty())
 				{
 					currentFrame.setImage(getImage(imageFile));

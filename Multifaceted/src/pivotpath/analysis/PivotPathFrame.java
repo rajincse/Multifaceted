@@ -1,18 +1,20 @@
 package pivotpath.analysis;
 
+import imdb.analysis.HeatMapAnalysisViewer;
+
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
-import multifaceted.Util;
-
 public class PivotPathFrame {
+	private static final double SCALE =1.5;
 	private long timestamp;
 	private BufferedImage image;
 	private Point2D mousePosition;
 	private Point2D gazePosition;
+	private int gazeRadius;
 	private ArrayList<Double> elementScoreList;
 	private ArrayList<Point2D> elementPositionList;
 	public PivotPathFrame(long timestamp)
@@ -94,29 +96,105 @@ public class PivotPathFrame {
 		this.elementPositionList.add(position);
 		this.elementScoreList.add(score);
 	}
-	
+	public int getGazeRadius() {
+		return gazeRadius;
+	}
+	public void setGazeRadius(int gazeRadius) {
+		this.gazeRadius = gazeRadius;
+	}
+	@Override
+	public boolean equals(Object obj) {
+		// TODO Auto-generated method stub
+		if(obj instanceof PivotPathFrame)
+		{
+			PivotPathFrame frame = (PivotPathFrame) obj;
+			if(frame.getTimestamp() == this.timestamp)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			return super.equals(obj);
+		}
+		
+	}
 	public void render(Graphics2D g)
 	{
 		
 		int originX =100;
 		int originY = 100;
 		g.translate(originX, originY);
-		double scaleFactor = 1.5; 
 		g.setColor(Color.black);
 		g.drawString("Time: "+this.timestamp,-50, -50);
 		if(this.image != null)
 		{
-			g.drawImage(this.image, 0,0,(int)( this.image.getWidth()/scaleFactor),(int) (this.image.getHeight()/scaleFactor), 0, 0, this.image.getWidth(), this.image.getHeight(), null);
+			g.drawImage(this.image, 0,0,(int)( this.image.getWidth()/SCALE),(int) (this.image.getHeight()/SCALE), 0, 0, this.image.getWidth(), this.image.getHeight(), null);
 		}
 		if(this.mousePosition != null)
 		{
-			Util.drawCircle((int)this.mousePosition.getX(), (int)this.mousePosition.getY(), Color.red, g);
+			renderMouse(g, (int)(this.mousePosition.getX()/SCALE), (int)(this.mousePosition.getY()/SCALE));
 		}
 		
 		if(this.gazePosition != null)
 		{
-			Util.drawCircle((int)this.gazePosition.getX(), (int)this.gazePosition.getY(), Color.blue, g);
+			renderGaze(g, (int)(this.gazePosition.getX()/SCALE), (int)(this.gazePosition.getY()/SCALE));
 		}
+		
+		if(this.elementPositionList != null && !this.elementPositionList.isEmpty() )
+		{
+			for(int i =0;i< this.elementPositionList.size();i++)
+			{
+				int colorLength = HeatMapAnalysisViewer.HEATMAP_COLOR.length;
+				int colorIndex =colorLength -( i * (colorLength-1) /this.elementPositionList.size())-1;
+				Color color = HeatMapAnalysisViewer.HEATMAP_COLOR[colorIndex];
+				Point2D point = this.elementPositionList.get(i);
+				renderElement(g, (int)(point.getX()/SCALE), (int) (point.getY()/SCALE), color);
+			}
+		}
+	}
+	private void renderElement(Graphics2D g, int x, int y, Color color)
+	{
+		g.translate(x, y);
+//		int outerCircleRad = 15;
+		
+		g.translate(-13, -27);
+		g.setColor(color);
+		g.fillPolygon(	new int[]{11,11, 5,13,22,16,16,11},
+						new int[]{ 6,16,16,27,16,16, 6, 6}, 
+				8);
+		g.translate(13, 27);
+		g.translate(-x, -y);
+	}
+	private void renderMouse(Graphics2D g, int x, int y)
+	{
+		g.translate(x, y);
+		g.setColor(Color.black);
+		g.drawPolygon(	new int[]{0,1 ,4 ,9 ,11,7 ,12,0},
+				new int[]{0,17,13,21,19,12,12,0}, 
+				8);
+		g.setColor(Color.white);
+		g.fillPolygon(	new int[]{0,1 ,4 ,9 ,11,7 ,12,0},
+						new int[]{0,17,13,21,19,12,12,0}, 
+						8);
+		g.translate(-x, -y);
+	}
+	
+	private void renderGaze(Graphics2D g, int x, int y)
+	{
+		g.translate(x, y);
+		int innerCircleRad = 5;
+		int outerCircleRad = gazeRadius;
+		g.setColor(Color.red);
+		
+		g.fillOval(-innerCircleRad,-innerCircleRad, 2*innerCircleRad, 2* innerCircleRad);
+		g.drawOval(-outerCircleRad,-outerCircleRad, 2*outerCircleRad, 2* outerCircleRad);
+		
+		g.translate(-x, -y);
 	}
 	
 }

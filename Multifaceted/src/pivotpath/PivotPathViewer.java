@@ -33,7 +33,6 @@ import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 
 import multifaceted.Util;
-import multifaceted.layout.LayoutViewerInterface;
 import perspectives.base.Property;
 import perspectives.base.Task;
 import perspectives.base.Viewer;
@@ -718,6 +717,8 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	private int gazeY;
 	@Override
 	public void gazeDetected(int x, int y) {
+		this.gazeX = x;
+		this.gazeY = y;
 		if(isShowGazeOn())
 		{
 			this.gazeX = x;
@@ -735,7 +736,15 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	@Override
 	public double getZoom() {
 		// TODO Auto-generated method stub
-		return ((ViewerContainer2D)this.getContainer()).getZoom();
+		if(this.getContainer() != null)
+		{
+			return ((ViewerContainer2D)this.getContainer()).getZoom();
+		}
+		else
+		{
+			return 1.0;
+		}
+		
 	}
 	private boolean isShowGazeOn()
 	{
@@ -927,10 +936,10 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	private void addResultData(Point mousePosition)
 	{
 		long time = System.currentTimeMillis();
-		
+		int rad =(int)( EyeTrackerLabelDetector.EDGETHRESHOLD/ this.getZoom());
 		String data = "Mouse\t"+time+"\t"+(mousePosition.x+IMAGE_SAVE_OFFSET_X)+"\t"+(mousePosition.y+IMAGE_SAVE_OFFSET_Y)
 				+"\t"+currentImageFileName+"\r\n"
-				+"Gaze\t"+time+"\t"+(gazeX+IMAGE_SAVE_OFFSET_X)+"\t"+(gazeY+IMAGE_SAVE_OFFSET_Y)
+				+"Gaze\t"+time+"\t"+(gazeX+IMAGE_SAVE_OFFSET_X)+"\t"+(gazeY+IMAGE_SAVE_OFFSET_Y)+"\t"+rad
 				+"\t"+currentImageFileName;
 		synchronized (this) {
 			this.resultText.append(data+"\r\n");

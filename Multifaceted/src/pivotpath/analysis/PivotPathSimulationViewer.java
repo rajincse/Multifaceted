@@ -215,6 +215,16 @@ public class PivotPathSimulationViewer extends Viewer implements JavaAwtRenderer
 	private PivotPathFrame currentFrame= null;;
 	private void processFileLine(String line) {		
 		String[] split = line.split("\t");
+		ArrayList<Point2D> positionList=null;
+		ArrayList<Double> scoreList=null;
+		String lastImage="";
+
+		if(currentFrame != null)
+		{
+			positionList = currentFrame.getElementPositionList();
+			scoreList = currentFrame.getElementScoreList();
+			lastImage = currentFrame.getImageName();
+		}
 //		System.out.println(line);
 		
 		if(split.length > 0 && split[0].equals("Mouse"))
@@ -233,6 +243,7 @@ public class PivotPathSimulationViewer extends Viewer implements JavaAwtRenderer
 				if(currentFrame.getImage() == null && !imageFile.isEmpty())
 				{
 					currentFrame.setImage(getImage(imageFile));
+					currentFrame.setImageName(imageFile);
 				}
 			}
 			else
@@ -242,6 +253,12 @@ public class PivotPathSimulationViewer extends Viewer implements JavaAwtRenderer
 				if(currentFrame.getImage() == null && !imageFile.isEmpty())
 				{
 					currentFrame.setImage(getImage(imageFile));
+					currentFrame.setImageName(imageFile);
+					if(lastImage.equals(imageFile))
+					{
+						currentFrame.setElementPositionList(positionList);
+						currentFrame.setElementScoreList(scoreList);
+					}
 				}
 				this.frameList.add(currentFrame);
 			}
@@ -264,6 +281,7 @@ public class PivotPathSimulationViewer extends Viewer implements JavaAwtRenderer
 				if(currentFrame.getImage() == null && !imageFile.isEmpty())
 				{
 					currentFrame.setImage(getImage(imageFile));
+					currentFrame.setImageName(imageFile);
 				}
 			}
 			else
@@ -274,6 +292,12 @@ public class PivotPathSimulationViewer extends Viewer implements JavaAwtRenderer
 				if(currentFrame.getImage() == null && !imageFile.isEmpty())
 				{
 					currentFrame.setImage(getImage(imageFile));
+					currentFrame.setImageName(imageFile);
+					if(lastImage.equals(imageFile))
+					{
+						currentFrame.setElementPositionList(positionList);
+						currentFrame.setElementScoreList(scoreList);
+					}
 				}
 				this.frameList.add(currentFrame);
 			}
@@ -305,6 +329,7 @@ public class PivotPathSimulationViewer extends Viewer implements JavaAwtRenderer
 				if(currentFrame.getImage() == null && !image.isEmpty())
 				{
 					currentFrame.setImage(getImage(image));
+					currentFrame.setImageName(image);
 				}
 			}
 			else
@@ -314,6 +339,7 @@ public class PivotPathSimulationViewer extends Viewer implements JavaAwtRenderer
 				if(currentFrame.getImage() == null && !image.isEmpty())
 				{
 					currentFrame.setImage(getImage(image));
+					currentFrame.setImageName(image);
 				}
 				this.frameList.add(currentFrame);
 			}

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 public class PivotPathFrame {
 	private static final double SCALE =1.5;
 	private long timestamp;
+	private String imageName; 
 	private BufferedImage image;
 	private Point2D mousePosition;
 	private Point2D gazePosition;
@@ -20,6 +21,7 @@ public class PivotPathFrame {
 	public PivotPathFrame(long timestamp)
 	{
 		this.timestamp = timestamp;
+		this.imageName = "";
 		this.image = null;
 		this.mousePosition = null;
 		this.gazePosition = null;
@@ -27,6 +29,7 @@ public class PivotPathFrame {
 		this.elementScoreList = null;
 	}
 	public PivotPathFrame(	long timestamp,
+							String imageName,
 							BufferedImage image,
 							Point2D mousePosition,
 							Point2D gazePosition,
@@ -34,6 +37,7 @@ public class PivotPathFrame {
 							ArrayList<Point2D> elementPositionList)
 	{
 		this.timestamp = timestamp;
+		this.imageName = imageName;
 		this.image = image;
 		this.mousePosition = mousePosition;
 		this.gazePosition = gazePosition;
@@ -95,6 +99,18 @@ public class PivotPathFrame {
 		}
 		this.elementPositionList.add(position);
 		this.elementScoreList.add(score);
+	}
+	public String getImageName() {
+		return imageName;
+	}
+	public void setImageName(String imageName) {
+		this.imageName = imageName;
+	}
+	public void setElementScoreList(ArrayList<Double> elementScoreList) {
+		this.elementScoreList = elementScoreList;
+	}
+	public void setElementPositionList(ArrayList<Point2D> elementPositionList) {
+		this.elementPositionList = elementPositionList;
 	}
 	public int getGazeRadius() {
 		return gazeRadius;

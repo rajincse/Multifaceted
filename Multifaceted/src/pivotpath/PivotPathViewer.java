@@ -929,10 +929,12 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		long time = System.currentTimeMillis();
 		
 		String data = "Mouse\t"+time+"\t"+(mousePosition.x+IMAGE_SAVE_OFFSET_X)+"\t"+(mousePosition.y+IMAGE_SAVE_OFFSET_Y)
+				+"\t"+currentImageFileName+"\r\n"
+				+"Gaze\t"+time+"\t"+(gazeX+IMAGE_SAVE_OFFSET_X)+"\t"+(gazeY+IMAGE_SAVE_OFFSET_Y)
 				+"\t"+currentImageFileName;
-//		synchronized (this) {
-//			this.resultText.append(data+"\r\n");
-//		}
+		synchronized (this) {
+			this.resultText.append(data+"\r\n");
+		}
 //		System.out.println("##"+data);
 	}
 	

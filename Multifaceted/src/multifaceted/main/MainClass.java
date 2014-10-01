@@ -7,6 +7,7 @@ import imdb.analysis.ProbabilityViewerFactory;
 import imdb.analysis.StripViewerFactory;
 import perspectives.base.Environment;
 import pivotpath.PivotPathViewerFactory;
+import pivotpath.analysis.PivotPathSimulationViewerFactory;
 import recommend.RecommendViewerFactory;
 
 public class MainClass {
@@ -21,5 +22,7 @@ public class MainClass {
 		e.registerViewerFactory(new ProbabilityViewerFactory());
 		e.registerViewerFactory(new RecommendViewerFactory());
 		e.registerViewerFactory(new PivotPathViewerFactory());
+		e.registerViewerFactory(new PivotPathSimulationViewerFactory());
+		
 	}
 }

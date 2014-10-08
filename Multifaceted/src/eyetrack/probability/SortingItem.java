@@ -6,10 +6,10 @@ public class SortingItem implements Comparable<SortingItem> {
 
 	private EyeTrackerItem item;
 	private double value;
-	public SortingItem(EyeTrackerItem item)
+	public SortingItem(EyeTrackerItem item, double value)
 	{
 		this.item = item;
-		this.value = item.getScore();
+		this.value = value;
 	}
 	
 	public double getValue() {

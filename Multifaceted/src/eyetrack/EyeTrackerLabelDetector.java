@@ -11,8 +11,6 @@ import eyetrack.probability.ProbabilityManager;
 import eyetrack.probability.SortingItem;
 import eyetrack.probability.StateAction;
 
-import multifaceted.layout.PivotElement;
-
 public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 	public static final int TIME_RESOLUTION=100;
 	private EyeTrackServer g;
@@ -36,11 +34,11 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 	public void registerElements(ArrayList<EyeTrackerItem> elements)
 	{
 		this.elements = elements;
-		this.probabilityManager.setPreviousElement(null);
+		this.probabilityManager.setOriginalPreviousElements(null);
 	}
 	public ArrayList<EyeTrackerItem> getTopElements()
 	{
-		return this.probabilityManager.getPreviousElements();
+		return this.probabilityManager.getOriginalPreviousElements();
 	}
 	@Override
 	public void processGaze(Point gazePoint, double pupilDiameter) {
@@ -101,8 +99,17 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 			
 			
 			double gazeScore = element.getGazeScore(gazePoint, zoom);
-			ArrayList<StateAction> actions = element.getActions(probabilityManager.getPreviousStateActions());
-			double probability = probabilityManager.getProbability(actions);
+			
+			//original 
+			ArrayList<StateAction> originalActions = element.getActions(probabilityManager.getPreviousStateActions(ProbabilityManager.SCORE_ORIGINAL));			
+			double probability = probabilityManager.getProbability(originalActions);			
+			//gazeScore
+			ArrayList<StateAction> gazeActions = element.getActions(probabilityManager.getPreviousStateActions(ProbabilityManager.SCORE_GAZE));
+			probability = Math.max(probability, probabilityManager.getProbability(gazeActions));
+			//probabilityScore
+			ArrayList<StateAction> probabilityActions = element.getActions(probabilityManager.getPreviousStateActions(ProbabilityManager.SCORE_PROBABILITY));
+			probability = Math.max(probability, probabilityManager.getProbability(probabilityActions));
+			
 			double score = gazeScore* probability;
 			element.setScore(score);
 			element.setGazeScore(gazeScore);
@@ -128,14 +135,38 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 			}
 			fromIndex = i;
 		}
+		ArrayList<EyeTrackerItem> originalPreviousElements = this.getPreviousElementList(fromIndex, toIndex, ProbabilityManager.SCORE_ORIGINAL);
+		this.probabilityManager.setOriginalPreviousElements(originalPreviousElements);
+		
+		ArrayList<EyeTrackerItem> gazePreviousElements = this.getPreviousElementList(fromIndex, toIndex, ProbabilityManager.SCORE_GAZE);
+		this.probabilityManager.setGazePreviousElements(gazePreviousElements);
+		
+		ArrayList<EyeTrackerItem> probabilityPreviousElements = this.getPreviousElementList(fromIndex, toIndex, ProbabilityManager.SCORE_PROBABILITY);
+		this.probabilityManager.setProbabilityPreviousElements(probabilityPreviousElements);
+	}
+	
+	private ArrayList<EyeTrackerItem> getPreviousElementList(int fromIndex, int toIndex, int scoreType )
+	{
 		PriorityQueue<SortingItem> priorityQueue = new PriorityQueue<SortingItem>();
 		//initial
 		ArrayList<Double> scoreHistoryTime = this.scoreHistory.get(fromIndex);
 		for(int j=0;j<scoreHistoryTime.size();j++)
 		{
 			EyeTrackerItem element = this.elements.get(j);
-			
-			SortingItem sortingItem = new SortingItem(element);
+			double score = 0;
+			if(scoreType== ProbabilityManager.SCORE_ORIGINAL)
+			{
+				score = element.getScore();
+			}
+			else if (scoreType == ProbabilityManager.SCORE_GAZE )
+			{
+				score = element.getStoredGazeScore();
+			}
+			else if (scoreType == ProbabilityManager.SCORE_PROBABILITY )
+			{
+				score = element.getProbabilityScore();
+			}
+			SortingItem sortingItem = new SortingItem(element, score);
 			priorityQueue.add(sortingItem);
 		}
 		
@@ -176,6 +207,6 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 				break;
 			}
 		}
-		this.probabilityManager.setPreviousElement(previousElements);
+		return previousElements;
 	}
 }

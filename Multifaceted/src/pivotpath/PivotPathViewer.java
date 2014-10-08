@@ -60,6 +60,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	private static final String PROPERTY_STEP="Debug.Step";
 	private static final String PROPERTY_PERFORMANCE="Debug.Check Performance";
 	private static final String PROPERTY_SHOW_GAZE="Debug.Show Gaze";
+	private static final String PROPERTY_MOUSE_GAZE="Debug.Mouse Gaze";
 	private static final String PROPERTY_REFRESH="Refresh";
 	private static final String PROPERTY_END_STUDY = "End of Study";
 	private static final String PROPERTY_SHOW_LIST_TYPE = "Show List";
@@ -285,6 +286,9 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			
 			Property<PBoolean> pShowGaze = new Property<PBoolean>(PROPERTY_SHOW_GAZE,new PBoolean(false));
 			addProperty(pShowGaze);
+			
+			Property<PBoolean> pMouseGaze = new Property<PBoolean>(PROPERTY_MOUSE_GAZE,new PBoolean(false));
+			addProperty(pMouseGaze);
 			
 			Property<PSignal> pEndOfStudy = new Property<PSignal>(PROPERTY_END_STUDY, new PSignal())
 					{
@@ -751,6 +755,11 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		PBoolean showGaze = (PBoolean)this.getProperty(PROPERTY_SHOW_GAZE).getValue();
 		return showGaze.boolValue();
 	}
+	private boolean isMouseGazeOn()
+	{
+		PBoolean mouseGaze = (PBoolean)this.getProperty(PROPERTY_MOUSE_GAZE).getValue();
+		return mouseGaze.boolValue();
+	}
 	private boolean isSearchActorOn()
 	{
 		PBoolean searchActor = (PBoolean)this.getProperty(PROPERTY_SEARCH_PERSON).getValue();
@@ -953,8 +962,11 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		if (button == 1)
 		{
 			((ViewerContainer2D)this.getContainer()).rightButtonDown = false;
+			if(isMouseGazeOn())
+			{
+				et.processScreenPoint(new Point(x,y));	
+			}
 			
-			et.processScreenPoint(new Point(x,y));
 
 			return true;
 		}

@@ -487,6 +487,16 @@ class LabelInfoBit extends InfoBit
 		// TODO Auto-generated method stub
 		return "{"+this.getType()+this.label+"}";
 	}
+	@Override
+	public double getStoredGazeScore() {
+		// TODO Auto-generated method stub
+		return this.gazeScore;
+	}
+	@Override
+	public double getProbabilityScore() {
+		// TODO Auto-generated method stub
+		return this.probability;
+	}
 }
 
 class InfoBitGroup

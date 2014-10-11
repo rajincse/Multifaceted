@@ -133,7 +133,7 @@ public class Util {
 		double score=0;
 		double deviation = EyeTrackerLabelDetector.EDGETHRESHOLD/zoom;
 		double distance = distanceToRectangle(x, y, w, h, p)*zoom;
-		score =gaussianDistribution(distance, 0, deviation)*  Math.sqrt(2 * Math.PI) * deviation;
+		score =gaussianDistribution(distance, 0, deviation);
 		return score;
 	}
 	public static double getGaussianScore(Point2D gazePosition, double meanX, double meanY, double deviationX, double deviationY)
@@ -196,5 +196,10 @@ public class Util {
 		}
 			
 		
+	}
+	// Get a score of 1/R to 1
+	public static double getLevitatedScore(double value, double ratio)
+	{
+		return (1+value)/ratio;
 	}
 }

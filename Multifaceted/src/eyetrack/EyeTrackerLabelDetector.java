@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
 
+import multifaceted.Util;
+
 import eyetrack.probability.ProbabilityManager;
 import eyetrack.probability.SortingItem;
 import eyetrack.probability.StateAction;
@@ -93,6 +95,28 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 		
 		double zoom =viewer.getZoom();
 		
+		PriorityQueue<SortingItem> gazeScorePriorityQueue = new PriorityQueue<SortingItem>();
+		
+		//get top 10% gaze score
+		
+		for(int i=0;i< this.elements.size();i++)
+		{
+			EyeTrackerItem element = this.elements.get(i);
+			double gazeScore = element.getGazeScore(gazePoint, zoom);
+			SortingItem item= new SortingItem(element, gazeScore);
+			gazeScorePriorityQueue.add(item);
+		}
+		// Getting the sum of as topGazeScoreSum of top 10% gazes
+		
+		int maxCount = (int) Math.ceil(ProbabilityManager.TOP_PERCENTILE*gazeScorePriorityQueue.size()/100.0);
+		double topGazeScoreSum =0;
+		for(int i=0;i<maxCount && !gazeScorePriorityQueue.isEmpty();i++)
+		{
+			SortingItem item = gazeScorePriorityQueue.poll();
+			topGazeScoreSum+=item.getValue();
+		}
+		//-------------------
+		
 		for (int i=0; i<elements.size(); i++)
 		{
 			EyeTrackerItem element = this.elements.get(i);
@@ -104,10 +128,13 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 			ArrayList<StateAction> originalActions = element.getActions(probabilityManager.getPreviousStateActions(ProbabilityManager.SCORE_ORIGINAL));			
 			double probability = probabilityManager.getProbability(originalActions);			
 			
-			double score = gazeScore* probability;
+			double contributingGazeScore = gazeScore / topGazeScoreSum;
+			double levitatedProbability = Util.getLevitatedScore(probability, ProbabilityManager.LEVITATION_PROBABILITY_RATIO);
+			
+			double score = contributingGazeScore* levitatedProbability;
 			element.setScore(score);
-			element.setGazeScore(gazeScore);
-			element.setProbability(probability);
+			element.setGazeScore(contributingGazeScore);
+			element.setProbability(levitatedProbability);
 			scoreHistoryTime.add(score);
 		
 		}

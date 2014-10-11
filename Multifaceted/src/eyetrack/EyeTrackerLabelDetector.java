@@ -103,12 +103,6 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 			//original 
 			ArrayList<StateAction> originalActions = element.getActions(probabilityManager.getPreviousStateActions(ProbabilityManager.SCORE_ORIGINAL));			
 			double probability = probabilityManager.getProbability(originalActions);			
-			//gazeScore
-			ArrayList<StateAction> gazeActions = element.getActions(probabilityManager.getPreviousStateActions(ProbabilityManager.SCORE_GAZE));
-			probability = Math.max(probability, probabilityManager.getProbability(gazeActions));
-			//probabilityScore
-			ArrayList<StateAction> probabilityActions = element.getActions(probabilityManager.getPreviousStateActions(ProbabilityManager.SCORE_PROBABILITY));
-			probability = Math.max(probability, probabilityManager.getProbability(probabilityActions));
 			
 			double score = gazeScore* probability;
 			element.setScore(score);
@@ -137,12 +131,6 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 		}
 		ArrayList<EyeTrackerItem> originalPreviousElements = this.getPreviousElementList(fromIndex, toIndex, ProbabilityManager.SCORE_ORIGINAL);
 		this.probabilityManager.setOriginalPreviousElements(originalPreviousElements);
-		
-		ArrayList<EyeTrackerItem> gazePreviousElements = this.getPreviousElementList(fromIndex, toIndex, ProbabilityManager.SCORE_GAZE);
-		this.probabilityManager.setGazePreviousElements(gazePreviousElements);
-		
-		ArrayList<EyeTrackerItem> probabilityPreviousElements = this.getPreviousElementList(fromIndex, toIndex, ProbabilityManager.SCORE_PROBABILITY);
-		this.probabilityManager.setProbabilityPreviousElements(probabilityPreviousElements);
 	}
 	
 	private ArrayList<EyeTrackerItem> getPreviousElementList(int fromIndex, int toIndex, int scoreType )

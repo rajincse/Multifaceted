@@ -170,6 +170,8 @@ public class PivotPathFrame {
 				Color color = HeatMapAnalysisViewer.HEATMAP_COLOR[colorIndex];
 				Point2D point = this.elementPositionList.get(i);
 				renderElement(g, (int)(point.getX()/SCALE), (int) (point.getY()/SCALE), color);
+				g.setColor(Color.black);
+				g.drawString(""+(i+1), (int)(point.getX()/SCALE)+5, (int) (point.getY()/SCALE)+5);
 			}
 		}
 	}

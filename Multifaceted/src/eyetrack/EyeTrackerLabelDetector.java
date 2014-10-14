@@ -26,6 +26,7 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 	
 	private ArrayList<Long> timeList = new ArrayList<Long>();
 	private ArrayList<ArrayList<Double>> scoreHistory = new ArrayList<ArrayList<Double>>();
+	private ArrayList<ArrayList<Double>> gazeHistory = new ArrayList<ArrayList<Double>>();
 	
 	public EyeTrackerLabelDetector(EyeTrackerViewer viewer)
 	{
@@ -36,6 +37,9 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 	public void registerElements(ArrayList<EyeTrackerItem> elements)
 	{
 		this.elements = elements;
+		this.timeList.clear();
+		this.scoreHistory.clear();
+		this.gazeHistory.clear();
 		this.probabilityManager.setOriginalPreviousElements(null);
 	}
 	public ArrayList<EyeTrackerItem> getTopElements()
@@ -45,6 +49,7 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 	@Override
 	public void processGaze(Point gazePoint, double pupilDiameter) {
 		// TODO Auto-generated method stub
+//		System.out.println(System.currentTimeMillis()+"\t"+gazePoint.x+"\t"+gazePoint.y+"\t"+String.format("%.2f", pupilDiameter));
 		
 		processGaze(gazePoint);
 	}
@@ -91,6 +96,8 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 		long time = System.currentTimeMillis();
 		this.timeList.add(time);
 		ArrayList<Double> scoreHistoryTime = new ArrayList<Double>();
+		ArrayList<Double> gazeScoreHistoryTime = new ArrayList<Double>();
+		this.gazeHistory.add(gazeScoreHistoryTime);
 		this.scoreHistory.add(scoreHistoryTime);
 		
 		double zoom =viewer.getZoom();
@@ -123,12 +130,13 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 			
 			
 			double gazeScore = element.getGazeScore(gazePoint, zoom);
-			
+			gazeScoreHistoryTime.add(gazeScore);
+			double averageGazeScore = this.getAverageGazeScore(i, gazeScore);
 			//original 
 			ArrayList<StateAction> originalActions = element.getActions(probabilityManager.getPreviousStateActions(ProbabilityManager.SCORE_ORIGINAL));			
 			double probability = probabilityManager.getProbability(originalActions);			
 			
-			double contributingGazeScore = gazeScore / topGazeScoreSum;
+			double contributingGazeScore = averageGazeScore / topGazeScoreSum;
 			double levitatedProbability = Util.getLevitatedScore(probability, ProbabilityManager.LEVITATION_PROBABILITY_RATIO);
 			
 			double score = contributingGazeScore* levitatedProbability;
@@ -140,6 +148,29 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 		}
 		
 		computeStates();
+	}
+	private double getAverageGazeScore(int index, double originalGazeScore)
+	{
+		long currentTime = System.currentTimeMillis();
+		
+		int toIndex = this.timeList.size()-1;
+		int fromIndex = toIndex;
+		for(int i=toIndex;i>0 ;i--)
+		{
+			if(currentTime - this.timeList.get(i) > TIME_RESOLUTION)
+			{
+				break;
+			}
+			fromIndex = i;
+		}
+		int count=0;
+		double sumGazeScore =0;
+		for(int i=fromIndex;i<= toIndex;i++)
+		{
+			sumGazeScore+= this.gazeHistory.get(i).get(index);
+			count++;
+		}
+		return sumGazeScore/count;
 	}
 	
 	private void computeStates()

@@ -42,16 +42,7 @@ class MovieInfoBit extends LabelInfoBit
 	int stars;
 	public MovieInfoBit(String label)
 	{
-		super(label.split("\t")[0]);
-		stars = Integer.parseInt(label.split("\t")[1]);
-		this.color = new Color(200,200,100,100);
-		this.hoveredColor = new Color(250,100,100,150);
-		scale = 1.5;
-	}
-	
-	public MovieInfoBit(String label, String id)
-	{
-		super(label.split("\t")[0], id);
+		super(label.split("\t")[0], label.split("\t")[2]);
 		stars = Integer.parseInt(label.split("\t")[1]);
 		this.color = new Color(200,200,100,100);
 		this.hoveredColor = new Color(250,100,100,150);

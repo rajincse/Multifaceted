@@ -500,7 +500,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			{
 				movieCount++;		
 			}
-			int dataIndex = pivotPathData.addData(movie.getTitle()+"\t"+(int)movie.getRating());
+			int dataIndex = pivotPathData.addData(movie.getTitle()+"\t"+(int)movie.getRating()+"\t"+movie.getId());
 			
 		
 			ArrayList<CompactPerson> directorList = movie.getDirectors();
@@ -577,11 +577,10 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		PivotPathData pivotPathData = new PivotPathData();
 		Movie movie = this.data.getMovie(compactMovie);
 		
-		int dataIndex = pivotPathData.addData(movie.getTitle()+"\t"+(int)movie.getRating());
+		int dataIndex = pivotPathData.addData(movie.getTitle()+"\t"+(int)movie.getRating()+"\t"+movie.getId());
 		
 		ArrayList<CompactPerson> directorList = movie.getDirectors();
 		ArrayList<CompactPerson> actorList = movie.getActors();
-		int actorCount = actorList.size() < MAX_ACTOR ? actorList.size(): MAX_ACTOR;
 		ArrayList<Genre> genreList = movie.getGenreList();
 		
 		

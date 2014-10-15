@@ -22,4 +22,5 @@ public interface EyeTrackerItem{
 	//Debug
 	public void setGazeScore(double gazeScore);
 	public void setProbability(double probability);
+	public void setNextProbability(double probability);
 }

@@ -7,7 +7,7 @@ import eyetrack.probability.StateAction;
 
 public class ProbabilityManager {
 	public static final double TOP_PERCENTILE =10;
-	public static final double LEVITATION_PROBABILITY_RATIO =0.5; // to make probabilty range from 0.5 to 1
+	public static final double LEVITATION_LOWER_BOUND =0.5; // to make probabilty range from 0.5 to 1
 	public static final int SCORE_ORIGINAL =0;
 	public static final int SCORE_GAZE =1;
 	public static final int SCORE_PROBABILITY =2;

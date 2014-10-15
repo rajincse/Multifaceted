@@ -335,7 +335,7 @@ class LabelInfoBit extends InfoBit
 		
 		String probability = Util.formatNum(this.probability);		
 		g.setColor(new Color(240,55,55,128));
-		g.drawString("X"+probability, (int)getWidth(), (int)(getHeight()*0.8));
+		g.drawString("X"+probability+"next ("+Util.formatNum(this.nextProbability)+")", (int)getWidth(), (int)(getHeight()*0.8));
 		
 		String score =Util.formatNum(this.score);
 		g.setColor(new Color(44,120,34,200));
@@ -401,9 +401,9 @@ class LabelInfoBit extends InfoBit
 			point = at.transform(gazePosition, point);
 		}
 		
-		score =Util.getRectangleToGazeScore(0, 0, width, height,point, zoom);
+		double gazeScore =Util.getRectangleToGazeScore(0, 0, width, height,point, zoom);
 		
-		return score;
+		return gazeScore;
 	}
 	
 	
@@ -485,7 +485,7 @@ class LabelInfoBit extends InfoBit
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		return "{"+this.getType()+this.label+"}";
+		return "{"+this.getType()+this.label+","+Util.formatNum(this.score)+"}";
 	}
 	@Override
 	public double getStoredGazeScore() {
@@ -496,6 +496,12 @@ class LabelInfoBit extends InfoBit
 	public double getProbabilityScore() {
 		// TODO Auto-generated method stub
 		return this.probability;
+	}
+	private double nextProbability;
+	@Override
+	public void setNextProbability(double probability) {
+		// TODO Auto-generated method stub
+		this.nextProbability = probability;
 	}
 }
 

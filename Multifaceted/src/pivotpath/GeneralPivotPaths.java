@@ -418,14 +418,40 @@ class LabelInfoBit extends InfoBit
 		// TODO Auto-generated method stub
 		return EyeTrackerItem.TYPE_INVALID;
 	}
+	private int getSameTypeRelation(EyeTrackerItem previousElement)
+	{
+		if(previousElement.getId() == this.getId())
+		{
+			return StateAction.SAME_TYPE_RELATION_SELF;
+		}
+		else if(this.group.items.contains(previousElement))
+		{
+			return StateAction.SAME_TYPE_RELATION_SAME_GROUP;
+		}
+		else
+		{
+			return StateAction.SAME_TYPE_RELATION_OTHER;
+		}
+	}
 	@Override
 	public ArrayList<StateAction> getActions(ArrayList<StateAction> stateActions) {
 		if(stateActions != null)
 		{
 			for(StateAction stateAction: stateActions)
 			{
-				int action = StateAction.getAction(this, isConnected(stateAction.getPreviousItem()));
-				stateAction.setAction(action);
+				EyeTrackerItem previousItem = stateAction.getPreviousItem();
+				if(previousItem.getType() == this.getType())
+				{
+					int sameTypeRelation = this.getSameTypeRelation(previousItem);
+					int action = StateAction.getSameTypeAction(this, sameTypeRelation);
+					stateAction.setAction(action);
+				}
+				else
+				{
+					int action = StateAction.getAction(this, isConnected(previousItem));
+					stateAction.setAction(action);
+				}
+				
 			}
 			return stateActions;
 		}
@@ -1217,6 +1243,10 @@ public class GeneralPivotPaths {
 		{
 			try
 			{
+				if(splineTargets[i] == null || splineShapes[i]==null)
+				{
+					continue;
+				}
 				InfoBitGroup g1 = splineTargets[i][0].getGroup();
 				InfoBitGroup g2 = splineTargets[i][1].getGroup();
 				if ( (g1.hovered >=0 && g1.items.get(g1.hovered) == splineTargets[i][0]) ||

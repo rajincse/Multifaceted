@@ -909,12 +909,15 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 				if(element instanceof LabelInfoBit)
 				{
 					LabelInfoBit labelInfoBit = (LabelInfoBit) element;
-					int colorLength = HeatMapAnalysisViewer.HEATMAP_COLOR.length;
-					int colorIndex =colorLength -( i * (colorLength-1) /elementsSize)-1;
 					
 					if(isShowGazeOn())
 					{
-						labelInfoBit.color = HeatMapAnalysisViewer.HEATMAP_COLOR[colorIndex];
+						if(element.getScore() < 1)
+						{
+							Color c = new Color(255, 255 - (int)(element.getScore()*255), 100);
+							labelInfoBit.color = c;
+						}
+						
 					}
 					
 					

@@ -102,7 +102,18 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 		this.scoreHistory.add(scoreHistoryTime);
 		
 		double zoom =viewer.getZoom();
-		
+		//---Get from Index and toIndex for Average gazeScore
+		int gazeToIndex = this.timeList.size()-1;
+		int gazeFromIndex = gazeToIndex;
+		for(int i=gazeToIndex;i>0 ;i--)
+		{
+			if(time - this.timeList.get(i) > TIME_RESOLUTION_GAZE)
+			{
+				break;
+			}
+			gazeFromIndex = i;
+		}
+		//-----------------------------
 		PriorityQueue<SortingItem> gazeScorePriorityQueue = new PriorityQueue<SortingItem>();
 		
 		//get top 10% gaze score
@@ -113,7 +124,7 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 			// Getting the gaze score and adding to the history.
 			double gazeScore = element.getGazeScore(gazePoint, zoom);
 			gazeScoreHistoryTime.add(gazeScore);
-			double averageGazeScore = this.getAverageGazeScore(i);
+			double averageGazeScore = this.getAverageGazeScore(i, gazeFromIndex, gazeToIndex);
 			SortingItem item= new SortingItem(element, averageGazeScore);
 			gazeScorePriorityQueue.add(item);
 		}
@@ -133,7 +144,7 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 			EyeTrackerItem element = this.elements.get(i);
 			
 			// Getting the average score from the history only
-			double averageGazeScore = this.getAverageGazeScore(i);
+			double averageGazeScore = this.getAverageGazeScore(i, gazeFromIndex	, gazeToIndex);
 			//original 
 			ArrayList<StateAction> stateActions = probabilityManager.getPreviousStateActions();
 			ArrayList<StateAction> originalActions = element.getActions(stateActions);			
@@ -152,20 +163,8 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 		
 		computeStates();
 	}
-	private double getAverageGazeScore(int index)
+	private double getAverageGazeScore(int index, int fromIndex, int toIndex)
 	{
-		long currentTime = System.currentTimeMillis();
-		
-		int toIndex = this.timeList.size()-1;
-		int fromIndex = toIndex;
-		for(int i=toIndex;i>0 ;i--)
-		{
-			if(currentTime - this.timeList.get(i) > TIME_RESOLUTION_GAZE)
-			{
-				break;
-			}
-			fromIndex = i;
-		}
 		int count=0;
 		double sumGazeScore =0;
 		for(int i=fromIndex;i<= toIndex;i++)

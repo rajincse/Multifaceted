@@ -31,6 +31,16 @@ public class Util {
 		g.fillOval(x-rad, y-rad, 2*rad, 2*rad);
 		g.setColor(previousColor);
 	}
+	public static void drawAxis(int x, int y, Color cx, Color cy, Graphics2D g)
+	{
+		Color previousColor = g.getColor();
+		int width =10;
+		g.setColor(cx);
+		g.drawLine(x, y	,x, y+width);
+		g.setColor(cy);
+		g.drawLine(x, y	,x+width, y);
+		g.setColor(previousColor);
+	}
 	public static Point2D getTransformedPoint(double x, double y, double theta, Point2D p)
 	{
 		AffineTransform at = new AffineTransform();

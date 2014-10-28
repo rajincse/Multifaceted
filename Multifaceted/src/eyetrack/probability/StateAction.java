@@ -9,6 +9,7 @@ public class StateAction {
 	public static int STATE_MOVIE =2;
 	public static int STATE_DIRECTOR =3;
 	public static int STATE_GENRE =4;
+	public static int STATE_MOVIE_STAR_RATING =5;
 	
 	public static int ACTION_INVALID =-1;
 	public static int ACTION_ACTOR_CONNECTED =0;

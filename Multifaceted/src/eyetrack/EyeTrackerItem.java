@@ -11,6 +11,7 @@ public interface EyeTrackerItem{
 	public static int TYPE_MOVIE =StateAction.STATE_MOVIE;
 	public static int TYPE_DIRECTOR =StateAction.STATE_DIRECTOR;
 	public static int TYPE_GENRE =StateAction.STATE_GENRE;
+	public static int TYPE_MOVIE_STAR_RATING=StateAction.STATE_MOVIE_STAR_RATING;
 	public int getType();
 	public String getId ();
 	public void setScore(double score);

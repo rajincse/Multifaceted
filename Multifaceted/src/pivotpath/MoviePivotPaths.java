@@ -6,6 +6,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D.Double;
 import java.util.ArrayList;
 
+import multifaceted.Util;
 import eyetrack.EyeTrackerItem;
 
 
@@ -35,20 +36,97 @@ class ActorInfoBit extends LabelInfoBit
 		return EyeTrackerItem.TYPE_ACTOR;
 	}
 }
+class StarRating extends LabelInfoBit
+{
+	private MovieInfoBit movie;
+	private double rating;
+	public StarRating(MovieInfoBit movie, double rating)
+	{
+		super(""+rating, "R"+movie.getId());
+		this.movie = movie;
+		this.rating = rating;
+	}
 
+	public MovieInfoBit getMovie() {
+		return movie;
+	}
+
+	public double getRating() {
+		return rating;
+	}
+
+	@Override
+	public int getType() {
+		// TODO Auto-generated method stub
+		return EyeTrackerItem.TYPE_MOVIE;
+	}
+	@Override
+	public void render(Graphics2D g, boolean hovered) {
+		// TODO Auto-generated method stub
+		
+		g.setColor(Color.gray);
+		int width =g.getFontMetrics().stringWidth(""+this.rating);
+		
+		g.drawString(""+this.rating, 0,(int)scale*10);
+		
+		int[] starx = new int[]{0,4,5,6,10,7,8,5,2,3};
+		int[] stary = new int[]{4,4,0,4,4,6,10,8,10,6};
+		for (int i=0; i<starx.length; i++)
+		{
+			starx[i] += width;
+		}
+		
+		g.setColor(Color.gray);
+		g.drawPolygon(starx, stary, 10);
+		g.setColor(Color.yellow);
+		g.fillPolygon(starx, stary, 10);
+		
+		renderDebug(g);
+	}
+
+	
+	@Override
+	public void renderDebug(Graphics2D g) {
+		// TODO Auto-generated method stub
+		Util.drawCircle(0, 0, Color.red, g);
+		Util.drawCircle(0, (int)getHeight(), Color.green, g);
+		Util.drawCircle((int)getWidth(), 0, Color.blue, g);
+		Util.drawCircle((int)getWidth(), (int )getHeight(), Color.black, g);
+	}
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return "{Movie:"+movie+", star"+this.rating+"}";
+	}
+}
 class MovieInfoBit extends LabelInfoBit
 {
 	public static final int MAX_LEN =32;
-	int stars;
+	private StarRating starRating;
 	public MovieInfoBit(String label)
 	{
 		super(label.split("\t")[0], label.split("\t")[2]);
-		stars = Integer.parseInt(label.split("\t")[1]);
+		double rating = java.lang.Double.parseDouble(label.split("\t")[1]);
+		this.starRating = new StarRating(this, rating);
 		this.color = new Color(200,200,100,100);
 		this.hoveredColor = new Color(250,100,100,150);
 		scale = 1.5;
 	}
 	
+	public StarRating getStarRating() {
+		return starRating;
+	}
+
+	public void setStarRating(StarRating starRating) {
+		this.starRating = starRating;
+	}
+	
+	@Override
+	public InfoBit[] getAdditionalInfoBit() {
+		// TODO Auto-generated method stub
+		return new InfoBit[]{this.starRating};
+	}
+
 	@Override
 	public Line2D[] getEdgeAnchors() {
 		return new Line2D.Double[]{new Line2D.Double(0,5,-100,5), 
@@ -71,21 +149,6 @@ class MovieInfoBit extends LabelInfoBit
 		
 		g.setColor(new Color(0,0,0,200));
 		drawString(g);
-		g.setColor(Color.gray);
-		g.drawString(""+stars, (int)this.getWidth()-(int)(scale*6), (int)(-scale*5.5));
-		
-		int[] starx = new int[]{0,4,5,6,10,7,8,5,2,3};
-		int[] stary = new int[]{4,4,0,4,4,6,10,8,10,6};
-		for (int i=0; i<starx.length; i++)
-		{
-			starx[i] += this.getWidth();
-			stary[i] -= scale*12;
-		}
-		
-		g.setColor(Color.gray);
-		g.drawPolygon(starx, stary, 10);
-		g.setColor(Color.yellow);
-		g.fillPolygon(starx, stary, 10);
 		
 		renderDebug(g);
 	}

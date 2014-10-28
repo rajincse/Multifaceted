@@ -245,7 +245,7 @@ abstract class InfoBit implements EyeTrackerItem
 	public abstract double getWidth();
 	public abstract double getHeight();
 	public abstract Line2D[] getEdgeAnchors();
-
+	public abstract InfoBit[] getAdditionalInfoBit();
 	
 	
 	public InfoBit(String id)
@@ -394,7 +394,6 @@ class LabelInfoBit extends InfoBit
 
 			double r = MainInfoBitGroup.TILT_ANGLE;
 			
-			at.translate(width/2, height/2);
 			at.rotate(-r);			
 			at.translate(-x, -y);
 			
@@ -529,6 +528,11 @@ class LabelInfoBit extends InfoBit
 		// TODO Auto-generated method stub
 		this.nextProbability = probability;
 	}
+	@Override
+	public InfoBit[] getAdditionalInfoBit() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
 
 class InfoBitGroup
@@ -662,8 +666,7 @@ class MainInfoBitGroup extends InfoBitGroup
 		double r = TILT_ANGLE;		
 		
 		a.translate(x, y);			
-		a.rotate(r);
-		a.translate(-w/2, -h/2);			
+		a.rotate(r);		
 
 		for (int j=0; j<ret.length; j++)
 		{
@@ -676,24 +679,23 @@ class MainInfoBitGroup extends InfoBitGroup
 	
 	public void render(Graphics2D g)
 	{
-		
+		double r = TILT_ANGLE;
+		g.translate(x, y);			
+		g.rotate(r);
 		for (int i=0; i<items.size(); i++)
 		{
-			int x = (int)getItemX(i);
-			int y = (int)getItemY(i);			
-			double w = items.get(i).getWidth();
-			double h = items.get(i).getHeight();
-			double r = TILT_ANGLE;
+			double h = getItemY(i) - y;
 				
 
-			g.translate(x, y);			
-			g.rotate(r);
-			g.translate(-w/2, -h/2);			
+			g.translate(0, h);
+
 			items.get(i).render(g, i == hovered);		
-			g.translate(w/2, h/2);
-			g.rotate(-r);		
-			g.translate(-x, -y);	
+			
+			g.translate(0, -h);
+				
 		}
+		g.rotate(-r);		
+		g.translate(-x, -y);
 	}
 	
 	public int mouseHovered(int mx, int my)
@@ -711,10 +713,8 @@ class MainInfoBitGroup extends InfoBitGroup
 
 			double r = TILT_ANGLE;
 			
-			//at.translate(ax, ay);
-			at.translate(w/2, h/2);
+
 			at.rotate(-r);	
-			//at.translate(-ax,-ay);
 			at.translate(-x, -y);
 			
 			Point2D p = new Point2D.Double();
@@ -858,6 +858,19 @@ public class GeneralPivotPaths {
 			
 			g.addItem(d);
 			d.group = g;
+			
+			//Additional InfoBit
+			InfoBit[] additionalInfoBits = d.getAdditionalInfoBit();
+			if(additionalInfoBits != null && additionalInfoBits.length > 0 )
+			{
+				for(InfoBit additionalInfoBit: additionalInfoBits)
+				{
+					g.addItem(additionalInfoBit);
+					
+					additionalInfoBit.group = g;
+				}
+			}
+			
 			g.x = mainBounds.getMinX() + i*mainBounds.getWidth()/data.length;
 			g.y = mainBounds.getCenterY();			
 			dataGroups.add(g);

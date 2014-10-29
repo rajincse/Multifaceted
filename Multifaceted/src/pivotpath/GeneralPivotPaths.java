@@ -298,6 +298,8 @@ class LabelInfoBit extends InfoBit
 		this.label = label;
 		w = -1;
 		h = -1;
+		this.color = Util.getColor(getType());
+		this.hoveredColor = Util.getHoveredColor(getType());
 	}
 	public LabelInfoBit(String label)
 	{
@@ -305,6 +307,8 @@ class LabelInfoBit extends InfoBit
 		this.label = label;
 		w = -1;
 		h = -1;
+		this.color = Util.getColor(getType());
+		this.hoveredColor = Util.getHoveredColor(getType());
 	}
 
 	@Override
@@ -390,12 +394,15 @@ class LabelInfoBit extends InfoBit
 		Point2D point = Util.getTransformedPoint(-x, -y, 0, gazePosition);
 		if(this.group instanceof MainInfoBitGroup)
 		{
+			double groupX = this.group.x;
+			double groupY = this.group.y;
+			double heightDiff = y - this.group.y;
 			AffineTransform at = new AffineTransform();	
 
 			double r = MainInfoBitGroup.TILT_ANGLE;
-			
+			at.translate(0, -heightDiff);
 			at.rotate(-r);			
-			at.translate(-x, -y);
+			at.translate(-groupX, -groupY);
 			
 			point = at.transform(gazePosition, point);
 		}
@@ -705,7 +712,7 @@ class MainInfoBitGroup extends InfoBitGroup
 		{			
 			
 			double x = (int)getItemX(i);
-			double y = (int)getItemY(i);
+			double y = (int)getItemY(i)- this.y;
 			double w =  items.get(i).getWidth();
 			double h =  items.get(i).getHeight();			
 			
@@ -713,9 +720,9 @@ class MainInfoBitGroup extends InfoBitGroup
 
 			double r = TILT_ANGLE;
 			
-
+			at.translate(0,-y);
 			at.rotate(-r);	
-			at.translate(-x, -y);
+			at.translate(-this.x, -this.y);
 			
 			Point2D p = new Point2D.Double();
 			p = at.transform(new Point2D.Double(mx,my), p);

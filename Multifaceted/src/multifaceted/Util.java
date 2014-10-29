@@ -190,15 +190,19 @@ public class Util {
 		}
 		else if(type== EyeTrackerItem.TYPE_MOVIE)
 		{
-			return  new Color(200,200,100,100);
+			return  new Color(250,150,150,100);
 		}
 		else if(type== EyeTrackerItem.TYPE_DIRECTOR)
 		{
-			return new Color(200,100,100,150);
+			return new Color(250,150,150,100);
 		}	
 		else if(type== EyeTrackerItem.TYPE_GENRE)
 		{
 			return  new Color(150,150,250,100);
+		}	
+		else if(type== EyeTrackerItem.TYPE_MOVIE_STAR_RATING)
+		{
+			return  new Color(255,255,255,0);
 		}	
 		else
 		{
@@ -206,6 +210,34 @@ public class Util {
 		}
 			
 		
+	}
+	
+	public static Color getHoveredColor(int type)
+	{
+		if(type== EyeTrackerItem.TYPE_ACTOR)
+		{
+			return   new Color(180,180,180,150);
+		}
+		else if(type== EyeTrackerItem.TYPE_MOVIE)
+		{
+			return   new Color(200,100,100,150);
+		}
+		else if(type== EyeTrackerItem.TYPE_DIRECTOR)
+		{
+			return new Color(200,100,100,150);
+		}	
+		else if(type== EyeTrackerItem.TYPE_GENRE)
+		{
+			return  new Color(100,100,200,150);
+		}	
+		else if(type== EyeTrackerItem.TYPE_MOVIE_STAR_RATING)
+		{
+			return  new Color(200,100,100,150);
+		}	
+		else
+		{
+			return Color.black;
+		}
 	}
 	// Get a score of 1/R to 1
 	public static double getLevitatedScore(double value, double lowerBound)

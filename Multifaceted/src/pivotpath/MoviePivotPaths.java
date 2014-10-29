@@ -15,14 +15,10 @@ class ActorInfoBit extends LabelInfoBit
 	public ActorInfoBit(String label)
 	{
 		super(label);
-		this.color = new Color(230,230,230,100);
-		this.hoveredColor = new Color(180,180,180,150);
 	}
 	public ActorInfoBit(String label, String id)
 	{
 		super(label, id);
-		this.color = new Color(230,230,230,100);
-		this.hoveredColor = new Color(180,180,180,150);
 	}
 	@Override
 	public Line2D[] getEdgeAnchors() {
@@ -58,11 +54,16 @@ class StarRating extends LabelInfoBit
 	@Override
 	public int getType() {
 		// TODO Auto-generated method stub
-		return EyeTrackerItem.TYPE_MOVIE;
+		return EyeTrackerItem.TYPE_MOVIE_STAR_RATING;
 	}
 	@Override
 	public void render(Graphics2D g, boolean hovered) {
 		// TODO Auto-generated method stub
+		if (hovered)
+			g.setColor(hoveredColor);
+		else
+			g.setColor(color);
+		g.fillRect(0, 0, (int)getWidth(), (int)getHeight());
 		
 		g.setColor(Color.gray);
 		int width =g.getFontMetrics().stringWidth(""+this.rating);
@@ -86,14 +87,6 @@ class StarRating extends LabelInfoBit
 
 	
 	@Override
-	public void renderDebug(Graphics2D g) {
-		// TODO Auto-generated method stub
-		Util.drawCircle(0, 0, Color.red, g);
-		Util.drawCircle(0, (int)getHeight(), Color.green, g);
-		Util.drawCircle((int)getWidth(), 0, Color.blue, g);
-		Util.drawCircle((int)getWidth(), (int )getHeight(), Color.black, g);
-	}
-	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
 		return "{Movie:"+movie+", star"+this.rating+"}";
@@ -108,8 +101,7 @@ class MovieInfoBit extends LabelInfoBit
 		super(label.split("\t")[0], label.split("\t")[2]);
 		double rating = java.lang.Double.parseDouble(label.split("\t")[1]);
 		this.starRating = new StarRating(this, rating);
-		this.color = new Color(200,200,100,100);
-		this.hoveredColor = new Color(250,100,100,150);
+	
 		scale = 1.5;
 	}
 	
@@ -232,14 +224,10 @@ class DirectorInfoBit extends LabelInfoBit
 	public DirectorInfoBit(String label)
 	{
 		super(label);
-		this.color = new Color(250,150,150,100);
-		this.hoveredColor = new Color(200,100,100,150);
 	}
 	public DirectorInfoBit(String label, String id)
 	{
 		super(label, id);
-		this.color = new Color(250,150,150,100);
-		this.hoveredColor = new Color(200,100,100,150);
 	}
 	@Override
 	public Line2D[] getEdgeAnchors() {
@@ -265,14 +253,10 @@ class GenreInfoBit extends LabelInfoBit
 	public GenreInfoBit(String label)
 	{
 		super(label);
-		this.color = new Color(150,150,250,100);
-		this.hoveredColor = new Color(100,100,200,150);
 	}
 	public GenreInfoBit(String label, String id)
 	{
 		super(label, id);
-		this.color = new Color(150,150,250,100);
-		this.hoveredColor = new Color(100,100,200,150);
 	}
 	@Override
 	public Line2D[] getEdgeAnchors() {

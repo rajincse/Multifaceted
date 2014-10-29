@@ -454,7 +454,7 @@ class LabelInfoBit extends InfoBit
 				}
 				else
 				{
-					int action = StateAction.getAction(this, isConnected(previousItem));
+					int action = StateAction.getAction(this, isConnected(previousItem), previousItem.isHovered());
 					stateAction.setAction(action);
 				}
 				
@@ -465,7 +465,7 @@ class LabelInfoBit extends InfoBit
 		{
 			ArrayList<StateAction> emptyStateActions = new ArrayList<StateAction>();
 			StateAction stateAction = new StateAction(null, 1);
-			int action = StateAction.getAction(this, false);
+			int action = StateAction.getAction(this, false, false);
 			stateAction.setAction(action);
 			emptyStateActions.add(stateAction);
 			return emptyStateActions;
@@ -539,6 +539,19 @@ class LabelInfoBit extends InfoBit
 	public InfoBit[] getAdditionalInfoBit() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	@Override
+	public boolean isHovered() {
+		// TODO Auto-generated method stub
+		int hovered = this.group.hovered;
+		if(hovered > 0 && hovered < this.group.items.size())
+		{
+			if(this == this.group.items.get(hovered))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 }
 

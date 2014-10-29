@@ -24,4 +24,6 @@ public interface EyeTrackerItem{
 	public void setGazeScore(double gazeScore);
 	public void setProbability(double probability);
 	public void setNextProbability(double probability);
+	//Mouse Hovering
+	public boolean isHovered();
 }

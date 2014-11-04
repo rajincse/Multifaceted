@@ -12,6 +12,7 @@ import imdb.entity.SearchItem;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -61,6 +62,8 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	private static final String PROPERTY_PERFORMANCE="Debug.Check Performance";
 	private static final String PROPERTY_SHOW_GAZE="Debug.Show Gaze";
 	private static final String PROPERTY_MOUSE_GAZE="Debug.Mouse Gaze";
+	private static final String PROPERTY_SAVE_VIEW="Debug.Save View";
+	private static final String PROPERTY_RENDER_DEBUG="Debug.Render Debug";
 	private static final String PROPERTY_REFRESH="Refresh";
 	private static final String PROPERTY_END_STUDY = "End of Study";
 	private static final String PROPERTY_SHOW_LIST_TYPE = "Show List";
@@ -140,7 +143,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			}
 		};
 		pivotPaths.addSlot(new Point2D[]{new Point2D.Double(0, -300),  new Point2D.Double(0,50), new Point2D.Double(1000,50), new Point2D.Double(1000,-300), new Point2D.Double(0,-300)}, new Color(200,200,0,100));
-		pivotPaths.addSlot(new Point2D[]{new Point2D.Double(0, 300),  new Point2D.Double(0,600), new Point2D.Double(1000,600), new Point2D.Double(1000,300), new Point2D.Double(0,300)}, new Color(200,200,0,100));
+		pivotPaths.addSlot(new Point2D[]{new Point2D.Double(0, 400),  new Point2D.Double(0,700), new Point2D.Double(1000,700), new Point2D.Double(1000,400), new Point2D.Double(0,400)}, new Color(200,200,0,100));
 		
 		pivotPaths.viewer = this;
 		pivotPaths.pivotPathViewer = this;
@@ -289,6 +292,19 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			
 			Property<PBoolean> pMouseGaze = new Property<PBoolean>(PROPERTY_MOUSE_GAZE,new PBoolean(false));
 			addProperty(pMouseGaze);
+			Property<PSignal> pSaveView = new Property<PSignal>(PROPERTY_SAVE_VIEW, new PSignal())
+					{
+						@Override
+						protected boolean updating(PSignal newvalue) {
+							// TODO Auto-generated method stub
+							saveView();
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pSaveView);
+			
+			Property<PBoolean> pRenderDebug = new Property<PBoolean>(PROPERTY_RENDER_DEBUG,new PBoolean(false));
+			addProperty(pRenderDebug);
 			
 			Property<PSignal> pEndOfStudy = new Property<PSignal>(PROPERTY_END_STUDY, new PSignal())
 					{
@@ -500,7 +516,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			{
 				movieCount++;		
 			}
-			int dataIndex = pivotPathData.addData(movie.getTitle()+"\t"+(int)movie.getRating()+"\t"+movie.getId());
+			int dataIndex = pivotPathData.addData(movie.getTitle()+"\t"+movie.getRating()+"\t"+movie.getId());
 			
 		
 			ArrayList<CompactPerson> directorList = movie.getDirectors();
@@ -759,6 +775,11 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		PBoolean mouseGaze = (PBoolean)this.getProperty(PROPERTY_MOUSE_GAZE).getValue();
 		return mouseGaze.boolValue();
 	}
+	private boolean isRenderDebugOn()
+	{
+		PBoolean renderDebug = (PBoolean)this.getProperty(PROPERTY_RENDER_DEBUG).getValue();
+		return renderDebug.boolValue();
+	}
 	private boolean isSearchActorOn()
 	{
 		PBoolean searchActor = (PBoolean)this.getProperty(PROPERTY_SEARCH_PERSON).getValue();
@@ -779,6 +800,10 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		if(isShowGazeOn())
 		{
 			drawEyeGaze(g);
+		}
+		if(isRenderDebugOn())
+		{
+			pivotPaths.renderDebug(g);
 		}
 		
 		et.block(false);
@@ -912,7 +937,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 					
 					if(isShowGazeOn())
 					{
-						if(element.getScore() < 1)
+						if(element.getScore() <= 1)
 						{
 							Color c = new Color(255, 255 - (int)(element.getScore()*255), 100);
 							labelInfoBit.color = c;
@@ -951,7 +976,31 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		String data = "Mouse\t"+time+"\t"+(mousePosition.x+IMAGE_SAVE_OFFSET_X)+"\t"+(mousePosition.y+IMAGE_SAVE_OFFSET_Y)
 				+"\t"+currentImageFileName+"\r\n"
 				+"Gaze\t"+time+"\t"+(gazeX+IMAGE_SAVE_OFFSET_X)+"\t"+(gazeY+IMAGE_SAVE_OFFSET_Y)+"\t"+rad
+				+"\t"+currentImageFileName+"\r\n"
+				+"Zoom\t"+time+"\t"+this.getZoom()
 				+"\t"+currentImageFileName;
+		
+		//Hovering info
+		if(this.hoverType>= 0 && this.hoverGroupIndex >= 0 && this.hoverElementIndex >= 0)
+		{
+			InfoBit element= null;
+			if(this.hoverType == PivotPathViewerInterface.GROUP_DATA)
+			{
+				element = this.pivotPaths.dataGroups.get(hoverGroupIndex).getItems().get(hoverElementIndex);
+			}
+			else if(this.hoverType == PivotPathViewerInterface.GROUP_ATTRIBUTE)
+			{
+				element = this.pivotPaths.groups.get(hoverGroupIndex).getItems().get(hoverElementIndex);
+			}
+			if(element != null && element instanceof LabelInfoBit)
+			{
+				data+=	"\r\n"
+						+"Hover\t"+time+"\t"+element.getId()+"\t"+((LabelInfoBit)element).label+"\t"+element.getType()+"\t"+String.format("%.2f",element.getScore())
+						+"\t"+(int)(element.group.getItemX(element)+IMAGE_SAVE_OFFSET_X)+"\t"+(int)(element.group.getItemY(element)+IMAGE_SAVE_OFFSET_Y)
+						+"\t"+currentImageFileName;
+			}
+			
+		}
 		synchronized (this) {
 			this.resultText.append(data+"\r\n");
 		}
@@ -1050,10 +1099,11 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
-				BufferedImage bim = new BufferedImage(1200,1000, BufferedImage.TYPE_INT_ARGB);
+				BufferedImage bim = new BufferedImage(1200,1200, BufferedImage.TYPE_INT_ARGB);
 				
 				Graphics2D g = bim.createGraphics();
-				
+				g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+				g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 				g.translate(IMAGE_SAVE_OFFSET_X,IMAGE_SAVE_OFFSET_Y);
 				render(g);
 				
@@ -1122,6 +1172,17 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			}, 0);
 		}
 		
+	}
+
+	private int hoverType =-1;
+	private int hoverGroupIndex=-1;
+	private int hoverElementIndex =-1;
+	@Override
+	public void hoverDetected(int type,int groupIndex, int elementIndex) {
+		// TODO Auto-generated method stub
+		this.hoverType = type;
+		this.hoverGroupIndex = groupIndex;
+		this.hoverElementIndex = elementIndex;
 	}
 
 }

@@ -240,8 +240,24 @@ abstract class InfoBit implements EyeTrackerItem
 	{
 		return scale;
 	}
-	
+	protected boolean isConnectionHovered=false;
+	public boolean isConnectionHovered()
+	{
+		return this.isConnectionHovered;
+	}
+	public void setConnectionHovered(boolean isConnectionHovered )
+	{
+		this.isConnectionHovered = isConnectionHovered;
+	}
+	public void setAllConnectionHover()
+	{
+		for(int i=0;i<this.connections.size();i++)
+		{
+			this.connections.get(i).setConnectionHovered(true);
+		}
+	}
 	public abstract void render(Graphics2D g, boolean hovered);
+	public abstract void renderDebug(Graphics2D g);
 	public abstract double getWidth();
 	public abstract double getHeight();
 	public abstract Line2D[] getEdgeAnchors();
@@ -313,7 +329,7 @@ class LabelInfoBit extends InfoBit
 
 	@Override
 	public void render(Graphics2D g, boolean hovered) {	
-		if (hovered)
+		if (hovered || this.isConnectionHovered)
 			g.setColor(hoveredColor);
 		else
 			g.setColor(color);
@@ -325,10 +341,10 @@ class LabelInfoBit extends InfoBit
 		
 		g.setColor(new Color(0,0,0,200));
 		g.drawString(label, g.getFontMetrics().stringWidth("w"), (int)(getHeight()*0.8));
-		
-		renderDebug(g);
+
 	}
 
+	@Override
 	public void renderDebug(Graphics2D g)
 	{
 		Color previousColor = g.getColor();
@@ -601,11 +617,23 @@ class InfoBitGroup
 			int x = (int)getItemX(i);
 			int y = (int)getItemY(i);
 			g.translate(x,y);
-			items.get(i).render(g, i == hovered);
+			InfoBit bit =items.get(i);			
+			bit.render(g, i == hovered);
 			g.translate(-x,-y);
 		}
 	}
-	
+	public void renderDebug(Graphics2D g)
+	{
+		for (int i=0; i<items.size(); i++)
+		{
+			int x = (int)getItemX(i);
+			int y = (int)getItemY(i);
+			g.translate(x,y);
+			InfoBit bit =items.get(i);			
+			bit.renderDebug(g);
+			g.translate(-x,-y);
+		}
+	}
 	public double getItemX(int i)
 	{
 		return x;
@@ -667,6 +695,14 @@ class InfoBitGroup
 		
 		return hovered;
 	}
+	public void setAllConnectionUnHovered()
+	{
+		for (int i=0; i<items.size(); i++)
+		{
+			InfoBit bit = items.get(i);
+			bit.setConnectionHovered(false);
+		}
+	}
 
 }
 
@@ -718,6 +754,27 @@ class MainInfoBitGroup extends InfoBitGroup
 		g.translate(-x, -y);
 	}
 	
+	@Override
+	public void renderDebug(Graphics2D g) {
+		// TODO Auto-generated method stub
+		double r = TILT_ANGLE;
+		g.translate(x, y);			
+		g.rotate(r);
+		for (int i=0; i<items.size(); i++)
+		{
+			double h = getItemY(i) - y;
+				
+
+			g.translate(0, h);
+
+			items.get(i).renderDebug(g);		
+			
+			g.translate(0, -h);
+				
+		}
+		g.rotate(-r);		
+		g.translate(-x, -y);
+	}
 	public int mouseHovered(int mx, int my)
 	{		
 		hovered = -1;
@@ -1297,24 +1354,23 @@ public class GeneralPivotPaths {
 			//splineShapes[i].render(g);
 		}
 		
-		for (int i=0; i<forceContainers.size(); i++)
-			forceContainers.get(i).render(g);
-		
+	
 		for (int i=0; i<groups.size(); i++)
 			groups.get(i).render(g);
 		
 		for (int i=0; i<dataGroups.size(); i++)
 			dataGroups.get(i).render(g);
-//		renderDebug(g);
 	}
-	private void renderDebug(Graphics2D g)
+	public void renderDebug(Graphics2D g)
 	{
-		Color prevColor = g.getColor();
-		g.setColor(Color.CYAN);
-		int width =10;
-		g.drawRect((int)mainBounds.getMinX()-width, (int)mainBounds.getMinY()-width, (int)mainBounds.getWidth()+2*width,(int)mainBounds.getHeight()+2*width);
+		for (int i=0; i<forceContainers.size(); i++)
+			forceContainers.get(i).render(g);
 		
-		g.setColor(prevColor);
+		for (int i=0; i<groups.size(); i++)
+			groups.get(i).renderDebug(g);
+		
+		for (int i=0; i<dataGroups.size(); i++)
+			dataGroups.get(i).renderDebug(g);
 	}
 	
 	
@@ -1508,17 +1564,40 @@ public class GeneralPivotPaths {
 	public void mouseMoved(int x, int y)
 	{
 		hovered=null;
+		int hoverType =-1;
+		int hoverGroup=-1;
+		int hoverIndex =-1;
 		for (int i=0; i<groups.size(); i++)
 		{
+			groups.get(i).setAllConnectionUnHovered();
 			int index = groups.get(i).mouseHovered(x, y);
 			if (index >= 0)
+			{
 				hovered = groups.get(i).items.get(index).facetName +"\t" + groups.get(i).items.get(index).value+ "\t" + groups.get(i).items.get(index).id;
+				hoverType = PivotPathViewerInterface.GROUP_ATTRIBUTE;
+				hoverGroup =i;
+				hoverIndex = index;
+				groups.get(i).getItems().get(index).setAllConnectionHover();
+			}
+				
 			
 		}
 		for (int i=0; i<dataGroups.size(); i++)
 		{
+			dataGroups.get(i).setAllConnectionUnHovered();
 			int index = dataGroups.get(i).mouseHovered(x, y);
-			if (index >=0) hovered = "\t" + data.get(i);
+			if (index >=0)
+			{
+				hovered = "\t" + data.get(i);
+				hoverType = PivotPathViewerInterface.GROUP_DATA;
+				hoverGroup =i;
+				hoverIndex = index;
+				dataGroups.get(i).getItems().get(index).setAllConnectionHover();
+			}
+		}
+		if(pivotPathViewer != null)
+		{
+			pivotPathViewer.hoverDetected(hoverType,hoverGroup, hoverIndex);
 		}
 		
 		viewer.requestRender();		

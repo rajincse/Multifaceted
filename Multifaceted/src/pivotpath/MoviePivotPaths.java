@@ -38,7 +38,7 @@ class StarRating extends LabelInfoBit
 	private double rating;
 	public StarRating(MovieInfoBit movie, double rating)
 	{
-		super(""+rating, "R"+movie.getId());
+		super(movie.label+":"+rating, "R"+movie.getId());
 		this.movie = movie;
 		this.rating = rating;
 	}
@@ -82,9 +82,19 @@ class StarRating extends LabelInfoBit
 		g.setColor(Color.yellow);
 		g.fillPolygon(starx, stary, 10);
 		
-		renderDebug(g);
 	}
+	 @Override
+	public double getWidth() {
 
+			if (w < 0)
+			{
+				Canvas c = new Canvas();
+				font = font.deriveFont((float)(scale*10.));
+				w = c.getFontMetrics(font).stringWidth(""+this.rating)+17;	
+				return w;
+			}
+			return w;
+	}
 	
 	@Override
 	public String toString() {
@@ -141,8 +151,7 @@ class MovieInfoBit extends LabelInfoBit
 		
 		g.setColor(new Color(0,0,0,200));
 		drawString(g);
-		
-		renderDebug(g);
+
 	}
 	public void drawString(Graphics2D g)
 	{

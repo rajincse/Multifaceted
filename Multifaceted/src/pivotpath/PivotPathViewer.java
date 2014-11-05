@@ -104,6 +104,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	public static final String RESULT_GAZE_POSITION ="Gaze";
 	public static final String RESULT_Hover ="Hover";
 	
+	private static final double ZOOM_THRESHOLD =0.6;
 	
 	private IMDBDataSource data;
 	
@@ -1070,6 +1071,13 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	public boolean mousedragged(int x, int y, int oldx, int oldy) {
 		mousePosition.x = x;
 		mousePosition.y = y;
+		ViewerContainer2D container = (ViewerContainer2D)this.getContainer();
+		double zoom = container.getZoom();
+		if(container.rightButtonDown && zoom < ZOOM_THRESHOLD)
+		{
+			container.setZoom(ZOOM_THRESHOLD);
+			return true;
+		}
 		return false;
 	}
 

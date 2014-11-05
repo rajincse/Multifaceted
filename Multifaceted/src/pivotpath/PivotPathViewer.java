@@ -97,6 +97,14 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	public static final long TIMER_PERIOD_GAZE=500;
 	public static final long TIMER_PERIOD_MOUSE_POSITION=50;
 	
+	public static final String RESULT_ANCHOR_EYE_ELEMENT ="Eye";
+	public static final String RESULT_ANCHOR_MOUSE_POSITION ="Mouse";
+	public static final String RESULT_ANCHOR_MOUSE_CLICK ="Click";
+	public static final String RESULT_ANCHOR_ZOOM ="ZOOM";
+	public static final String RESULT_GAZE_POSITION ="Gaze";
+	public static final String RESULT_Hover ="Hover";
+	
+	
 	private IMDBDataSource data;
 	
 	private ArrayList<SearchItem> recentlyViewed = null;
@@ -960,7 +968,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		long time = System.currentTimeMillis();
 		String id = element.getId();
 		String name = element.label;		
-		String data = time+"\t"+id+"\t"+name+"\t"+element.getType()+"\t"+String.format("%.2f",score)
+		String data = RESULT_ANCHOR_EYE_ELEMENT+"\t"+time+"\t"+id+"\t"+name+"\t"+element.getType()+"\t"+String.format("%.2f",score)
 				+"\t"+(int)(element.group.getItemX(element)+IMAGE_SAVE_OFFSET_X)+"\t"+(int)(element.group.getItemY(element)+IMAGE_SAVE_OFFSET_Y)
 				+"\t"+currentImageFileName;
 		synchronized (this) {
@@ -973,11 +981,11 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	{
 		long time = System.currentTimeMillis();
 		int rad =(int)( EyeTrackerLabelDetector.EDGETHRESHOLD/ this.getZoom());
-		String data = "Mouse\t"+time+"\t"+(mousePosition.x+IMAGE_SAVE_OFFSET_X)+"\t"+(mousePosition.y+IMAGE_SAVE_OFFSET_Y)
+		String data = RESULT_ANCHOR_MOUSE_POSITION+"\t"+time+"\t"+(mousePosition.x+IMAGE_SAVE_OFFSET_X)+"\t"+(mousePosition.y+IMAGE_SAVE_OFFSET_Y)
 				+"\t"+currentImageFileName+"\r\n"
-				+"Gaze\t"+time+"\t"+(gazeX+IMAGE_SAVE_OFFSET_X)+"\t"+(gazeY+IMAGE_SAVE_OFFSET_Y)+"\t"+rad
+				+RESULT_GAZE_POSITION+"\t"+time+"\t"+(gazeX+IMAGE_SAVE_OFFSET_X)+"\t"+(gazeY+IMAGE_SAVE_OFFSET_Y)+"\t"+rad
 				+"\t"+currentImageFileName+"\r\n"
-				+"Zoom\t"+time+"\t"+this.getZoom()
+				+RESULT_ANCHOR_ZOOM+"\t"+time+"\t"+this.getZoom()
 				+"\t"+currentImageFileName;
 		
 		//Hovering info
@@ -995,7 +1003,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			if(element != null && element instanceof LabelInfoBit)
 			{
 				data+=	"\r\n"
-						+"Hover\t"+time+"\t"+element.getId()+"\t"+((LabelInfoBit)element).label+"\t"+element.getType()+"\t"+String.format("%.2f",element.getScore())
+						+RESULT_Hover+"\t"+time+"\t"+element.getId()+"\t"+((LabelInfoBit)element).label+"\t"+element.getType()+"\t"+String.format("%.2f",element.getScore())
 						+"\t"+(int)(element.group.getItemX(element)+IMAGE_SAVE_OFFSET_X)+"\t"+(int)(element.group.getItemY(element)+IMAGE_SAVE_OFFSET_Y)
 						+"\t"+currentImageFileName;
 			}
@@ -1006,8 +1014,17 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		}
 //		System.out.println("##"+data);
 	}
-	
+	private void addResultDataMouseClick(int x, int y, int button)
+	{
+		long time = System.currentTimeMillis();
+		String data = RESULT_ANCHOR_MOUSE_CLICK+"\t"+(x+IMAGE_SAVE_OFFSET_X)+"\t"+(y+IMAGE_SAVE_OFFSET_Y)+"\t"+button
+				+"\t"+currentImageFileName;
+		synchronized (this) {
+			this.resultText.append(data+"\r\n");
+		}
+	}
 	public boolean mousepressed(int x, int y, int button) {
+		this.addResultDataMouseClick(x, y, button);
 		mousePosition.x = x;
 		mousePosition.y = y;
 		if (button == 1)

@@ -139,7 +139,7 @@ class MovieInfoBit extends LabelInfoBit
 	@Override
 	public void render(Graphics2D g, boolean hovered)
 	{
-		if (hovered)
+		if (hovered || isConnectionHovered)
 			g.setColor(hoveredColor);
 		else
 			g.setColor(color);

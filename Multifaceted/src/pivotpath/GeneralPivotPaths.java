@@ -1567,9 +1567,19 @@ public class GeneralPivotPaths {
 		int hoverType =-1;
 		int hoverGroup=-1;
 		int hoverIndex =-1;
+		
+		// Make all un hovered
 		for (int i=0; i<groups.size(); i++)
 		{
 			groups.get(i).setAllConnectionUnHovered();
+		}
+		for (int i=0; i<dataGroups.size(); i++)
+		{
+			dataGroups.get(i).setAllConnectionUnHovered();
+		}
+		for (int i=0; i<groups.size(); i++)
+		{
+			
 			int index = groups.get(i).mouseHovered(x, y);
 			if (index >= 0)
 			{
@@ -1584,7 +1594,7 @@ public class GeneralPivotPaths {
 		}
 		for (int i=0; i<dataGroups.size(); i++)
 		{
-			dataGroups.get(i).setAllConnectionUnHovered();
+			
 			int index = dataGroups.get(i).mouseHovered(x, y);
 			if (index >=0)
 			{

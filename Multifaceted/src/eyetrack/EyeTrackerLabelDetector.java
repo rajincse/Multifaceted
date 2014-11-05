@@ -9,6 +9,7 @@ import java.util.PriorityQueue;
 
 import multifaceted.Util;
 
+import eyetrack.probability.EyeTrackerProbabilityViewer;
 import eyetrack.probability.ProbabilityManager;
 import eyetrack.probability.SortingItem;
 import eyetrack.probability.StateAction;
@@ -22,14 +23,14 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 	
 	private ArrayList<EyeTrackerItem> elements=null;
 	private boolean blocked = false;
-	private EyeTrackerViewer viewer = null;
+	private EyeTrackerProbabilityViewer viewer = null;
 	private ProbabilityManager probabilityManager;
 	
 	private ArrayList<Long> timeList = new ArrayList<Long>();
 	private ArrayList<ArrayList<Double>> scoreHistory = new ArrayList<ArrayList<Double>>();
 	private ArrayList<ArrayList<Double>> gazeHistory = new ArrayList<ArrayList<Double>>();
 	
-	public EyeTrackerLabelDetector(EyeTrackerViewer viewer)
+	public EyeTrackerLabelDetector(EyeTrackerProbabilityViewer viewer)
 	{
 		this.viewer = viewer;
 		this.probabilityManager = new ProbabilityManager();
@@ -145,19 +146,32 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 			
 			// Getting the average score from the history only
 			double averageGazeScore = this.getAverageGazeScore(i, gazeFromIndex	, gazeToIndex);
-			//original 
-			ArrayList<StateAction> stateActions = probabilityManager.getPreviousStateActions();
-			ArrayList<StateAction> originalActions = element.getActions(stateActions);			
-			double probability = probabilityManager.getProbability(originalActions);			
-			
 			double contributingGazeScore = averageGazeScore / topGazeScoreSum;
-			double levitatedProbability = Util.getLevitatedScore(probability, ProbabilityManager.LEVITATION_LOWER_BOUND);
+			//original 
+			if(viewer.isProbabilityOn())
+			{
+				ArrayList<StateAction> stateActions = probabilityManager.getPreviousStateActions();
+				ArrayList<StateAction> originalActions = element.getActions(stateActions);			
+				double probability = probabilityManager.getProbability(originalActions);			
+				
+				
+				double levitatedProbability = Util.getLevitatedScore(probability, ProbabilityManager.LEVITATION_LOWER_BOUND);
+				
+				double score = contributingGazeScore* levitatedProbability;
+				element.setScore(score);
+				element.setGazeScore(contributingGazeScore);
+				element.setProbability(levitatedProbability);
+				scoreHistoryTime.add(score);
+			}
+			else
+			{
+				double score = contributingGazeScore;
+				element.setScore(score);
+				element.setGazeScore(contributingGazeScore);
+				element.setProbability(0);
+				scoreHistoryTime.add(score);
+			}
 			
-			double score = contributingGazeScore* levitatedProbability;
-			element.setScore(score);
-			element.setGazeScore(contributingGazeScore);
-			element.setProbability(levitatedProbability);
-			scoreHistoryTime.add(score);
 		
 		}
 		
@@ -205,12 +219,20 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 			EyeTrackerItem element = this.elements.get(i);
 			
 			//original 
-			ArrayList<StateAction> stateActions = probabilityManager.getPreviousStateActions();
-			ArrayList<StateAction> originalActions = element.getActions(stateActions);			
-			double probability = probabilityManager.getProbability(originalActions);	
-			double levitatedProbability = Util.getLevitatedScore(probability, ProbabilityManager.LEVITATION_LOWER_BOUND);
+			if(viewer.isProbabilityOn())
+			{
+				ArrayList<StateAction> stateActions = probabilityManager.getPreviousStateActions();
+				ArrayList<StateAction> originalActions = element.getActions(stateActions);			
+				double probability = probabilityManager.getProbability(originalActions);	
+				double levitatedProbability = Util.getLevitatedScore(probability, ProbabilityManager.LEVITATION_LOWER_BOUND);
+				
+				element.setNextProbability(levitatedProbability);
+			}
+			else
+			{
+				element.setNextProbability(0);
+			}
 			
-			element.setNextProbability(levitatedProbability);
 		}
 	}
 	

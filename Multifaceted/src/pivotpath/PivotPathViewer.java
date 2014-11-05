@@ -48,8 +48,9 @@ import perspectives.two_d.ViewerContainer2D;
 import eyetrack.EyeTrackerItem;
 import eyetrack.EyeTrackerLabelDetector;
 import eyetrack.EyeTrackerViewer;
+import eyetrack.probability.EyeTrackerProbabilityViewer;
 
-public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPathViewerInterface , EyeTrackerViewer{
+public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPathViewerInterface , EyeTrackerProbabilityViewer{
 
 	private static final String PROPERTY_SEARCH="Search";
 	private static final String PROPERTY_SEARCH_PERSON="Search Person";
@@ -64,6 +65,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	private static final String PROPERTY_MOUSE_GAZE="Debug.Mouse Gaze";
 	private static final String PROPERTY_SAVE_VIEW="Debug.Save View";
 	private static final String PROPERTY_RENDER_DEBUG="Debug.Render Debug";
+	private static final String PROPERTY_PROBABILITY_ON="Probability";
 	private static final String PROPERTY_REFRESH="Refresh";
 	private static final String PROPERTY_END_STUDY = "End of Study";
 	private static final String PROPERTY_SHOW_LIST_TYPE = "Show List";
@@ -314,6 +316,9 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			
 			Property<PBoolean> pRenderDebug = new Property<PBoolean>(PROPERTY_RENDER_DEBUG,new PBoolean(false));
 			addProperty(pRenderDebug);
+			
+			Property<PBoolean> pProbabilityOn = new Property<PBoolean>(PROPERTY_PROBABILITY_ON,new PBoolean(true));
+			addProperty(pProbabilityOn);
 			
 			Property<PSignal> pEndOfStudy = new Property<PSignal>(PROPERTY_END_STUDY, new PSignal())
 					{
@@ -793,6 +798,12 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	{
 		PBoolean searchActor = (PBoolean)this.getProperty(PROPERTY_SEARCH_PERSON).getValue();
 		return searchActor.boolValue();
+	}
+	@Override
+	public boolean isProbabilityOn() {
+		// TODO Auto-generated method stub
+		PBoolean probabilityOn = (PBoolean)this.getProperty(PROPERTY_PROBABILITY_ON).getValue();
+		return probabilityOn.boolValue();
 	}
 	public void render(Graphics2D g) {
 		synchronized(this)

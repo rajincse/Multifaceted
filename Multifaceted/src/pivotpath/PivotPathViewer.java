@@ -162,7 +162,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		
 		try
 		{	
-			Property<PString> pSearch = new Property<PString>(PROPERTY_SEARCH, new PString("leonardo dicaprio"))
+			Property<PString> pSearch = new Property<PString>(PROPERTY_SEARCH, new PString(""))
 					{
 							@Override
 							protected boolean updating(PString newvalue) {

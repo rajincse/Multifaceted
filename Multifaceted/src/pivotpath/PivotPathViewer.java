@@ -49,6 +49,7 @@ import eyetrack.EyeTrackerItem;
 import eyetrack.EyeTrackerLabelDetector;
 import eyetrack.EyeTrackerViewer;
 import eyetrack.probability.EyeTrackerProbabilityViewer;
+import eyetrack.radu.EyeTrackerLabelDetectorRadu;
 
 public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPathViewerInterface , EyeTrackerProbabilityViewer{
 
@@ -115,7 +116,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	
 	private ArrayList<SearchItem> searchResult = null;
 	
-	private EyeTrackerLabelDetector et = null;
+	private EyeTrackerLabelDetectorRadu et = null;
 	
 	private boolean isLocked = false;
 	
@@ -137,7 +138,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		this.data = data;		
 		this.recentlyViewed = new ArrayList<SearchItem>();
 		this.recentlyViewedId  = new ArrayList<Long>();
-		et = new EyeTrackerLabelDetector(this);
+		et = new EyeTrackerLabelDetectorRadu(this);
 		this.resultText = new StringBuffer();
 		this.timer = new Timer("EyeTrack Data Collection Timer");
 		this.mousePosition = new Point(0,0);
@@ -161,7 +162,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		
 		try
 		{	
-			Property<PString> pSearch = new Property<PString>(PROPERTY_SEARCH, new PString(""))
+			Property<PString> pSearch = new Property<PString>(PROPERTY_SEARCH, new PString("leonardo dicaprio"))
 					{
 							@Override
 							protected boolean updating(PString newvalue) {
@@ -939,38 +940,45 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			if (isLocked) return;
 		}
 		et.block(true);
-		if(this.et.getTopElements() != null )
-		{
-			if(isShowGazeOn())
+		try{
+			if(this.et.getTopElements() != null )
 			{
-				this.setPreviousColors();
-			}
-			
-			ArrayList<EyeTrackerItem> topelements = et.getTopElements();
-			int elementsSize = topelements.size();
-			for(int i=0;i<elementsSize;i++)
-			{
-				EyeTrackerItem element = this.et.getTopElements().get(i);
-				if(element instanceof LabelInfoBit)
+				if(isShowGazeOn())
 				{
-					LabelInfoBit labelInfoBit = (LabelInfoBit) element;
-					
-					if(isShowGazeOn())
-					{
-						if(element.getScore() <= 1)
-						{
-							Color c = new Color(255, 255 - (int)(element.getScore()*255), 100);
-							labelInfoBit.color = c;
-						}
-						
-					}
-					
-					
-					addResultData(labelInfoBit, labelInfoBit.getScore());
+					this.setPreviousColors();
 				}
 				
+				ArrayList<EyeTrackerItem> topelements = et.getTopElements();
+				int elementsSize = topelements.size();
+				for(int i=0;i<elementsSize;i++)
+				{
+					
+					EyeTrackerItem element = topelements.get(i);
+					if(element instanceof LabelInfoBit)
+					{
+						LabelInfoBit labelInfoBit = (LabelInfoBit) element;
+						
+						if(isShowGazeOn())
+						{
+							if(element.getScore() <= 1)
+							{
+								Color c = new Color(255, 255 - (int)(element.getScore()*255), 100);
+								labelInfoBit.color = c;
+							}
+							
+						}
+						
+						
+						addResultData(labelInfoBit, labelInfoBit.getScore());
+					}
+					
+				}
 			}
+		}catch(Exception ex)
+		{
+			ex.printStackTrace();
 		}
+		
 		et.block(false);
 		
 	}

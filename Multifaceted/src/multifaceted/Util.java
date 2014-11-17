@@ -138,12 +138,25 @@ public class Util {
 		return d;
 	}
 	
-	public static double getRectangleToGazeScore(double x, double y, double w, double h, Point2D p, double zoom)
+	public static double getRectangleToGazeScoreGaussian(double x, double y, double w, double h, Point2D p, double zoom)
 	{
 		double score=0;
 		double deviation = EyeTrackerLabelDetector.EDGETHRESHOLD/zoom;
 		double distance = distanceToRectangle(x, y, w, h, p)*zoom;
 		score =gaussianDistribution(distance, 0, deviation) * (deviation * Math.sqrt(2 * Math.PI));
+		return score;
+	}
+	
+	public static double getRectangleToGazeScoreNonGaussian(double x, double y, double w, double h, Point2D p, double zoom)
+	{
+		double score=0;
+		int radius = (int)( EyeTrackerLabelDetector.EDGETHRESHOLD / zoom);
+		double distance = distanceToRectangle(x, y, w, h, p);
+		if (distance <= radius) 
+		{
+			score= 1.0 - distance/radius;
+		}
+			
 		return score;
 	}
 	public static double getGaussianScore(Point2D gazePosition, double meanX, double meanY, double deviationX, double deviationY)

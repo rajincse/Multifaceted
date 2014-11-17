@@ -26,4 +26,6 @@ public interface EyeTrackerItem{
 	public void setNextProbability(double probability);
 	//Mouse Hovering
 	public boolean isHovered();
+	//Connection
+	public boolean isConnected(EyeTrackerItem element);
 }

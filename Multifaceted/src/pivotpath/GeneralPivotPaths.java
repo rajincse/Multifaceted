@@ -11,6 +11,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,6 +19,7 @@ import java.util.HashSet;
 import multifaceted.Util;
 
 import eyetrack.EyeTrackerItem;
+import eyetrack.probability.ProbabilityManager;
 import eyetrack.probability.StateAction;
 
 import perspectives.base.Animation;
@@ -349,17 +351,20 @@ class LabelInfoBit extends InfoBit
 	{
 		Color previousColor = g.getColor();
 		
-		String gazeScore = Util.formatNum(this.gazeScore);	
-		g.setColor(new Color(32,87,176,128));
-		g.drawString("   "+gazeScore, (int)getWidth(), 0);
+		g.setFont(g.getFont().deriveFont(8.0f));
+		g.setColor(Color.black);
 		
-		String probability = Util.formatNum(this.probability);		
-		g.setColor(new Color(240,55,55,128));
-		g.drawString("X"+probability+"next ("+Util.formatNum(this.nextProbability)+")", (int)getWidth(), (int)(getHeight()*0.8));
 		
-		String score =Util.formatNum(this.score);
-		g.setColor(new Color(44,120,34,200));
-		g.drawString("="+score, (int)getWidth(), (int)(getHeight()*1.6));
+		String gazeScoreString =  (new DecimalFormat("##.00")).format(this.gazeScore) ;
+		String probabilityString = (new DecimalFormat("##.00")).format(this.probability);
+		String levitatedProbabilityScoreString  = 
+				(new DecimalFormat("##.00"))
+				.format(Util.getLevitatedScore(this.probability, ProbabilityManager.LEVITATION_LOWER_BOUND));
+		String scoreString = (new DecimalFormat("##.00")).format(this.score);
+		String s =gazeScoreString+ "; " + 
+		 probabilityString+ " (" + levitatedProbabilityScoreString +  "); " + scoreString
+				;
+		g.drawString(s, (int)getWidth(), (int)(getHeight()));
 		
 		g.setColor(previousColor);
 	}
@@ -410,20 +415,22 @@ class LabelInfoBit extends InfoBit
 		Point2D point = Util.getTransformedPoint(-x, -y, 0, gazePosition);
 		if(this.group instanceof MainInfoBitGroup)
 		{
+			
 			double groupX = this.group.x;
 			double groupY = this.group.y;
-			double heightDiff = y - this.group.y;
+			double yDiff = y - this.group.y;
+			double xDiff = x - this.group.x;
 			AffineTransform at = new AffineTransform();	
 
 			double r = MainInfoBitGroup.TILT_ANGLE;
-			at.translate(0, -heightDiff);
+			at.translate(-xDiff, -yDiff);
 			at.rotate(-r);			
 			at.translate(-groupX, -groupY);
 			
 			point = at.transform(gazePosition, point);
 		}
 		
-		double gazeScore =Util.getRectangleToGazeScore(0, 0, width, height,point, zoom);
+		double gazeScore =Util.getRectangleToGazeScoreNonGaussian(0, 0, width, height,point, zoom);
 		
 		return gazeScore;
 	}
@@ -487,8 +494,8 @@ class LabelInfoBit extends InfoBit
 			return emptyStateActions;
 		}
 	}
-	
-	protected boolean isConnected(EyeTrackerItem element)
+	@Override
+	public boolean isConnected(EyeTrackerItem element)
 	{
 		boolean connected = false;
 		if(element != null)
@@ -732,7 +739,21 @@ class MainInfoBitGroup extends InfoBitGroup
 		}
 		return ret;
 	}
-	
+	@Override
+	public double getItemX(int i) {
+		// TODO Auto-generated method stub
+		if(i > 0 && i< this.items.size())
+		{
+			InfoBit firstBit = items.get(0);
+			InfoBit currentBit = items.get(i);
+			return this.x + firstBit.getWidth()-currentBit.getWidth();
+		}
+		else
+		{
+			return super.getItemX(i);
+		}
+		
+	}
 	public void render(Graphics2D g)
 	{
 		double r = TILT_ANGLE;
@@ -740,14 +761,15 @@ class MainInfoBitGroup extends InfoBitGroup
 		g.rotate(r);
 		for (int i=0; i<items.size(); i++)
 		{
-			double h = getItemY(i) - y;
-				
+			double yDiff = getItemY(i) - y;
+			double xDiff = getItemX(i) -x;	
+			InfoBit bit =items.get(i); 	
 
-			g.translate(0, h);
+			g.translate(xDiff, yDiff);
 
-			items.get(i).render(g, i == hovered);		
+			bit.render(g, i == hovered);		
 			
-			g.translate(0, -h);
+			g.translate(-xDiff, -yDiff);
 				
 		}
 		g.rotate(-r);		
@@ -762,14 +784,15 @@ class MainInfoBitGroup extends InfoBitGroup
 		g.rotate(r);
 		for (int i=0; i<items.size(); i++)
 		{
-			double h = getItemY(i) - y;
-				
+			double yDiff = getItemY(i) - y;
+			double xDiff = getItemX(i) -x;	
+			InfoBit bit =items.get(i); 	
 
-			g.translate(0, h);
+			g.translate(xDiff, yDiff);
 
 			items.get(i).renderDebug(g);		
 			
-			g.translate(0, -h);
+			g.translate(-xDiff, -yDiff);
 				
 		}
 		g.rotate(-r);		
@@ -781,8 +804,8 @@ class MainInfoBitGroup extends InfoBitGroup
 		for (int i=0; i<items.size(); i++)
 		{			
 			
-			double x = (int)getItemX(i);
-			double y = (int)getItemY(i)- this.y;
+			double yDiff = getItemY(i) - y;
+			double xDiff = getItemX(i) -x;	
 			double w =  items.get(i).getWidth();
 			double h =  items.get(i).getHeight();			
 			
@@ -790,7 +813,7 @@ class MainInfoBitGroup extends InfoBitGroup
 
 			double r = TILT_ANGLE;
 			
-			at.translate(0,-y);
+			at.translate(-xDiff,-yDiff);
 			at.rotate(-r);	
 			at.translate(-this.x, -this.y);
 			

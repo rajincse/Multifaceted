@@ -121,6 +121,6 @@ public class IMDBDataSource extends DataSource{
 	}
 	public  ArrayList<CompactMovie> getDirectedMovieList(CompactPerson person)
 	{
-		return this.client.getPerson(person.getId()).getActedMovieList();
+		return this.client.getPerson(person.getId()).getDirectedMovieList();
 	}
 }

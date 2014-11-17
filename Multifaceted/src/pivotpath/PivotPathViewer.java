@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.PriorityQueue;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -592,19 +594,9 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		}
 		et.registerElements(elements);
 	}
-	private void selectMovie(CompactMovie compactMovie)
+	
+	private PivotPathData getPivotPathMovieData(CompactMovie compactMovie)
 	{
-		synchronized(this)
-		{
-			isLocked = true;
-		}
-		
-		long time = System.currentTimeMillis();
-
-		preSelectionTask();
-		
-		System.out.println("Selected:"+compactMovie);
-		
 		PivotPathData pivotPathData = new PivotPathData();
 		Movie movie = this.data.getMovie(compactMovie);
 		
@@ -634,6 +626,114 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		for(Genre genre : genreList)
 		{
 			pivotPathData.addAttribute(dataIndex,  new String[]{STR_GENRE, genre.getGenreName(),""+genre.getId()});				
+		}
+		
+		return pivotPathData;
+	}
+	private ArrayList<CompactMovie> createMovieList(CompactMovie compactMovie)
+	{
+		ArrayList<CompactMovie> movieList = new ArrayList<CompactMovie>();
+		movieList.add(compactMovie);
+		
+		PriorityQueue<MovieSortingItem> priorityQueue = new PriorityQueue<MovieSortingItem>();
+		MovieSortingItem item =new MovieSortingItem(compactMovie,MAX_MOVIE+1);
+		priorityQueue.add(item);
+		HashMap<Long, MovieSortingItem> movieSortingMap = new HashMap<Long, MovieSortingItem>();
+		movieSortingMap.put(item.getMovie().getId(), item);
+		
+		
+		Movie movie = this.data.getMovie(compactMovie);
+		ArrayList<CompactPerson> actorList = movie.getActors();
+		int actorCount =0;
+		for(CompactPerson actor: actorList)
+		{
+			ArrayList<CompactMovie> actedMovieList = this.data.getActedMovieList(actor);
+			int index=0;
+			for(CompactMovie actedMovie: actedMovieList)
+			{
+				
+				if(movieSortingMap.containsKey(actedMovie.getId()))
+				{
+					MovieSortingItem movieitem = movieSortingMap.get(actedMovie.getId());
+					priorityQueue.remove(movieitem);
+					movieitem.setValue(movieitem.getValue()+MAX_MOVIE-index+1);
+					priorityQueue.add(movieitem);
+				}
+				else
+				{
+					MovieSortingItem movieitem =new MovieSortingItem(actedMovie, MAX_MOVIE-index+1);
+					priorityQueue.add(movieitem);
+					movieSortingMap.put(movieitem.getMovie().getId(), movieitem);
+				}
+				index++;
+			}
+			
+			actorCount++;
+			if(actorCount>= MAX_ACTOR)
+			{
+				break;
+			}
+		}
+		ArrayList<CompactPerson> directorList = movie.getDirectors();
+		for(CompactPerson director: directorList)
+		{
+			ArrayList<CompactMovie> directedMovieList = this.data.getDirectedMovieList(director);
+			int index=0;
+			for(CompactMovie directedMovie: directedMovieList)
+			{
+				
+				if(movieSortingMap.containsKey(directedMovie.getId()))
+				{
+					MovieSortingItem movieitem = movieSortingMap.get(directedMovie.getId());					
+					priorityQueue.remove(movieitem);					
+					movieitem.setValue(movieitem.getValue()+MAX_MOVIE-index+1);
+					priorityQueue.add(movieitem);
+				}
+				else
+				{	
+					MovieSortingItem movieitem =new MovieSortingItem(directedMovie, +MAX_MOVIE-index+1);
+					priorityQueue.add(movieitem);
+					movieSortingMap.put(movieitem.getMovie().getId(), movieitem);
+				}		
+				index++;
+			}
+		}
+		int count =1;
+		while(!priorityQueue.isEmpty() && count <= MAX_MOVIE)
+		{
+			MovieSortingItem movieitem = priorityQueue.poll();
+			System.out.println(movieitem);
+			if(!movieList.contains(movieitem.getMovie()))
+			{
+				
+				movieList.add(movieitem.getMovie());
+				count++;
+			}
+			
+		}
+		return movieList;
+	}
+	private void selectMovie(CompactMovie compactMovie)
+	{
+		synchronized(this)
+		{
+			isLocked = true;
+		}
+		
+		long time = System.currentTimeMillis();
+
+		preSelectionTask();
+		
+		System.out.println("Selected:"+compactMovie);
+		
+		PivotPathData pivotPathData = new PivotPathData();
+		ArrayList<CompactMovie> movieList = this.createMovieList(compactMovie);
+		
+		for(CompactMovie movie: movieList)
+		{
+			PivotPathData pivotMovieData = this.getPivotPathMovieData(movie);
+			pivotPathData.addData(pivotMovieData.getDataList());
+			pivotPathData.addAttribute(pivotMovieData.getAttributeList());
 		}
 
 		pivotPaths.setFacetToSlotMapping(new String[]{STR_ACTOR,STR_DIRECTOR,STR_GENRE}, new int[]{0,1,1});

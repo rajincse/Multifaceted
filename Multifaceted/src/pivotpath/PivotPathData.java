@@ -21,6 +21,12 @@ public class PivotPathData {
 		return this.dataList.size()-1;
 	}
 	
+	public int addData(ArrayList<String> data)
+	{
+		this.dataList.addAll(data);
+		
+		return this.dataList.size()-1;
+	}
 	public void addAttribute(int dataIndex, String[] attribute)
 	{
 		if(dataIndex >= this.attributeList.size())
@@ -42,6 +48,14 @@ public class PivotPathData {
 		
 	}
 	
+	public void addAttribute(ArrayList<ArrayList<ArrayList<String>>> attribute)
+	{
+		this.attributeList.addAll(attribute);
+	}
+	public ArrayList<String> getDataList()
+	{
+		return this.dataList;
+	}
 	public String[] getData()
 	{
 		String[] data = new String[this.dataList.size()];
@@ -51,7 +65,10 @@ public class PivotPathData {
 		}
 		return data;
 	}
-	
+	public ArrayList<ArrayList<ArrayList<String>>> getAttributeList()
+	{
+		return this.attributeList;
+	}
 	public String[][][] getAttribute()
 	{
 		String[][][] attribute = new String[this.attributeList.size()][][];

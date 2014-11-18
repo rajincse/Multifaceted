@@ -1621,7 +1621,7 @@ public class GeneralPivotPaths {
 			int index = dataGroups.get(i).mouseHovered(x, y);
 			if (index >=0)
 			{
-				hovered = "\t" + data.get(i);
+				hovered = "\t" + dataGroups.get(i).items.get(index).value+ "\t" + dataGroups.get(i).items.get(index).id;
 				hoverType = PivotPathViewerInterface.GROUP_DATA;
 				hoverGroup =i;
 				hoverIndex = index;

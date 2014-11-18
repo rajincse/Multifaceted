@@ -1,7 +1,6 @@
 package pivotpath;
 
 import imdb.IMDBDataSource;
-import imdb.analysis.HeatMapAnalysisViewer;
 import imdb.entity.CompactMovie;
 import imdb.entity.CompactPerson;
 import imdb.entity.Genre;
@@ -49,8 +48,8 @@ import perspectives.two_d.JavaAwtRenderer;
 import perspectives.two_d.ViewerContainer2D;
 import eyetrack.EyeTrackerItem;
 import eyetrack.EyeTrackerLabelDetector;
-import eyetrack.EyeTrackerViewer;
 import eyetrack.probability.EyeTrackerProbabilityViewer;
+import eyetrack.probability.ProbabilityManager;
 import eyetrack.radu.EyeTrackerLabelDetectorRadu;
 
 public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPathViewerInterface , EyeTrackerProbabilityViewer{
@@ -106,8 +105,8 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	public static final String RESULT_ANCHOR_MOUSE_POSITION ="Mouse";
 	public static final String RESULT_ANCHOR_MOUSE_CLICK ="Click";
 	public static final String RESULT_ANCHOR_ZOOM ="ZOOM";
-	public static final String RESULT_GAZE_POSITION ="Gaze";
-	public static final String RESULT_Hover ="Hover";
+	public static final String RESULT_ANCHOR_GAZE_POSITION ="Gaze";
+	public static final String RESULT_ANCHOR_Hover ="Hover";
 	
 	private static final double ZOOM_THRESHOLD =0.6;
 	
@@ -153,6 +152,10 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 				if(!facet.trim().equals("") && !facet.equals(STR_GENRE))
 				{
 					selectItem(id, value);
+				}
+				else if(facet.trim().equals("") )
+				{
+					selectItem(id, value, EyeTrackerItem.TYPE_MOVIE);
 				}
 			}
 		};
@@ -849,10 +852,13 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	
 	private int gazeX;
 	private int gazeY;
+	ArrayList<Point> gazeList = new ArrayList<Point>();
+	
 	@Override
 	public void gazeDetected(int x, int y) {
 		this.gazeX = x;
 		this.gazeY = y;
+		this.gazeList.add(new Point(x,y));
 		if(isShowGazeOn())
 		{
 			this.gazeX = x;
@@ -1088,7 +1094,10 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		long time = System.currentTimeMillis();
 		String id = element.getId();
 		String name = element.label;		
-		String data = RESULT_ANCHOR_EYE_ELEMENT+"\t"+time+"\t"+id+"\t"+name+"\t"+element.getType()+"\t"+String.format("%.2f",score)
+		String data = RESULT_ANCHOR_EYE_ELEMENT+"\t"+time+"\t"+id+"\t"+name+"\t"+element.getType()
+				+"\t"+String.format("%.2f",score)
+				+"\t"+String.format("%.2f",element.getProbabilityScore())
+				+"\t"+String.format("%.2f",Util.getLevitatedScore(element.getProbabilityScore(), ProbabilityManager.LEVITATION_LOWER_BOUND))
 				+"\t"+(int)(element.group.getItemX(element)+IMAGE_SAVE_OFFSET_X)+"\t"+(int)(element.group.getItemY(element)+IMAGE_SAVE_OFFSET_Y)
 				+"\t"+currentImageFileName;
 		synchronized (this) {
@@ -1097,47 +1106,79 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		
 //		System.out.println("##"+data);
 	}
+	private Point getAverageGazePosition()
+	{
+		int sumX =0;
+		int sumY =0;
+		int count=0;
+		for(Point p : gazeList)
+		{
+			sumX+= p.x;
+			sumY+=p.y;
+			count++;
+		}
+		
+		if(count > 0)
+		{
+			Point averageGaze = new Point(sumX/count, sumY/count);
+			gazeList.clear();
+			return averageGaze;
+		}
+		else
+		{
+			return new Point(0,0);
+		}
+		
+	}
 	private void addResultData(Point mousePosition)
 	{
 		long time = System.currentTimeMillis();
-		int rad =(int)( EyeTrackerLabelDetector.EDGETHRESHOLD/ this.getZoom());
-		String data = RESULT_ANCHOR_MOUSE_POSITION+"\t"+time+"\t"+(mousePosition.x+IMAGE_SAVE_OFFSET_X)+"\t"+(mousePosition.y+IMAGE_SAVE_OFFSET_Y)
-				+"\t"+currentImageFileName+"\r\n"
-				+RESULT_GAZE_POSITION+"\t"+time+"\t"+(gazeX+IMAGE_SAVE_OFFSET_X)+"\t"+(gazeY+IMAGE_SAVE_OFFSET_Y)+"\t"+rad
-				+"\t"+currentImageFileName+"\r\n"
-				+RESULT_ANCHOR_ZOOM+"\t"+time+"\t"+this.getZoom()
-				+"\t"+currentImageFileName;
-		
-		//Hovering info
-		if(this.hoverType>= 0 && this.hoverGroupIndex >= 0 && this.hoverElementIndex >= 0)
+		try
 		{
-			InfoBit element= null;
-			if(this.hoverType == PivotPathViewerInterface.GROUP_DATA)
-			{
-				element = this.pivotPaths.dataGroups.get(hoverGroupIndex).getItems().get(hoverElementIndex);
-			}
-			else if(this.hoverType == PivotPathViewerInterface.GROUP_ATTRIBUTE)
-			{
-				element = this.pivotPaths.groups.get(hoverGroupIndex).getItems().get(hoverElementIndex);
-			}
-			if(element != null && element instanceof LabelInfoBit)
-			{
-				data+=	"\r\n"
-						+RESULT_Hover+"\t"+time+"\t"+element.getId()+"\t"+((LabelInfoBit)element).label+"\t"+element.getType()+"\t"+String.format("%.2f",element.getScore())
-						+"\t"+(int)(element.group.getItemX(element)+IMAGE_SAVE_OFFSET_X)+"\t"+(int)(element.group.getItemY(element)+IMAGE_SAVE_OFFSET_Y)
-						+"\t"+currentImageFileName;
-			}
+			Point averageGaze = this.getAverageGazePosition();
+			int rad =(int)( EyeTrackerLabelDetector.EDGETHRESHOLD/ this.getZoom());
+			String data = RESULT_ANCHOR_MOUSE_POSITION+"\t"+time+"\t"+(mousePosition.x+IMAGE_SAVE_OFFSET_X)+"\t"+(mousePosition.y+IMAGE_SAVE_OFFSET_Y)
+					+"\t"+currentImageFileName+"\r\n"
+					+RESULT_ANCHOR_GAZE_POSITION+"\t"+time+"\t"+(averageGaze.x+IMAGE_SAVE_OFFSET_X)+"\t"+(averageGaze.y+IMAGE_SAVE_OFFSET_Y)+"\t"+rad
+					+"\t"+currentImageFileName+"\r\n"
+					+RESULT_ANCHOR_ZOOM+"\t"+time+"\t"+this.getZoom()
+					+"\t"+currentImageFileName;
 			
+			//Hovering info
+			if(this.hoverType>= 0 && this.hoverGroupIndex >= 0 && this.hoverElementIndex >= 0)
+			{
+				InfoBit element= null;
+				if(this.hoverType == PivotPathViewerInterface.GROUP_DATA)
+				{
+					element = this.pivotPaths.dataGroups.get(hoverGroupIndex).getItems().get(hoverElementIndex);
+				}
+				else if(this.hoverType == PivotPathViewerInterface.GROUP_ATTRIBUTE)
+				{
+					element = this.pivotPaths.groups.get(hoverGroupIndex).getItems().get(hoverElementIndex);
+				}
+				if(element != null && element instanceof LabelInfoBit)
+				{
+					data+=	"\r\n"
+							+RESULT_ANCHOR_Hover+"\t"+time+"\t"+element.getId()+"\t"+((LabelInfoBit)element).label+"\t"+element.getType()+"\t"+String.format("%.2f",element.getScore())
+							+"\t"+(int)(element.group.getItemX(element)+IMAGE_SAVE_OFFSET_X)+"\t"+(int)(element.group.getItemY(element)+IMAGE_SAVE_OFFSET_Y)
+							+"\t"+currentImageFileName;
+				}
+				
+			}
+			synchronized (this) {
+				this.resultText.append(data+"\r\n");
+			}
 		}
-		synchronized (this) {
-			this.resultText.append(data+"\r\n");
+		catch(Exception ex)
+		{
+			ex.printStackTrace();
 		}
 //		System.out.println("##"+data);
 	}
 	private void addResultDataMouseClick(int x, int y, int button)
 	{
 		long time = System.currentTimeMillis();
-		String data = RESULT_ANCHOR_MOUSE_CLICK+"\t"+(x+IMAGE_SAVE_OFFSET_X)+"\t"+(y+IMAGE_SAVE_OFFSET_Y)+"\t"+button
+		String data = RESULT_ANCHOR_MOUSE_CLICK+"\t"+time+"\t"+(x+IMAGE_SAVE_OFFSET_X)+"\t"+(y+IMAGE_SAVE_OFFSET_Y)+"\t"+button
 				+"\t"+currentImageFileName;
 		synchronized (this) {
 			this.resultText.append(data+"\r\n");
@@ -1221,7 +1262,27 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		et.block(false);
 		
 	}
-
+	@Override
+	public void selectItem(String id, String name, int type) {
+		// TODO Auto-generated method stub
+		if(type == EyeTrackerItem.TYPE_MOVIE)
+		{
+			et.block(true);
+			System.out.println(id+" "+name);
+			CompactMovie movie = new CompactMovie(Long.parseLong(id), name, 1900);
+			int val = JOptionPane.showConfirmDialog(null, "Are you sure to select "+name+"?", "Confirmation?", JOptionPane.YES_NO_OPTION);
+			if(val == JOptionPane.YES_OPTION)
+			{
+				selectMovie(movie);
+			}
+			et.block(false);
+			
+		}
+		else
+		{
+			this.selectItem(id, name);
+		}
+	}
 	@Override
 	public void callSetToolTipText(String text) {
 		// TODO Auto-generated method stub

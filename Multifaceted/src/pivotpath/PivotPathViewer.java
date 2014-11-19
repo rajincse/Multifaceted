@@ -66,7 +66,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	private static final String PROPERTY_MOUSE_GAZE="Debug.Mouse Gaze";
 	private static final String PROPERTY_SAVE_VIEW="Debug.Save View";
 	private static final String PROPERTY_RENDER_DEBUG="Debug.Render Debug";
-	private static final String PROPERTY_PROBABILITY_ON="Probability";
+	private static final String PROPERTY_DISABLE_PROBABILITY="Disable Probability";
 	private static final String PROPERTY_REFRESH="Refresh";
 	private static final String PROPERTY_END_STUDY = "End of Study";
 	private static final String PROPERTY_SHOW_LIST_TYPE = "Show List";
@@ -188,7 +188,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 					};
 			addProperty(pSearch);
 			
-			Property<PBoolean> pSearchActor = new Property<PBoolean>(PROPERTY_SEARCH_PERSON, new PBoolean(true));
+			Property<POptions> pSearchActor = new Property<POptions>(PROPERTY_SEARCH_PERSON, new POptions(new String[]{"Person", "Movies"}));
 			addProperty(pSearchActor);
 			
 			Property<PSignal> pSelect = new Property<PSignal>(PROPERTY_SELECT, new PSignal())
@@ -268,39 +268,8 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 					};
 			addProperty(pBack);
 			
-			Property<PSignal> pStep = new Property<PSignal>(PROPERTY_STEP, new PSignal())
-					{
-						@Override
-						protected boolean updating(PSignal newvalue) {
-							// TODO Auto-generated method stub
-							simulate();
-							return super.updating(newvalue);
-						}
-					};
-			addProperty(pStep);
-			Property<PString> pPerformance = new Property<PString>(PROPERTY_PERFORMANCE, new PString(""))
-					{
-						@Override
-						protected boolean updating(PString newvalue) {
-							// TODO Auto-generated method stub
-							long[] ids = new long[]{437747,700661,369071,1304615,95992};
-							
-							String msg="\r\n";
-							for(int i =0; i< ids.length;i++)
-							{
-								CompactPerson person = new CompactPerson(ids[i],"Rajin","m");
-								long time = System.currentTimeMillis();
-								selectPerson(person);
-								time = System.currentTimeMillis() - time;
-								msg+=ids[i]+": "+time+"\r\n";								
-							}
-							System.out.println("Performance:"+msg);
-							return super.updating(newvalue);
-						}
-					};
-			addProperty(pPerformance);
-			
 			Property<PBoolean> pShowGaze = new Property<PBoolean>(PROPERTY_SHOW_GAZE,new PBoolean(false));
+			
 			addProperty(pShowGaze);
 			
 			Property<PBoolean> pMouseGaze = new Property<PBoolean>(PROPERTY_MOUSE_GAZE,new PBoolean(false));
@@ -319,8 +288,13 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			Property<PBoolean> pRenderDebug = new Property<PBoolean>(PROPERTY_RENDER_DEBUG,new PBoolean(false));
 			addProperty(pRenderDebug);
 			
-			Property<PBoolean> pProbabilityOn = new Property<PBoolean>(PROPERTY_PROBABILITY_ON,new PBoolean(true));
-			addProperty(pProbabilityOn);
+			Property<PBoolean> pProbabilityOff = new Property<PBoolean>(PROPERTY_DISABLE_PROBABILITY,new PBoolean(false));
+			addProperty(pProbabilityOff);
+			
+			pShowGaze.setVisible(false);
+			pMouseGaze.setVisible(false);
+			pRenderDebug.setVisible(false);
+			pProbabilityOff.setVisible(false);
 			
 			Property<PSignal> pEndOfStudy = new Property<PSignal>(PROPERTY_END_STUDY, new PSignal())
 					{
@@ -599,7 +573,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		PivotPathData pivotPathData = new PivotPathData();
 		Movie movie = this.data.getMovie(compactMovie);
 		
-		int dataIndex = pivotPathData.addData(movie.getTitle()+"\t"+(int)movie.getRating()+"\t"+movie.getId());
+		int dataIndex = pivotPathData.addData(movie.getTitle()+"\t"+movie.getRating()+"\t"+movie.getId());
 		
 		ArrayList<CompactPerson> directorList = movie.getDirectors();
 		ArrayList<CompactPerson> actorList = movie.getActors();
@@ -724,7 +698,8 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		preSelectionTask();
 		
 		System.out.println("Selected:"+compactMovie);
-		
+		Movie movieObj = this.data.getMovie(compactMovie);
+		updateSelectedItem(movieObj.getTitle() +"\r\nYear:"+movieObj.getYear()+", Rating:"+movieObj.getRating(), SELECT_FROM_SEARCH);
 		PivotPathData pivotPathData = new PivotPathData();
 		ArrayList<CompactMovie> movieList = this.createMovieList(compactMovie);
 		
@@ -851,19 +826,16 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	
 	@Override
 	public void gazeDetected(int x, int y) {
-		this.gazeX = x;
-		this.gazeY = y;
-		this.addResultDataGazePoint(x, y);
-		
 		
 		if(isShowGazeOn())
-		{
+		{	
 			this.gazeX = x;
 			this.gazeY = y;
-			
 			this.requestRender();
 		}
-//		this.saveScoreInfo();
+		
+		this.addResultDataGazePoint(x, y);
+		this.saveScoreInfo();
 	}
 	@Override
 	public AffineTransform getTransform() {
@@ -900,14 +872,21 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	}
 	private boolean isSearchActorOn()
 	{
-		PBoolean searchActor = (PBoolean)this.getProperty(PROPERTY_SEARCH_PERSON).getValue();
-		return searchActor.boolValue();
+		POptions searchActor = (POptions)this.getProperty(PROPERTY_SEARCH_PERSON).getValue();
+		if(searchActor.selectedIndex ==0 )
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}		
 	}
 	@Override
 	public boolean isProbabilityOn() {
 		// TODO Auto-generated method stub
-		PBoolean probabilityOn = (PBoolean)this.getProperty(PROPERTY_PROBABILITY_ON).getValue();
-		return probabilityOn.boolValue();
+		PBoolean probabilityOff = (PBoolean)this.getProperty(PROPERTY_DISABLE_PROBABILITY).getValue();
+		return !probabilityOff.boolValue();
 	}
 	public void render(Graphics2D g) {
 		synchronized(this)
@@ -989,15 +968,6 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	
 	private void startTimer()
 	{
-		this.timer.schedule(new TimerTask() {
-			
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
-				saveScoreInfo();
-			}
-		}
-		, 0, TIMER_PERIOD_GAZE);
 		
 		
 	}

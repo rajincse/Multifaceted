@@ -11,7 +11,6 @@ import imdb.entity.SearchItem;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -129,8 +128,6 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	
 	private Timer timer =null;
 	
-	private Point mousePosition =null;
-	
 	private SearchItem currentItem;
 	
 	private GeneralPivotPaths pivotPaths;
@@ -142,7 +139,6 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		et = new EyeTrackerLabelDetectorRadu(this);
 		this.resultText = new StringBuffer();
 		this.timer = new Timer("EyeTrack Data Collection Timer");
-		this.mousePosition = new Point(0,0);
 		
 		this.pivotPaths = new MoviePivotPaths("Movies", new Rectangle2D.Double(0,0,1000,300))
 		{
@@ -852,13 +848,14 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	
 	private int gazeX;
 	private int gazeY;
-	ArrayList<Point> gazeList = new ArrayList<Point>();
 	
 	@Override
 	public void gazeDetected(int x, int y) {
 		this.gazeX = x;
 		this.gazeY = y;
-		this.gazeList.add(new Point(x,y));
+		this.addResultDataGazePoint(x, y);
+		
+		
 		if(isShowGazeOn())
 		{
 			this.gazeX = x;
@@ -1002,15 +999,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		}
 		, 0, TIMER_PERIOD_GAZE);
 		
-		this.timer.schedule(new TimerTask() {
-			
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
-				addResultData(mousePosition);
-			}
-		}
-		, 0, TIMER_PERIOD_MOUSE_POSITION);
+		
 	}
 	
 	private void stopTimer()
@@ -1093,12 +1082,15 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		
 		long time = System.currentTimeMillis();
 		String id = element.getId();
-		String name = element.label;		
+		String name = element.label;
+		
+		Point viewPortPoint = this.getViewPortPoint((int)(element.group.getItemX(element)), (int)(element.group.getItemY(element)));
+		
 		String data = RESULT_ANCHOR_EYE_ELEMENT+"\t"+time+"\t"+id+"\t"+name+"\t"+element.getType()
 				+"\t"+String.format("%.2f",score)
 				+"\t"+String.format("%.2f",element.getProbabilityScore())
 				+"\t"+String.format("%.2f",Util.getLevitatedScore(element.getProbabilityScore(), ProbabilityManager.LEVITATION_LOWER_BOUND))
-				+"\t"+(int)(element.group.getItemX(element)+IMAGE_SAVE_OFFSET_X)+"\t"+(int)(element.group.getItemY(element)+IMAGE_SAVE_OFFSET_Y)
+				+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y)
 				+"\t"+currentImageFileName;
 		synchronized (this) {
 			this.resultText.append(data+"\r\n");
@@ -1106,88 +1098,99 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		
 //		System.out.println("##"+data);
 	}
-	private Point getAverageGazePosition()
-	{
-		int sumX =0;
-		int sumY =0;
-		int count=0;
-		for(Point p : gazeList)
-		{
-			sumX+= p.x;
-			sumY+=p.y;
-			count++;
-		}
-		
-		if(count > 0)
-		{
-			Point averageGaze = new Point(sumX/count, sumY/count);
-			gazeList.clear();
-			return averageGaze;
-		}
-		else
-		{
-			return new Point(0,0);
-		}
-		
-	}
-	private void addResultData(Point mousePosition)
+	private void addResultDataMouseMove(Point mousePosition)
 	{
 		long time = System.currentTimeMillis();
+		Point viewPortPoint =this.getViewPortPoint(mousePosition.x, mousePosition.y);	
+		String data = RESULT_ANCHOR_MOUSE_POSITION+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y)
+				+"\t"+currentImageFileName;
+		
+		
+		synchronized (this) {
+			this.resultText.append(data+"\r\n");
+		}
+		
+//		System.out.println("##"+data);
+	}
+	private void addResultDataMouseClick(int x, int y, int button)
+	{	
+		long time = System.currentTimeMillis();
+		
+		Point viewPortPoint =this.getViewPortPoint(x, y);
+		
+		System.out.println("Mouse click:"+viewPortPoint.x+","+viewPortPoint.y);
+		
+		String data = RESULT_ANCHOR_MOUSE_CLICK+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y)+"\t"+button
+				+"\t"+currentImageFileName;
+		synchronized (this) {
+			this.resultText.append(data+"\r\n");
+		}
+	}
+	private void addResultDataGazePoint(int x, int y)
+	{
+		long time = System.currentTimeMillis();
+		
+		
+		Point viewPortPoint =this.getViewPortPoint(x, y);
+		
+		
+		String data = RESULT_ANCHOR_GAZE_POSITION+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y)
+				+"\t"+currentImageFileName;
+		synchronized (this) {
+			this.resultText.append(data+"\r\n");
+		}
+	}
+	private void addResultDataHover(int hoverType,int hoverGroupIndex, int hoverElementIndex) 
+	{
+		long time = System.currentTimeMillis();
+		
 		try
 		{
-			Point averageGaze = this.getAverageGazePosition();
-			int rad =(int)( EyeTrackerLabelDetector.EDGETHRESHOLD/ this.getZoom());
-			String data = RESULT_ANCHOR_MOUSE_POSITION+"\t"+time+"\t"+(mousePosition.x+IMAGE_SAVE_OFFSET_X)+"\t"+(mousePosition.y+IMAGE_SAVE_OFFSET_Y)
-					+"\t"+currentImageFileName+"\r\n"
-					+RESULT_ANCHOR_GAZE_POSITION+"\t"+time+"\t"+(averageGaze.x+IMAGE_SAVE_OFFSET_X)+"\t"+(averageGaze.y+IMAGE_SAVE_OFFSET_Y)+"\t"+rad
-					+"\t"+currentImageFileName+"\r\n"
-					+RESULT_ANCHOR_ZOOM+"\t"+time+"\t"+this.getZoom()
-					+"\t"+currentImageFileName;
-			
-			//Hovering info
-			if(this.hoverType>= 0 && this.hoverGroupIndex >= 0 && this.hoverElementIndex >= 0)
+			if(hoverType>= 0 && hoverGroupIndex >= 0 && hoverElementIndex >= 0)
 			{
 				InfoBit element= null;
-				if(this.hoverType == PivotPathViewerInterface.GROUP_DATA)
+				if(hoverType == PivotPathViewerInterface.GROUP_DATA)
 				{
 					element = this.pivotPaths.dataGroups.get(hoverGroupIndex).getItems().get(hoverElementIndex);
 				}
-				else if(this.hoverType == PivotPathViewerInterface.GROUP_ATTRIBUTE)
+				else if(hoverType == PivotPathViewerInterface.GROUP_ATTRIBUTE)
 				{
 					element = this.pivotPaths.groups.get(hoverGroupIndex).getItems().get(hoverElementIndex);
 				}
 				if(element != null && element instanceof LabelInfoBit)
 				{
-					data+=	"\r\n"
-							+RESULT_ANCHOR_Hover+"\t"+time+"\t"+element.getId()+"\t"+((LabelInfoBit)element).label+"\t"+element.getType()+"\t"+String.format("%.2f",element.getScore())
-							+"\t"+(int)(element.group.getItemX(element)+IMAGE_SAVE_OFFSET_X)+"\t"+(int)(element.group.getItemY(element)+IMAGE_SAVE_OFFSET_Y)
+					Point viewPortPoint = this.getViewPortPoint((int)(element.group.getItemX(element)), (int)(element.group.getItemY(element)));
+					String data =	RESULT_ANCHOR_Hover+"\t"+time+"\t"+element.getId()+"\t"+((LabelInfoBit)element).label
+							+"\t"+element.getType()+"\t"+String.format("%.2f",element.getScore())
+							+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y)
 							+"\t"+currentImageFileName;
+					
+					synchronized (this) {
+						this.resultText.append(data+"\r\n");
+					}
 				}
 				
 			}
-			synchronized (this) {
-				this.resultText.append(data+"\r\n");
-			}
+			
 		}
 		catch(Exception ex)
 		{
 			ex.printStackTrace();
 		}
-//		System.out.println("##"+data);
 	}
-	private void addResultDataMouseClick(int x, int y, int button)
+	private Point getViewPortPoint(int x, int y )
 	{
-		long time = System.currentTimeMillis();
-		String data = RESULT_ANCHOR_MOUSE_CLICK+"\t"+time+"\t"+(x+IMAGE_SAVE_OFFSET_X)+"\t"+(y+IMAGE_SAVE_OFFSET_Y)+"\t"+button
-				+"\t"+currentImageFileName;
-		synchronized (this) {
-			this.resultText.append(data+"\r\n");
-		}
+		Point screenPoint = new Point(x, y);
+		
+		Point viewPortPoint = new Point();
+		
+		AffineTransform transform = this.getTransform();
+		transform.transform(screenPoint, viewPortPoint);
+		return viewPortPoint;
 	}
 	public boolean mousepressed(int x, int y, int button) {
 		this.addResultDataMouseClick(x, y, button);
-		mousePosition.x = x;
-		mousePosition.y = y;
+		
 		if (button == 1)
 		{
 			((ViewerContainer2D)this.getContainer()).rightButtonDown = false;
@@ -1208,16 +1211,13 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 
 
 	public boolean mousereleased(int x, int y, int button) {
-		mousePosition.x = x;
-		mousePosition.y = y;
 		
 		return false;
 	}
 
 
 	public boolean mousemoved(int x, int y) {
-		mousePosition.x = x;
-		mousePosition.y = y;
+		addResultDataMouseMove(new Point(x,y));
 		if(this.pivotPaths.groups != null)
 		{
 			this.pivotPaths.mouseMoved(x,y);
@@ -1229,8 +1229,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 
 
 	public boolean mousedragged(int x, int y, int oldx, int oldy) {
-		mousePosition.x = x;
-		mousePosition.y = y;
+		addResultDataMouseMove(new Point(x,y));
 		ViewerContainer2D container = (ViewerContainer2D)this.getContainer();
 		double zoom = container.getZoom();
 		if(container.rightButtonDown && zoom < ZOOM_THRESHOLD)
@@ -1238,6 +1237,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			container.setZoom(ZOOM_THRESHOLD);
 			return true;
 		}
+		saveView();
 		return false;
 	}
 
@@ -1304,16 +1304,10 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
-				BufferedImage bim = new BufferedImage(1200,1200, BufferedImage.TYPE_INT_ARGB);
 				
-				Graphics2D g = bim.createGraphics();
-				g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-				g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-				g.translate(IMAGE_SAVE_OFFSET_X,IMAGE_SAVE_OFFSET_Y);
-				render(g);
-				
-				
-				String filename = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date())+currentItem.getDisplayText().replace(" ", "_")+ ".PNG";
+				BufferedImage bim =getViewPortImage();
+				String zoomText = String.format("%.2f", getZoom());
+				String filename = new SimpleDateFormat("yyyyMMdd_HHmmss_S").format(new Date())+currentItem.getDisplayText().replace(" ", "_")+"_"+zoomText+ ".PNG";
 				
 				try {
 					ImageIO.write(bim, "PNG", new File(IMAGE_RESULT_DIR + filename ));
@@ -1325,6 +1319,10 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			}
 		}, 0);
 	
+	}
+	private BufferedImage getViewPortImage()
+	{
+		return this.getContainer().getImage();
 	}
 	private void preSelectionTask()
 	{
@@ -1379,15 +1377,16 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		
 	}
 
-	private int hoverType =-1;
-	private int hoverGroupIndex=-1;
-	private int hoverElementIndex =-1;
 	@Override
 	public void hoverDetected(int type,int groupIndex, int elementIndex) {
 		// TODO Auto-generated method stub
-		this.hoverType = type;
-		this.hoverGroupIndex = groupIndex;
-		this.hoverElementIndex = elementIndex;
+		if(type>= 0 && groupIndex >= 0 && elementIndex >= 0)
+		{
+			
+			saveView();
+			addResultDataHover(type, groupIndex, elementIndex);
+		}
+
 	}
 
 }

@@ -890,7 +890,6 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		{
 			if (isLocked) return;
 		}
-		et.block(true);
 		
 		if(!pivotPaths.data.isEmpty())
 		{
@@ -906,7 +905,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			pivotPaths.renderDebug(g);
 		}
 		
-		et.block(false);
+		
 	}
 	
 	private void drawEyeGaze(Graphics2D g)

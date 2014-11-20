@@ -214,18 +214,27 @@ public class EyeTrackerLabelDetectorRadu implements EyeTrackerDataReceiver{
 				item.setScore(0);
 				continue;
 			}
+			if(viewer.isProbabilityDisabled())
+			{
+				item.setProbability(-1);
+				item.setScore(g);
+			}
+			else
+			{
+				double p = transProbs[i] / mx;
+				if (sum == 0) p = 1;
 			
-			double p = transProbs[i] / mx;
-			if (sum == 0) p = 1;
+				
+				double f = g*Util.getLevitatedScore(p, ProbabilityManager.LEVITATION_LOWER_BOUND);
+				
+				ps.get(i).add(new Double(p));
+				fs.get(i).add(new Double(f));
+				
+				
+				item.setProbability(p);
+				item.setScore(f);
+			}
 		
-			double f = g*Util.getLevitatedScore(p, ProbabilityManager.LEVITATION_LOWER_BOUND);
-			
-			ps.get(i).add(new Double(p));
-			fs.get(i).add(new Double(f));
-			
-			
-			item.setProbability(p);
-			item.setScore(f);
 		}
 
 		

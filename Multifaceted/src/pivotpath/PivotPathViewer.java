@@ -12,6 +12,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -106,6 +107,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	public static final String RESULT_ANCHOR_ZOOM ="ZOOM";
 	public static final String RESULT_ANCHOR_GAZE_POSITION ="Gaze";
 	public static final String RESULT_ANCHOR_Hover ="Hover";
+	public static final String RESULT_ANCHOR_IMAGE ="Image";
 	
 	private static final double ZOOM_THRESHOLD =0.6;
 	
@@ -290,11 +292,6 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			
 			Property<PBoolean> pProbabilityOff = new Property<PBoolean>(PROPERTY_DISABLE_PROBABILITY,new PBoolean(false));
 			addProperty(pProbabilityOff);
-			
-			pShowGaze.setVisible(false);
-			pMouseGaze.setVisible(false);
-			pRenderDebug.setVisible(false);
-			pProbabilityOff.setVisible(false);
 			
 			Property<PSignal> pEndOfStudy = new Property<PSignal>(PROPERTY_END_STUDY, new PSignal())
 					{
@@ -883,10 +880,10 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		}		
 	}
 	@Override
-	public boolean isProbabilityOn() {
+	public boolean isProbabilityDisabled() {
 		// TODO Auto-generated method stub
 		PBoolean probabilityOff = (PBoolean)this.getProperty(PROPERTY_DISABLE_PROBABILITY).getValue();
-		return !probabilityOff.boolValue();
+		return probabilityOff.boolValue();
 	}
 	public void render(Graphics2D g) {
 		synchronized(this)
@@ -1056,12 +1053,18 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		
 		Point viewPortPoint = this.getViewPortPoint((int)(element.group.getItemX(element)), (int)(element.group.getItemY(element)));
 		
+		String levitatedProbabilityText ="\t"+String.format("%.2f",Util.getLevitatedScore(element.getProbabilityScore(), ProbabilityManager.LEVITATION_LOWER_BOUND));
+		
+		if(this.isProbabilityDisabled())
+		{
+			levitatedProbabilityText ="\t-1";
+		}
+		
 		String data = RESULT_ANCHOR_EYE_ELEMENT+"\t"+time+"\t"+id+"\t"+name+"\t"+element.getType()
 				+"\t"+String.format("%.2f",score)
 				+"\t"+String.format("%.2f",element.getProbabilityScore())
-				+"\t"+String.format("%.2f",Util.getLevitatedScore(element.getProbabilityScore(), ProbabilityManager.LEVITATION_LOWER_BOUND))
-				+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y)
-				+"\t"+currentImageFileName;
+				+"\t"+levitatedProbabilityText
+				+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y);
 		synchronized (this) {
 			this.resultText.append(data+"\r\n");
 		}
@@ -1072,8 +1075,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	{
 		long time = System.currentTimeMillis();
 		Point viewPortPoint =this.getViewPortPoint(mousePosition.x, mousePosition.y);	
-		String data = RESULT_ANCHOR_MOUSE_POSITION+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y)
-				+"\t"+currentImageFileName;
+		String data = RESULT_ANCHOR_MOUSE_POSITION+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y);
 		
 		
 		synchronized (this) {
@@ -1088,10 +1090,8 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		
 		Point viewPortPoint =this.getViewPortPoint(x, y);
 		
-		System.out.println("Mouse click:"+viewPortPoint.x+","+viewPortPoint.y);
 		
-		String data = RESULT_ANCHOR_MOUSE_CLICK+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y)+"\t"+button
-				+"\t"+currentImageFileName;
+		String data = RESULT_ANCHOR_MOUSE_CLICK+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y)+"\t"+button;
 		synchronized (this) {
 			this.resultText.append(data+"\r\n");
 		}
@@ -1104,8 +1104,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		Point viewPortPoint =this.getViewPortPoint(x, y);
 		
 		
-		String data = RESULT_ANCHOR_GAZE_POSITION+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y)
-				+"\t"+currentImageFileName;
+		String data = RESULT_ANCHOR_GAZE_POSITION+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y);
 		synchronized (this) {
 			this.resultText.append(data+"\r\n");
 		}
@@ -1132,8 +1131,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 					Point viewPortPoint = this.getViewPortPoint((int)(element.group.getItemX(element)), (int)(element.group.getItemY(element)));
 					String data =	RESULT_ANCHOR_Hover+"\t"+time+"\t"+element.getId()+"\t"+((LabelInfoBit)element).label
 							+"\t"+element.getType()+"\t"+String.format("%.2f",element.getScore())
-							+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y)
-							+"\t"+currentImageFileName;
+							+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y);
 					
 					synchronized (this) {
 						this.resultText.append(data+"\r\n");
@@ -1199,6 +1197,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 
 
 	public boolean mousedragged(int x, int y, int oldx, int oldy) {
+		saveView();
 		addResultDataMouseMove(new Point(x,y));
 		ViewerContainer2D container = (ViewerContainer2D)this.getContainer();
 		double zoom = container.getZoom();
@@ -1207,7 +1206,6 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			container.setZoom(ZOOM_THRESHOLD);
 			return true;
 		}
-		saveView();
 		return false;
 	}
 
@@ -1264,28 +1262,47 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		saveView();
 	}
 
-	
-	private String currentImageFileName="";
 	private String currentResultFileName ="";
+	
+	private void addResultDataImage(String imageFile)
+	{
+		if(imageFile != null && !imageFile.isEmpty())
+		{
+			long time = System.currentTimeMillis();
+			String data = RESULT_ANCHOR_IMAGE+"\t"+time
+					+"\t"+imageFile;
+			
+			
+			synchronized (this) {
+				this.resultText.append(data+"\r\n");
+			}
+//			System.out.println("##"+data);
+		}
+		
+		
+		
+	}
 	private void saveView()
 	{	
+		final BufferedImage bim = new BufferedImage(getContainerWidth(), getContainerHeight(), BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = bim.createGraphics();g.setTransform(((ViewerContainer2D)getContainer()).transform);
+		render(g);
+		String zoomText = String.format("%.2f", getZoom());
+		final String imageFile = new SimpleDateFormat("yyyyMMdd_HHmmss_S").format(new Date())+currentItem.getDisplayText().replace(" ", "_")+"_"+zoomText+ ".PNG";
+		addResultDataImage(imageFile);
 		this.timer.schedule(new TimerTask() {
 			
 			@Override
 			public void run() {
-				// TODO Auto-generated method stub
-				
-				BufferedImage bim =getViewPortImage();
-				String zoomText = String.format("%.2f", getZoom());
-				String filename = new SimpleDateFormat("yyyyMMdd_HHmmss_S").format(new Date())+currentItem.getDisplayText().replace(" ", "_")+"_"+zoomText+ ".PNG";
+	
 				
 				try {
-					ImageIO.write(bim, "PNG", new File(IMAGE_RESULT_DIR + filename ));
-					currentImageFileName = filename;
+					ImageIO.write(bim, "PNG", new File(IMAGE_RESULT_DIR + imageFile ));
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
+					
 					e.printStackTrace();
 				}
+				
 			}
 		}, 0);
 	
@@ -1296,20 +1313,13 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	}
 	private void preSelectionTask()
 	{
-//		this.stopSimulation();
-
 		saveResult();
-		currentImageFileName ="";
-		
 	}
 	
 	private void postSelectionTask()
 	{
-		currentImageFileName ="";
 		registerEyetrackPoints();
-		saveView();
 		this.requestRender();
-//		this.startSimulation(TIME_LAPSE);
 	}
 	private void saveResult()
 	{
@@ -1347,14 +1357,23 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		
 	}
 
+	private int previousType =-1;
+	private int previousGroupIndex =-1;
+	private int previousElementIndex =-1;
 	@Override
 	public void hoverDetected(int type,int groupIndex, int elementIndex) {
 		// TODO Auto-generated method stub
-		if(type>= 0 && groupIndex >= 0 && elementIndex >= 0)
-		{
-			
-			saveView();
-			addResultDataHover(type, groupIndex, elementIndex);
+//		System.out.println("Hover:"+type+","+groupIndex+","+elementIndex);
+		if(type!=previousType || groupIndex !=previousGroupIndex || elementIndex != previousElementIndex)
+		{	
+			if(currentItem!= null)
+			{
+				saveView();
+				addResultDataHover(type, groupIndex, elementIndex);
+				this.previousType = type;
+				this.previousElementIndex=groupIndex;
+				this.previousElementIndex = elementIndex;
+			}	
 		}
 
 	}

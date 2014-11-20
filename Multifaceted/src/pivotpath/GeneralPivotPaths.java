@@ -1089,11 +1089,6 @@ public class GeneralPivotPaths {
                 {
                 	savedPosFinal.remove(keyFinal);
                 	viewer.requestRender();
-
-                	if(pivotPathViewer != null)
-                	{
-                		pivotPathViewer.callSaveView();
-                	}
                 }
             });
 		}
@@ -1628,12 +1623,14 @@ public class GeneralPivotPaths {
 				dataGroups.get(i).getItems().get(index).setAllConnectionHover();
 			}
 		}
+		
+		
+		viewer.requestRender();		
+		
 		if(pivotPathViewer != null)
 		{
 			pivotPathViewer.hoverDetected(hoverType,hoverGroup, hoverIndex);
 		}
-		
-		viewer.requestRender();		
 	}
 	
 	public void mouseClicked(int x, int y)

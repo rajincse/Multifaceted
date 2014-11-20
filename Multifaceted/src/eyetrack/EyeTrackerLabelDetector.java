@@ -148,7 +148,7 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 			double averageGazeScore = this.getAverageGazeScore(i, gazeFromIndex	, gazeToIndex);
 			double contributingGazeScore = averageGazeScore / topGazeScoreSum;
 			//original 
-			if(viewer.isProbabilityOn())
+			if(!viewer.isProbabilityDisabled())
 			{
 				ArrayList<StateAction> stateActions = probabilityManager.getPreviousStateActions();
 				ArrayList<StateAction> originalActions = element.getActions(stateActions);			
@@ -219,7 +219,7 @@ public class EyeTrackerLabelDetector implements EyeTrackerDataReceiver{
 			EyeTrackerItem element = this.elements.get(i);
 			
 			//original 
-			if(viewer.isProbabilityOn())
+			if(!viewer.isProbabilityDisabled())
 			{
 				ArrayList<StateAction> stateActions = probabilityManager.getPreviousStateActions();
 				ArrayList<StateAction> originalActions = element.getActions(stateActions);			

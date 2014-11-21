@@ -581,6 +581,11 @@ class LabelInfoBit extends InfoBit
 		// TODO Auto-generated method stub
 		return this.group.items.contains(element);
 	}
+	@Override
+	public boolean isIndirectlyHovered() {
+		// TODO Auto-generated method stub
+		return this.isConnectionHovered();
+	}
 }
 
 class InfoBitGroup

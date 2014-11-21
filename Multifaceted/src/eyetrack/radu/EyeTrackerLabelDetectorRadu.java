@@ -192,6 +192,13 @@ public class EyeTrackerLabelDetectorRadu implements EyeTrackerDataReceiver{
 			else
 				transProbs[i] = 0;
 			
+			EyeTrackerItem item = this.elements.get(i);
+			if (item.isHovered() || item.isIndirectlyHovered())
+			{
+				transProbs[i] = (transProbs[i] + 1)/2;
+			}	
+				
+			
 		}	
 		double sum = 0;
 		double mx = 0;

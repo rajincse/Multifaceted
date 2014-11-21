@@ -102,11 +102,13 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	public static final long TIMER_PERIOD_MOUSE_POSITION=50;
 	
 	public static final String RESULT_ANCHOR_EYE_ELEMENT ="Eye";
-	public static final String RESULT_ANCHOR_MOUSE_POSITION ="Mouse";
-	public static final String RESULT_ANCHOR_MOUSE_CLICK ="Click";
-	public static final String RESULT_ANCHOR_ZOOM ="ZOOM";
+	public static final String RESULT_ANCHOR_MOUSE_MOVE ="MouseMove";
+	public static final String RESULT_ANCHOR_MOUSE_DRAG ="MouseDrag";
+	public static final String RESULT_ANCHOR_MOUSE_DOWN ="MouseDown";
+	public static final String RESULT_ANCHOR_MOUSE_UP ="MouseUp";	
 	public static final String RESULT_ANCHOR_GAZE_POSITION ="Gaze";
-	public static final String RESULT_ANCHOR_Hover ="Hover";
+	public static final String RESULT_ANCHOR_HOVER_IN ="HoverIn";
+	public static final String RESULT_ANCHOR_HOVER_OUT ="HoverOut";
 	public static final String RESULT_ANCHOR_IMAGE ="Image";
 	
 	private static final double ZOOM_THRESHOLD =0.6;
@@ -1070,11 +1072,11 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		
 //		System.out.println("##"+data);
 	}
-	private void addResultDataMouseMove(Point mousePosition)
+	private void addResultDataMouseMove(int x, int y , String resultAnchorName)
 	{
 		long time = System.currentTimeMillis();
-		Point viewPortPoint =this.getViewPortPoint(mousePosition.x, mousePosition.y);	
-		String data = RESULT_ANCHOR_MOUSE_POSITION+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y);
+		Point viewPortPoint =this.getViewPortPoint(x,y);	
+		String data = resultAnchorName+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y);
 		
 		
 		synchronized (this) {
@@ -1083,14 +1085,14 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		
 //		System.out.println("##"+data);
 	}
-	private void addResultDataMouseClick(int x, int y, int button)
+	private void addResultDataMouseClick(int x, int y, int button, String resultAnchorName)
 	{	
 		long time = System.currentTimeMillis();
 		
 		Point viewPortPoint =this.getViewPortPoint(x, y);
 		
 		
-		String data = RESULT_ANCHOR_MOUSE_CLICK+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y)+"\t"+button;
+		String data = resultAnchorName+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y)+"\t"+button;
 		synchronized (this) {
 			this.resultText.append(data+"\r\n");
 		}
@@ -1108,7 +1110,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			this.resultText.append(data+"\r\n");
 		}
 	}
-	private void addResultDataHover(int hoverType,int hoverGroupIndex, int hoverElementIndex) 
+	private void addResultDataHover(int hoverType,int hoverGroupIndex, int hoverElementIndex, String resultAnchorName) 
 	{
 		long time = System.currentTimeMillis();
 		
@@ -1128,9 +1130,9 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 				if(element != null && element instanceof LabelInfoBit)
 				{
 					Point viewPortPoint = this.getViewPortPoint((int)(element.group.getItemX(element)), (int)(element.group.getItemY(element)));
-					String data =	RESULT_ANCHOR_Hover+"\t"+time+"\t"+element.getId()+"\t"+((LabelInfoBit)element).label
+					String data =	resultAnchorName+"\t"+time+"\t"+element.getId()+"\t"+((LabelInfoBit)element).label
 							+"\t"+element.getType()+"\t"+String.format("%.2f",element.getScore())
-							+"\t"+time+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y);
+							+"\t"+(viewPortPoint.x)+"\t"+(viewPortPoint.y);
 					
 					synchronized (this) {
 						this.resultText.append(data+"\r\n");
@@ -1156,7 +1158,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		return viewPortPoint;
 	}
 	public boolean mousepressed(int x, int y, int button) {
-		this.addResultDataMouseClick(x, y, button);
+		this.addResultDataMouseClick(x, y, button, RESULT_ANCHOR_MOUSE_DOWN);
 		
 		if (button == 1)
 		{
@@ -1178,13 +1180,13 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 
 
 	public boolean mousereleased(int x, int y, int button) {
-		
+		this.addResultDataMouseClick(x, y, button, RESULT_ANCHOR_MOUSE_UP);
 		return false;
 	}
 
 
 	public boolean mousemoved(int x, int y) {
-		addResultDataMouseMove(new Point(x,y));
+		addResultDataMouseMove(x,y, RESULT_ANCHOR_MOUSE_MOVE);
 		if(this.pivotPaths.groups != null)
 		{
 			this.pivotPaths.mouseMoved(x,y);
@@ -1197,7 +1199,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 
 	public boolean mousedragged(int x, int y, int oldx, int oldy) {
 		saveView();
-		addResultDataMouseMove(new Point(x,y));
+		addResultDataMouseMove(x,y, RESULT_ANCHOR_MOUSE_DRAG);
 		ViewerContainer2D container = (ViewerContainer2D)this.getContainer();
 		double zoom = container.getZoom();
 		if(container.rightButtonDown && zoom < ZOOM_THRESHOLD)
@@ -1287,7 +1289,11 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		Graphics2D g = bim.createGraphics();g.setTransform(((ViewerContainer2D)getContainer()).transform);
 		render(g);
 		String zoomText = String.format("%.2f", getZoom());
-		final String imageFile = new SimpleDateFormat("yyyyMMdd_HHmmss_S").format(new Date())+currentItem.getDisplayText().replace(" ", "_")+"_"+zoomText+ ".PNG";
+		final String imageFile = new SimpleDateFormat("yyyyMMdd_HHmmss_S").format(new Date())
+								+currentItem.getDisplayText()
+									.replace(" ", "_")
+									.replaceAll("[^a-zA-Z0-9\\.\\-]", "_")
+								+"_"+zoomText+ ".PNG";
 		addResultDataImage(imageFile);
 		this.timer.schedule(new TimerTask() {
 			
@@ -1362,16 +1368,21 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	@Override
 	public void hoverDetected(int type,int groupIndex, int elementIndex) {
 		// TODO Auto-generated method stub
-//		System.out.println("Hover:"+type+","+groupIndex+","+elementIndex);
+		
 		if(type!=previousType || groupIndex !=previousGroupIndex || elementIndex != previousElementIndex)
-		{	
+		{
+//			System.out.println("Hover Rajin:"+type+","+groupIndex+","+elementIndex+" prev:"+previousType+", "+previousGroupIndex+", "+previousElementIndex);
 			if(currentItem!= null)
 			{
 				saveView();
-				addResultDataHover(type, groupIndex, elementIndex);
-				this.previousType = type;
-				this.previousElementIndex=groupIndex;
-				this.previousElementIndex = elementIndex;
+				addResultDataHover(previousType, previousGroupIndex, previousElementIndex, RESULT_ANCHOR_HOVER_OUT);
+				addResultDataHover(type, groupIndex, elementIndex, RESULT_ANCHOR_HOVER_IN);
+			
+				previousType = type;
+				previousGroupIndex=groupIndex;
+				previousElementIndex = elementIndex;
+			
+				
 			}	
 		}
 

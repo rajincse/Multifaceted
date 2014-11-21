@@ -188,7 +188,7 @@ public class EyeTrackerLabelDetectorRadu implements EyeTrackerDataReceiver{
 			
 
 			if (sumCnt != 0)
-				transProbs[i] = Math.sqrt((Double)gs.get(i).get(t+1)) * sumProb / sumCnt;
+				transProbs[i] =  sumProb / sumCnt;
 			else
 				transProbs[i] = 0;
 			
@@ -285,6 +285,10 @@ public class EyeTrackerLabelDetectorRadu implements EyeTrackerDataReceiver{
 			{
 				action = StateAction.ACTION_ACTOR_CONNECTED;
 			}
+			else if(destinationElement.isSameGroup(sourceElement))
+			{
+				action = StateAction.ACTION_ACTOR_SAME_GROUP;
+			}
 			else
 			{
 				action = StateAction.ACTION_ACTOR_DISCONNECTED;
@@ -299,6 +303,10 @@ public class EyeTrackerLabelDetectorRadu implements EyeTrackerDataReceiver{
 			else if(destinationElement.isConnected(sourceElement))
 			{
 				action = StateAction.ACTION_MOVIE_CONNECTED;
+			}
+			else if(destinationElement.isSameGroup(sourceElement))
+			{
+				action = StateAction.ACTION_MOVIE_SAME_GROUP;
 			}
 			else
 			{
@@ -315,6 +323,10 @@ public class EyeTrackerLabelDetectorRadu implements EyeTrackerDataReceiver{
 			{
 				action = StateAction.ACTION_DIRECTOR_CONNECTED;
 			}
+			else if(destinationElement.isSameGroup(sourceElement))
+			{
+				action = StateAction.ACTION_DIRECTOR_SAME_GROUP;
+			}
 			else
 			{
 				action = StateAction.ACTION_DIRECTOR_DISCONNECTED;
@@ -330,6 +342,10 @@ public class EyeTrackerLabelDetectorRadu implements EyeTrackerDataReceiver{
 			{
 				action = StateAction.ACTION_GENRE_CONNECTED;
 			}
+			else if(destinationElement.isSameGroup(sourceElement))
+			{
+				action = StateAction.ACTION_GENRE_SAME_GROUP;
+			}
 			else
 			{
 				action = StateAction.ACTION_GENRE_DISCONNECTED;
@@ -340,6 +356,10 @@ public class EyeTrackerLabelDetectorRadu implements EyeTrackerDataReceiver{
 			if(destinationElement.isConnected(sourceElement))
 			{
 				action = StateAction.ACTION_STAR_RATING_CONNECTED;
+			}
+			else if(destinationElement.isSameGroup(sourceElement))
+			{
+				action = StateAction.ACTION_MOVIE_SAME_GROUP;
 			}
 			else
 			{

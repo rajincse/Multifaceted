@@ -28,4 +28,5 @@ public interface EyeTrackerItem{
 	public boolean isHovered();
 	//Connection
 	public boolean isConnected(EyeTrackerItem element);
+	public boolean isSameGroup(EyeTrackerItem element);
 }

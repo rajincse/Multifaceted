@@ -576,6 +576,11 @@ class LabelInfoBit extends InfoBit
 		}
 		return false;
 	}
+	@Override
+	public boolean isSameGroup(EyeTrackerItem element) {
+		// TODO Auto-generated method stub
+		return this.group.items.contains(element);
+	}
 }
 
 class InfoBitGroup

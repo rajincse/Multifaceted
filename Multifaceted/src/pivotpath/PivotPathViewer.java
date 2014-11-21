@@ -1180,6 +1180,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 
 
 	public boolean mousereleased(int x, int y, int button) {
+		saveView();
 		this.addResultDataMouseClick(x, y, button, RESULT_ANCHOR_MOUSE_UP);
 		return false;
 	}

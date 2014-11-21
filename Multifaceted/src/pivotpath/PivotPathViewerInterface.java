@@ -8,4 +8,5 @@ public interface PivotPathViewerInterface extends LayoutViewerInterface{
 	public void callSaveView();
 	public void hoverDetected(int type,int groupIndex, int elementIndex);
 	public void selectItem(String id, String name, int type);
+	public void setLock(boolean lock);
 }

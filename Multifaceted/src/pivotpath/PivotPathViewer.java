@@ -1198,7 +1198,10 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 
 
 	public boolean mousedragged(int x, int y, int oldx, int oldy) {
-		saveView();
+		synchronized(this)
+		{
+			if (isLocked) return false;
+		}
 		addResultDataMouseMove(x,y, RESULT_ANCHOR_MOUSE_DRAG);
 		ViewerContainer2D container = (ViewerContainer2D)this.getContainer();
 		double zoom = container.getZoom();
@@ -1386,6 +1389,16 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			}	
 		}
 
+	}
+
+	@Override
+	public void setLock(boolean lock) {
+		// TODO Auto-generated method stub
+		synchronized(this)
+		{
+			isLocked = lock;
+		}
+		this.et.block(lock);
 	}
 
 }

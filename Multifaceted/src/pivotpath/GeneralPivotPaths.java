@@ -1052,7 +1052,7 @@ public class GeneralPivotPaths {
 				
                 viewer.createAnimation(new Animation.PositionAnimation(new Point2D.Double(old.x,old.y), newPos, 2000) {
                     public void step(Point2D p) {
-                  
+                    	pivotPathViewer.setLock(true);
                     	old.x = p.getX();
                     	old.y = p.getY();
                            
@@ -1063,6 +1063,7 @@ public class GeneralPivotPaths {
                     {
                     	savedPosFinal.remove(keyFinal);
                     	viewer.requestRender();
+                    	pivotPathViewer.setLock(false);
                     }
                 });
                 

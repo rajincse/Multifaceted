@@ -567,7 +567,7 @@ class LabelInfoBit extends InfoBit
 	public boolean isHovered() {
 		// TODO Auto-generated method stub
 		int hovered = this.group.hovered;
-		if(hovered > 0 && hovered < this.group.items.size())
+		if(hovered >= 0 && hovered < this.group.items.size())
 		{
 			if(this == this.group.items.get(hovered))
 			{
@@ -584,7 +584,7 @@ class LabelInfoBit extends InfoBit
 	@Override
 	public boolean isIndirectlyHovered() {
 		// TODO Auto-generated method stub
-		return this.isConnectionHovered();
+		return this.isConnectionHovered;
 	}
 }
 

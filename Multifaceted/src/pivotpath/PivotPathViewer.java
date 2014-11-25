@@ -1402,4 +1402,19 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		this.et.block(lock);
 	}
 
+	@Override
+	public boolean isWithinScreen(Point screenPoint) {
+		// TODO Auto-generated method stub
+		Point viewPortPoint = this.getViewPortPoint(screenPoint.x, screenPoint.y);
+		if(viewPortPoint.x >=0&& viewPortPoint.y>=0)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+		
+	}
+
 }

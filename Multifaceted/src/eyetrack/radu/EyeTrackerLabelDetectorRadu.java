@@ -108,7 +108,11 @@ public class EyeTrackerLabelDetectorRadu implements EyeTrackerDataReceiver{
 			AffineTransform transform = viewer.getTransform().createInverse();
 			
 			transform.transform(processingPoint, screenPoint);
-			processScreenPoint(screenPoint);
+			if(viewer.isWithinScreen(screenPoint))
+			{
+				processScreenPoint(screenPoint);
+			}
+			
 		} catch (NoninvertibleTransformException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -1,7 +1,7 @@
-package eyeinterestanalyzer.event;
+package eyeinterestanalyzer;
 
 public class GazeEvent extends Event{
-	public int x,y;
+	int x,y;
 	public GazeEvent(long time,int x, int y){
 		super("gaze", time);
 		this.x = x;

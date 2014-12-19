@@ -1,4 +1,4 @@
-package eyeinterestanalyzer.viewer;
+package eyeinterestanalyzer;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -9,15 +9,14 @@ import java.util.ArrayList;
 
 import perspectives.base.Property;
 import perspectives.base.Viewer;
+import perspectives.properties.PDouble;
 import perspectives.properties.PFileInput;
 import perspectives.properties.PInteger;
 import perspectives.properties.PList;
+import perspectives.properties.POptions;
 import perspectives.two_d.JavaAwtRenderer;
 
 import eyeinterestanalyzer.User;
-import eyeinterestanalyzer.event.Event;
-import eyeinterestanalyzer.event.MouseButtonEvent;
-import eyeinterestanalyzer.event.MouseMoveEvent;
 public class EyeInterestAnalyzer extends Viewer implements JavaAwtRenderer {
 	
 	ArrayList<User> users;
@@ -36,6 +35,10 @@ public class EyeInterestAnalyzer extends Viewer implements JavaAwtRenderer {
 	int dataObjectHovered = -1;
 	
 	Point heatmapPicked = null;
+	
+	int heatmapYOffset = 650;
+	
+	
 	
 	
 
@@ -111,7 +114,55 @@ public class EyeInterestAnalyzer extends Viewer implements JavaAwtRenderer {
 		addProperty(pTimeStep);	
 		
 	
+		/*Property<PFileInput> pLoadCode = new Property<PFileInput>("Load Coding", new PFileInput()){
 
+			@Override
+			protected boolean updating(PFileInput newvalue) {
+				if (currentUser != null)
+					currentUser.loadCoding(newvalue.path);
+				return true;
+			}
+			
+		};
+		addProperty(pLoadCode);
+		
+		Property<PBoolean> withProb = new Property<PBoolean>("WithProb", new PBoolean(true)){
+			@Override
+			protected boolean updating(PBoolean newvalue){
+				currentUser.withProb = newvalue.boolValue();
+				return true;
+			}
+		};
+		addProperty(withProb);*/
+		
+		
+		Property<PDouble> pCellFilter = new Property<PDouble>("Cell Filter", new PDouble(1.)){
+			@Override
+			protected boolean updating(PDouble newvalue){
+				currentUser.setCellFilter(newvalue.doubleValue());
+				return true;
+			}
+		};
+		addProperty(pCellFilter);
+
+		
+		Property<PDouble> pRowFilter = new Property<PDouble>("Row Filter", new PDouble(1.)){
+			@Override
+			protected boolean updating(PDouble newvalue){
+				currentUser.setRowFilter(newvalue.doubleValue());
+				return true;
+			}
+		};
+		addProperty(pRowFilter);
+		
+		Property<POptions> pSort = new Property<POptions>("Sort by", new POptions(new String[]{"First Viewed", "Most Viewed", "Category"})){
+			@Override
+			protected boolean updating(POptions newvalue){
+				currentUser.setSort(newvalue.options[newvalue.selectedIndex]);
+				return true;
+			}
+		};
+		addProperty(pSort);
 	}
 	
 
@@ -132,24 +183,24 @@ public class EyeInterestAnalyzer extends Viewer implements JavaAwtRenderer {
 		for (int i=0; i<currentUser.gazes.size(); i++){
 			int p = (int)(255* ((i+1.)/currentUser.gazes.size()));
 			g.setColor(new Color(255,255-p,255-p));
-			g.fillOval(currentUser.gazes.get(i).x-5, currentUser.gazes.get(i).y + -5, 10,10);
+			g.fillOval(currentUser.gazes.get(i).x-10, currentUser.gazes.get(i).y + -10, 20,20);
 			
 			if (i == currentUser.gazes.size()-1){
 				g.setColor(new Color(255,255,255,200));
-				g.fillRect(currentUser.gazes.get(i).x+5, currentUser.gazes.get(i).y-10, 20, 10);
+				//g.fillRect(currentUser.gazes.get(i).x+5, currentUser.gazes.get(i).y-10, 20, 10);
 				g.setColor(Color.red);
 				g.setFont(g.getFont().deriveFont(15f));
-				g.drawString("" + currentUser.currentTime/100, currentUser.gazes.get(i).x+5, currentUser.gazes.get(i).y);
+				//g.drawString("" + currentUser.currentTime/100, currentUser.gazes.get(i).x+5, currentUser.gazes.get(i).y);
 			}
 			//g.drawString("" + currentUser.gazes.get(i).x + "," + currentUser.gazes.get(i).y,currentUser.gazes.get(i).x, currentUser.gazes.get(i).y);
 		}
 		
-		for (int i=0; i<currentUser.mouses.size(); i++){		
+		/*for (int i=0; i<currentUser.mouses.size(); i++){		
 			int p = (int)(255* ((i+1.)/currentUser.mouses.size()));
 			g.setColor(new Color(255-p,255-p,255));
 			g.fillOval(currentUser.mouses.get(i).x-5, currentUser.mouses.get(i).y + -5, 10,10);
 			g.drawString("" + currentUser.mouses.get(i).x + "," + currentUser.mouses.get(i).y,currentUser.mouses.get(i).x, currentUser.mouses.get(i).y);
-		}
+		}*/
 		
 		g.setColor(Color.black);
 		g.drawString("" + currentUser.currentTime/100, 0, -10);
@@ -161,32 +212,32 @@ public class EyeInterestAnalyzer extends Viewer implements JavaAwtRenderer {
 		
 		if (currentUser.heatmap != null){
 			
-			g.drawImage(currentUser.heatmap,  currentUser.heatmapXOffset, 1000,null);
+			g.drawImage(currentUser.heatmap,  currentUser.heatmapXOffset, heatmapYOffset,null);
 			
 			int timeLine = currentUser.timeToPixel(currentUser.currentTime);
 			g.setColor(new Color(0,0,0,100));
-			g.fillRect(timeLine,950,currentUser.cellWidth,currentUser.heatmap.getHeight()+100);
-			g.drawString(currentUser.currentTime+"ms", timeLine, 950);			
+			g.fillRect(timeLine,heatmapYOffset-50,currentUser.cellWidth,currentUser.heatmap.getHeight()+100);
+			g.drawString(currentUser.currentTime+"ms", timeLine, heatmapYOffset-50);			
 			if (timeLineHovered != null)
 				g.drawLine(timeLine-5, timeLineHovered.y, timeLine+5, timeLineHovered.y);
 			
 			int sp = currentUser.timeToPixel(currentUser.timePeriodStart);
 			g.setColor(new Color(0,150,0,100));
-			g.drawLine(sp,950,sp,950+currentUser.heatmap.getHeight()+100);
-			g.drawString(currentUser.timePeriodStart+"ms", sp, 950);
+			g.drawLine(sp,heatmapYOffset-50,sp,heatmapYOffset-50+currentUser.heatmap.getHeight()+100);
+			g.drawString(currentUser.timePeriodStart+"ms", sp, heatmapYOffset-50);
 			if (startPeriodHovered != null)
 				g.drawLine(sp-5, startPeriodHovered.y, sp+5, startPeriodHovered.y);
 			
 			int ep = currentUser.timeToPixel(currentUser.timePeriodEnd);
 			g.setColor(new Color(150,0,0,100));
-			g.drawLine(ep,950,ep,950+currentUser.heatmap.getHeight()+100);
-			g.drawString(currentUser.timePeriodEnd+"ms", ep, 950);
+			g.drawLine(ep,heatmapYOffset-50,ep,heatmapYOffset-50+currentUser.heatmap.getHeight()+100);
+			g.drawString(currentUser.timePeriodEnd+"ms", ep, heatmapYOffset-50);
 			if (endPeriodHovered != null)
 				g.drawLine(ep-5, endPeriodHovered.y, ep+5, endPeriodHovered.y);
 			
 			g.setColor(new Color(100,100,100,50));
-			g.fillRect(currentUser.heatmapXOffset, 1000, sp - currentUser.heatmapXOffset, currentUser.heatmap.getHeight());
-			g.fillRect(ep, 1000, currentUser.heatmapXOffset + currentUser.heatmap.getWidth() - ep, currentUser.heatmap.getHeight());
+			g.fillRect(currentUser.heatmapXOffset, heatmapYOffset, sp - currentUser.heatmapXOffset, currentUser.heatmap.getHeight());
+			g.fillRect(ep, heatmapYOffset, currentUser.heatmapXOffset + currentUser.heatmap.getWidth() - ep, currentUser.heatmap.getHeight());
 			
 			Rectangle[] vr = getViewEventRectangles();
 			for (int i=0; i<vr.length; i++){
@@ -210,20 +261,21 @@ public class EyeInterestAnalyzer extends Viewer implements JavaAwtRenderer {
 			
 			for (int i=0; i<currentUser.viewedObjects.size(); i++){
 
-				if (currentUser.viewedObjects.get(i).type.equals("1"))
+				if (currentUser.viewedObjects.get(i).type == 1)
 					g.setColor(new Color(250,200,200));
-				else if (currentUser.viewedObjects.get(i).type.equals("2"))
+				else if (currentUser.viewedObjects.get(i).type == 2)
 					g.setColor(new Color(200,250,200));
-				else if (currentUser.viewedObjects.get(i).type.equals("3"))
+				else if (currentUser.viewedObjects.get(i).type == 3)
 					g.setColor(new Color(200,200,250));
-				else if (currentUser.viewedObjects.get(i).type.equals("4"))
+				else if (currentUser.viewedObjects.get(i).type == 4)
 					g.setColor(new Color(250,250,150));
-				else if (currentUser.viewedObjects.get(i).type.equals("5"))
+				else if (currentUser.viewedObjects.get(i).type == 5)
 					g.setColor(new Color(250,150,250));
-				g.fillRect(0, 1000+currentUser.cellHeight*i, 200,currentUser.cellHeight);
+				g.fillRect(0, heatmapYOffset+currentUser.cellHeight*i, 200,currentUser.cellHeight-1);
 				g.setColor(Color.black);
-				String label = currentUser.viewedObjects.get(i).label.substring(0, Math.min(30, currentUser.viewedObjects.get(i).label.length()));
-				g.drawString(label, 0, 1000+currentUser.cellHeight*i+currentUser.cellHeight);
+				String label = currentUser.viewedObjects.get(i).label.substring(0, Math.min(26, currentUser.viewedObjects.get(i).label.length()));
+				g.setFont(g.getFont().deriveFont(10f));
+				g.drawString(label, 0, heatmapYOffset+currentUser.cellHeight*i+currentUser.cellHeight-2);
 				
 
 			}
@@ -231,7 +283,7 @@ public class EyeInterestAnalyzer extends Viewer implements JavaAwtRenderer {
 			
 			for (int i=0; i<currentUser.viewedObjects.size(); i++){
 				if (dataObjectHovered == i)
-					g.drawRect(0, 1000+currentUser.cellHeight*i, currentUser.heatmapXOffset + currentUser.heatmap.getWidth(), currentUser.cellHeight);
+					g.drawRect(0, heatmapYOffset+currentUser.cellHeight*i, currentUser.heatmapXOffset + currentUser.heatmap.getWidth(), currentUser.cellHeight);
 			}
 			
 		}
@@ -248,7 +300,7 @@ public class EyeInterestAnalyzer extends Viewer implements JavaAwtRenderer {
 			startPeriodDragging = true;
 		else if (endPeriodHovered != null)
 			endPeriodDragging = true;
-		else if (new Rectangle(currentUser.heatmapXOffset, 1000, currentUser.heatmap.getWidth(), currentUser.heatmap.getHeight()).contains(new Point(x,y)))
+		else if (new Rectangle(currentUser.heatmapXOffset, heatmapYOffset, currentUser.heatmap.getWidth(), currentUser.heatmap.getHeight()).contains(new Point(x,y)))
 			heatmapPicked = new Point(x-currentUser.heatmapXOffset,y);
 		return false;
 	}
@@ -282,12 +334,12 @@ public class EyeInterestAnalyzer extends Viewer implements JavaAwtRenderer {
 			return false;
 		
 		int timeLine = currentUser.timeToPixel(currentUser.currentTime); 
-		Rectangle r = new Rectangle(timeLine-3,950,currentUser.cellWidth+3,1000+currentUser.heatmap.getHeight());
+		Rectangle r = new Rectangle(timeLine-3,heatmapYOffset-50,currentUser.cellWidth+3,heatmapYOffset+currentUser.heatmap.getHeight());
 		
 		int ps = currentUser.timeToPixel(currentUser.timePeriodStart);
-		Rectangle rps = new Rectangle(ps-3,950,currentUser.cellWidth+3,1000+currentUser.heatmap.getHeight());
+		Rectangle rps = new Rectangle(ps-3,heatmapYOffset-50,currentUser.cellWidth+3,heatmapYOffset+currentUser.heatmap.getHeight());
 		int pe = currentUser.timeToPixel(currentUser.timePeriodEnd);
-		Rectangle rpe = new Rectangle(pe-3,950,currentUser.cellWidth+3,1000+currentUser.heatmap.getHeight());
+		Rectangle rpe = new Rectangle(pe-3,heatmapYOffset-50,currentUser.cellWidth+3,heatmapYOffset+currentUser.heatmap.getHeight());
 		
 		if (r.contains(new Point(x,y)))
 			timeLineHovered = new Point(x,y);	
@@ -309,7 +361,7 @@ public class EyeInterestAnalyzer extends Viewer implements JavaAwtRenderer {
 		
 		dataObjectHovered = -1;
 		for (int i=0; currentUser.viewedObjects != null && i<currentUser.viewedObjects.size(); i++){
-			r = new Rectangle(0, 1000+currentUser.cellHeight*i, currentUser.heatmapXOffset+currentUser.heatmap.getWidth(),currentUser.cellHeight);
+			r = new Rectangle(0, heatmapYOffset+currentUser.cellHeight*i, currentUser.heatmapXOffset+currentUser.heatmap.getWidth(),currentUser.cellHeight);
 			if (r.contains(new Point(x,y))){
 				dataObjectHovered = i;
 				this.setToolTipText(currentUser.viewedObjects.get(i).label);
@@ -391,7 +443,7 @@ private Rectangle[] getViewEventRectangles(){
 		if (i < currentUser.viewEvents.size()-1)
 			p2 = currentUser.timeToPixel(currentUser.viewEvents.get(i+1).time);
 		
-		r[i] = new Rectangle(p1, 980, p2-p1, 10);
+		r[i] = new Rectangle(p1, heatmapYOffset-20, p2-p1, 10);
 	}
 	return r;
 }
@@ -403,7 +455,7 @@ private Rectangle[] getHoverEventRectangles(){
 		int p = currentUser.timeToPixel(currentUser.hoverEvents.get(i).time);
 		
 		if (hs >=0)
-			r.add(new Rectangle(hs, 970, p - hs, 5));
+			r.add(new Rectangle(hs, heatmapYOffset-30, p - hs, 5));
 
 		if (currentUser.hoverEvents.get(i).in)	hs = p;
 		else hs = -1;
@@ -426,7 +478,7 @@ private Rectangle[] getMouseDragRectangles(){
 		else if ((e instanceof MouseButtonEvent && ds > 0) || (e instanceof MouseMoveEvent && !((MouseMoveEvent)e).drag && ds > 0)){
 			if (ds < currentUser.heatmapXOffset)
 				System.out.println("");
-			r.add(new Rectangle(ds, 960, p - ds, 5));
+			r.add(new Rectangle(ds, heatmapYOffset-40, p - ds, 5));
 			ds = -1;
 		}
 	}

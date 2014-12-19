@@ -1,8 +1,8 @@
-package eyeinterestanalyzer.event;
+package eyeinterestanalyzer;
 
 public class MouseMoveEvent extends Event{
-	public int x,y;
-	public boolean drag;
+	int x,y;
+	boolean drag;
 	public MouseMoveEvent(long time, boolean drag, int x, int y){
 		super("mousemove", time);
 		this.x = x;

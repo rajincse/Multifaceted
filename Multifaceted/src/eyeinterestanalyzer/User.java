@@ -13,51 +13,56 @@ import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
-import eyeinterestanalyzer.event.Event;
-import eyeinterestanalyzer.event.EyeEvent;
-import eyeinterestanalyzer.event.GazeEvent;
-import eyeinterestanalyzer.event.HoverEvent;
-import eyeinterestanalyzer.event.ImageEvent;
-import eyeinterestanalyzer.event.MouseButtonEvent;
-import eyeinterestanalyzer.event.MouseMoveEvent;
-import eyeinterestanalyzer.event.ViewEvent;
-
 public class User{
-	public String name;
+	String name;
 	
-	public ArrayList<Event> events;
+	ArrayList<Event> events;
 	ArrayList<DataObject> dataObjects;
 	
 	
-	public ArrayList<Point> gazes;
-	public ArrayList<Point> mouses;
+	ArrayList<Point> gazes;
+	ArrayList<Point> mouses;
 	
-	public String hoverString = "";
-	public String eyeString = "";
+	String hoverString = "";
+	String eyeString = "";
 	
-	public BufferedImage image = null;
+	BufferedImage image = null;
 	
-	public BufferedImage heatmap = null;
-	public ArrayList<DataObject> viewedObjects;
+	BufferedImage heatmap = null;
+	ArrayList<DataObject> viewedObjects;
 	
-	public int cellWidth = 1;
-	public int cellHeight = 10;
+	double[][] heatmapVal;
 	
-	public long currentTime=0;
+	int cellWidth = 1;
+	int cellHeight = 12;
+	
+	long currentTime=0;
 	int timeStep=600;
 	
-	public long timePeriodStart = 0;
-	public long timePeriodEnd = 0;
+	long timePeriodStart = 0;
+	long timePeriodEnd = 0;
+	
+	boolean withProb = true;
 	
 	HashMap<DataObject, Integer> dataToIndex;
 	
-	public ArrayList<ViewEvent> viewEvents;
-	public ArrayList<HoverEvent> hoverEvents;
-	public ArrayList<Event> mouseEvents;
+	ArrayList<ViewEvent> viewEvents;
+	ArrayList<HoverEvent> hoverEvents;
+	ArrayList<Event> mouseEvents;
 	
-	public int heatmapXOffset = 200;
+	ArrayList<ArrayList<String>> vectorLabel;
+	ArrayList<ArrayList<Double>> vectorLabelScores;
+	
+	int heatmapXOffset = 200;
 	
 	boolean isAggregated;
+	
+	ArrayList< ArrayList<String>> coding;
+	
+	double cellFilter = 1.;
+	double rowFilter = 1.;
+	
+	String sort = "First Viewed";
 	
 	public User(String name, boolean ag){
 		isAggregated = ag;
@@ -79,7 +84,8 @@ public class User{
 	}
 	
 	public User(File f){
-		this("dummy", false);
+		
+		this(f.getName(), false);
 		loadUser(f.getAbsolutePath());
 	}
 	
@@ -90,6 +96,10 @@ public class User{
 		String folder = path.substring(0,path.lastIndexOf("\\")) + "\\";		
 		BufferedReader br = new BufferedReader(new FileReader(path));
 		String prevView = "";
+		
+		Point prevGazePos = null;
+		long prevGazeTime = 0;
+		double gazeSpeed = 0;
 			
 	    String line;
 	    long startTime = -1;
@@ -101,9 +111,20 @@ public class User{
 	        		startTime =  Long.parseLong(split[1]);
 	        	
 	        	if (split[0].equals("Eye")){
+	        		
+	        		//if (gazeSpeed > 70) 
+	        		//	continue;
+	        		
+	        		//System.out.println(line);
 	        		long t = Long.parseLong(split[1]) - startTime;
 	        		double s = Double.parseDouble(split[5]);
-	        		double p = Double.parseDouble(split[6]);
+	        		double p = Double.parseDouble(split[8]);
+	        		
+	        	//	if (p >= 0)
+	        	//		s  = s / p;
+	        	//	if (s < 0 || s > 1) System.out.println("score: " + s + " ; " + line);
+	        		if (split[4].trim().equals("5")) continue;
+	        	
 	        		
 	        		String objId = split[2];
 	        		DataObject object = null;
@@ -113,7 +134,7 @@ public class User{
 	        				break;
 	        			}
 	        		if (object == null){
-	        			object = new DataObject(objId, split[3], split[4]);
+	        			object = new DataObject(objId, split[3], Integer.parseInt(split[4].trim()));
 	        			dataObjects.add(object);
 	        		}	        		
 	        		
@@ -131,7 +152,7 @@ public class User{
 	        				break;
 	        			}
 	        		if (object == null){
-	        			object = new DataObject(objId, split[3], split[4]);
+	        			object = new DataObject(objId, split[3], Integer.parseInt(split[4].trim()));
 	        			dataObjects.add(object);
 	        		}
 	        		
@@ -144,6 +165,13 @@ public class User{
 	        		int y = Integer.parseInt(split[3]);
 	        		Event e = new GazeEvent(t,x,y);
 	        		events.add(e);
+	        		
+	        		if (prevGazePos != null){
+	        			gazeSpeed = prevGazePos.distance(new Point(x,y));
+	        			//System.out.println(gazeSpeed + " : "+ prevGazePos.x + " " + prevGazePos.y + " -> " + x + " " + y + "( " + (prevGazeTime-t) + ")");
+	        		}
+	        		prevGazePos = new Point(x,y);
+	        		prevGazeTime = t;
 	        	}
 	        	else if (split[0].equals("MouseMove") || split[0].equals("MouseDrag")){
 	        		long t = Long.parseLong(split[1]) - startTime;
@@ -196,7 +224,7 @@ public class User{
 	        br.close();
 	        
 	        timePeriodStart = 0;
-	        timePeriodEnd = events.get(events.size()-1).getTime();
+	        timePeriodEnd = events.get(events.size()-1).time;
 	        createHeatmap();
 	    }
 		catch(Exception e){
@@ -212,7 +240,7 @@ public class User{
 		
 		System.out.println("creating heatmap ..");
 		
-		long lastTime = events.get(events.size()-1).getTime();
+		long lastTime = events.get(events.size()-1).time;
 		
 		ArrayList[][] eventMap = new ArrayList[dataObjects.size()][];
 		
@@ -227,11 +255,12 @@ public class User{
 			if (events.get(i) instanceof EyeEvent){
 				EyeEvent e = (EyeEvent)events.get(i);
 				
-				if (e.getTime() < ts || e.getTime() > te)
+				if (e.time < ts || e.time > te)
 					continue;
 				
 				int dataIndex = dataToIndex.get(e.target);
-				int timeIndex = (int)(e.getTime()/ timeStep);
+				int timeIndex = (int)(e.time / timeStep);
+
 
 				eventMap[dataIndex][timeIndex].add(e);
 			}
@@ -247,8 +276,17 @@ public class User{
 				ArrayList<EyeEvent> l = eventMap[i][j];
 				double sum = 0;
 				if (l.size() > 0){
-				for (int k=0; k<l.size(); k++)
-					sum += l.get(k).score;
+				for (int k=0; k<l.size(); k++){
+					
+					if (withProb)
+						sum += l.get(k).score;
+					else{
+					if (l.get(k).prob >= 0)
+						sum += l.get(k).score / l.get(k).prob;
+					else
+						sum += l.get(k).score;
+					}
+				}
 				}
 				heatmap[i][j] = sum/Math.max(l.size(),Math.sqrt(timeStep/1000.*60));
 				
@@ -261,7 +299,7 @@ public class User{
 		
 		for (int i=0; i<heatmap.length; i++)
 			for (int j=0; j<heatmap[i].length; j++)
-				if (heatmap[i][j] < avgCell)
+				if (heatmap[i][j] < cellFilter*avgCell)
 					heatmap[i][j] = 0;
 		
 		
@@ -275,7 +313,7 @@ public class User{
 			index[i] = i;
 			for (int j=0; j<heatmap[i].length; j++){
 				heatmapAvg[i] += heatmap[i][j];
-				if (heatmap[i][j] != 0)
+				if (heatmap[i][j] != 0 && firstIndex[i] < 0)
 					firstIndex[i] = j;
 			}
 			heatmapAvg[i] /= heatmap[i].length;
@@ -288,12 +326,13 @@ public class User{
 		avg /= heatmapAvg.length;
 		
 		for (int i=0; i<heatmap.length; i++)
-			if (heatmapAvg[i] < avg){
+			if (heatmapAvg[i] < rowFilter*avg){
 				firstIndex[i] = -1;
 				heatmapAvg[i] = 0;
 			}
 		
 		
+		if (sort.equals("First Viewed")){
 		//sort by first index
 		while (true){
 			boolean sw = false;
@@ -305,7 +344,37 @@ public class User{
 					double tmpd = heatmapAvg[i]; heatmapAvg[i] = heatmapAvg[i+1]; heatmapAvg[i+1] = tmpd;
 				}
 			if (!sw) break;
-		}
+		}}
+		
+		if (sort.equals("Most Viewed") || sort.equals("Category")){	
+		//sort by activity
+		while (true){
+			boolean sw = false;
+			for (int i=0; i<firstIndex.length-1; i++)
+				if (heatmapAvg[i] < heatmapAvg[i+1]){
+					sw = true;
+					int tmpi = firstIndex[i]; firstIndex[i] = firstIndex[i+1]; firstIndex[i+1] = tmpi;
+					    tmpi = index[i];      index[i] = index[i+1];           index[i+1] = tmpi;
+					double tmpd = heatmapAvg[i]; heatmapAvg[i] = heatmapAvg[i+1]; heatmapAvg[i+1] = tmpd;
+				}
+			if (!sw) break;
+		}}
+		
+		if (sort.equals("Category")){		
+		//sort by type
+		while (true){
+			boolean sw = false;
+			for (int i=0; i<firstIndex.length-1; i++)
+				if (dataObjects.get(index[i]).type < dataObjects.get(index[i+1]).type){
+					sw = true;
+					int tmpi = firstIndex[i]; firstIndex[i] = firstIndex[i+1]; firstIndex[i+1] = tmpi;
+					    tmpi = index[i];      index[i] = index[i+1];           index[i+1] = tmpi;
+					double tmpd = heatmapAvg[i]; heatmapAvg[i] = heatmapAvg[i+1]; heatmapAvg[i+1] = tmpd;
+				}
+			if (!sw) break;
+		}}
+		
+		
 		
 		viewedObjects = new ArrayList<DataObject>();
 		for (int i=0; i<index.length; i++){
@@ -337,6 +406,46 @@ public class User{
 		
 		System.out.println("done creating heatmap ..");
 		this.heatmap = bim;
+		
+		//create the vector
+		vectorLabel = new ArrayList<ArrayList<String>>();
+		vectorLabelScores = new ArrayList<ArrayList<Double>>();
+		for (int i=0; i<heatmap[0].length; i++){
+			vectorLabel.add(new ArrayList<String>());
+			vectorLabelScores.add(new ArrayList<Double>());
+		}
+		
+		for (int i=0; i< heatmap[0].length; i++){
+			double mx = 0;
+			int mxj = -1;
+			for (int j=0; j<index.length; j++){
+				if (dataObjects.get(index[j]).hidden || dataObjects.get(index[j]).type == 5)
+					continue;
+				
+				double val = heatmap[index[j]][i];
+				
+				if (val == 0) continue;
+				
+				ArrayList<String> a = vectorLabel.get(i);
+				ArrayList<Double> vv = vectorLabelScores.get(i);
+				int insertIndex = 0;
+				for (int k=0; k<=a.size(); k++)
+					if (k == a.size() || val > vv.get(k)){
+						insertIndex = k;
+						break;
+					}
+				
+				a.add(insertIndex, dataObjects.get(index[j]).label.toLowerCase().trim());
+				vv.add(insertIndex,val);
+
+			}
+			
+			if (vectorLabel.get(i).size() == 0){
+				vectorLabel.remove(i);
+				vectorLabel.add(i, null);
+			}
+		}
+		
 	}
 	
 	
@@ -356,7 +465,7 @@ public class User{
 		
 		for (int i=0; i<events.size(); i++){
 			
-			long tt = events.get(i).getTime();
+			long tt = events.get(i).time;
 			
 			if (events.get(i) instanceof GazeEvent){
 				GazeEvent ge = (GazeEvent)events.get(i);
@@ -420,18 +529,87 @@ public class User{
 	
 	public void setPeriodEnd(long te){
 		timePeriodEnd = te;
-		if (timePeriodEnd > events.get(events.size()-1).getTime()) timePeriodEnd = events.get(events.size()-1).getTime();
+		if (timePeriodEnd > events.get(events.size()-1).time) timePeriodEnd = events.get(events.size()-1).time;
 		if (timePeriodEnd < timePeriodStart + timeStep) timePeriodEnd = timePeriodStart + timeStep;	
 	}
 	
 	public void setCellWidth(int cw){
 		cellWidth = cw;
 		createHeatmap();
+		
+
 	}
 	
 	public void setTimeStep(int ts){
 		timeStep = ts;
 		createHeatmap();
+		
+		
+	/*	ArrayList<ArrayList<String>> c = this.changeCodingTimeBase(ts);
+		
+		int start = 0;
+		for (int i=0; i<c.size(); i++)
+			if (c.get(i) != null && c.get(i).size() > 0){
+				start = i;
+				break;
+				}
+		
+		try{
+		PrintWriter writer = new PrintWriter("c:/vectorcomp.txt", "UTF-8");
+	    double cnt = 0;
+	    int bothnull = 0;
+	    for (int i=start; i<c.size(); i++){
+	    	String lab1 = "";
+	    	String lab2 = "";
+	    	double same = 0;
+	    	if (this.vectorLabel.get(i) == null && c.get(i) == null){
+	    		same = 1;
+	    		bothnull++;
+	    	}
+	    	else if (vectorLabel.get(i) != null && c.get(i)!= null)
+	    		same = rankDistance(vectorLabel.get(i), vectorLabelScores.get(i), c.get(i));
+	
+	    	
+	    	if (vectorLabel.get(i) != null)
+	    		lab1 = vectorLabel.get(i).get(0);
+	    	if (c.get(i) != null)
+		    	for (int j=0; j<c.get(i).size(); j++)
+		    		lab2 += c.get(i).get(j) + ","; 
+	    	
+	    	cnt += same;
+	    	
+	    	System.out.println(cnt + " " + (c.size()-start) + " " + (cnt / (c.size() - start)) + " " + ((double)(cnt-bothnull) / (c.size() - start - bothnull)));
+	    	writer.println(i + "\t" + lab1 + "\t" + lab2 + "\t" + same);
+	    }
+	    writer.close();
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}*/
+	}
+	
+	public double rankDistance(ArrayList<String> v1, ArrayList<Double> v1score, ArrayList<String> v2){
+		
+		String method = "top";
+		if (method.equals("top")){
+			if (v2.indexOf(v1.get(0)) >= 0)
+				return 1;
+			return 0;
+		}
+		else{
+			double bestOption = 999999;
+			for (int i=0; i<v2.size(); i++){
+				int index = v1.indexOf(v2.get(i));
+				if (index < 0) continue;				
+				
+				double d = Math.abs(1. - v1score.get(index));
+				if (d < bestOption)
+					bestOption = d;
+			}
+			if (bestOption == 999999)
+				return 0;
+			return 1- bestOption;
+		}
 	}
 	
 	
@@ -456,14 +634,100 @@ public class User{
 					dataToIndex.put(tnew, dataObjects.size()-1);
 				}
 				
-				EyeEvent enew = new EyeEvent(e.getTime(), tnew, ((EyeEvent) e).score, ((EyeEvent) e).prob);
+				EyeEvent enew = new EyeEvent(e.time, tnew, ((EyeEvent) e).score, ((EyeEvent) e).prob);
 				events.add(enew);
 			}
 		}
 		
 		timePeriodStart = 0;
-		timePeriodEnd = events.get(events.size()-1).getTime();
+		timePeriodEnd = events.get(events.size()-1).time;
 		
 		createHeatmap();
 	}
+	
+	public void loadCoding(String path){
+		try{
+	    BufferedReader br = new BufferedReader(new FileReader(path));
+	    String line;
+	    
+	    coding = new ArrayList< ArrayList<String> >();
+	    while ((line = br.readLine()) != null) {
+	    	System.out.println(line);
+	    	String[] split = line.split("\t");
+	    	int tm1 = Integer.parseInt(split[1])-1;
+	    	int tm2 = Integer.parseInt(split[2])-1;
+	    	String[] l = split[0].split(",");
+	    
+	    	for (int i = tm1; i<=tm2; i++){
+	    		if (i >= coding.size()){
+	    			i--;
+	    			coding.add(null);
+	    		}
+	    		else{
+	    			if (coding.get(i) == null){
+	    				coding.remove(i);
+	    				coding.add(i, new ArrayList<String>());
+	    			}
+	    			
+	    			for (int k=0; k<l.length; k++)
+	    			coding.get(i).add(l[k].trim().toLowerCase());
+	   
+	    		}
+	    	}
+	    }
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	ArrayList<ArrayList<String>> changeCodingTimeBase(int base){
+		ArrayList<ArrayList<String>> c = new ArrayList<ArrayList<String>>();
+		
+		int totalTime = coding.size() * 100;
+		int newsize = totalTime / base;
+		
+		for (int i=0; i<newsize; i++){
+			ArrayList<String> t = new ArrayList<String>();
+			c.add(t);
+			
+			int t1 = base * i;
+			int t2 = base * (i+1);
+			
+			t1 = t1 / 100;
+			t2 = (int)Math.ceil(t2 / 100.);
+			
+			for (int j=t1; j< t2; j++)
+				for (int k=0; coding.get(j) != null && k<coding.get(j).size(); k++)
+					t.add(coding.get(j).get(k));
+			
+			if (t.size() == 0){
+				c.remove(c.size()-1);
+				c.add(null);
+			}
+		}
+		
+		return c;
+	}
+
+	public void setCellFilter(double cf) {
+		this.cellFilter = cf;
+		this.createHeatmap();
+		
+	}
+
+	public void setRowFilter(double rf) {
+		this.rowFilter = rf;
+		this.createHeatmap();
+		
+	}
+
+	public void setSort(String sort) {
+		this.sort = sort;
+		this.createHeatmap();
+		
+	}
+	
+	
+
 }

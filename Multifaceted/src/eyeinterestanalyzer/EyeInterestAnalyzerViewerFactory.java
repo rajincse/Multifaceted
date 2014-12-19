@@ -1,4 +1,4 @@
-package eyeinterestanalyzer.viewer;
+package eyeinterestanalyzer;
 
 import perspectives.base.Viewer;
 import perspectives.base.ViewerFactory;

@@ -1,4 +1,4 @@
-package eyeinterestanalyzer.event;
+package eyeinterestanalyzer;
 
 import eyeinterestanalyzer.DataObject;
 
@@ -6,9 +6,9 @@ import eyeinterestanalyzer.DataObject;
 
 public class EyeEvent extends Event{
 
-	public DataObject target;
-	public double score;
-	public double prob;
+	DataObject target;
+	double score;
+	double prob;
 	
 	public EyeEvent(long time, DataObject target, double score, double prob) {
 		super("eye", time);

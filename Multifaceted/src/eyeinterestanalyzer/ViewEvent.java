@@ -1,7 +1,7 @@
-package eyeinterestanalyzer.event;
+package eyeinterestanalyzer;
 
 public class ViewEvent extends Event{
-	public String view;	
+	String view;	
 	public ViewEvent(long time, String view) {
 		super("view", time);
 		this.view = view;				

@@ -1,6 +1,6 @@
 package multifaceted.main;
 
-import eyeinterestanalyzer.viewer.EyeInterestAnalyzerViewerFactory;
+import eyeinterestanalyzer.EyeInterestAnalyzerViewerFactory;
 import imdb.IMDBDataFactory;
 import imdb.IMDBViewerFactory;
 import imdb.analysis.HeatMapAnalysisViewerFactory;

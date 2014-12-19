@@ -1,4 +1,4 @@
-package eyeinterestanalyzer.event;
+package eyeinterestanalyzer;
 
 public class MouseButtonEvent extends Event{
 	int x,y;

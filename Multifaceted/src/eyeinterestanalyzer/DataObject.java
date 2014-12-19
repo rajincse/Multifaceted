@@ -3,12 +3,12 @@ package eyeinterestanalyzer;
 public class DataObject{
 	
 	String id;
-	public String label;
-	public String type;
+	String label;
+	int type;
 	
 	boolean hidden;
 	
-	public DataObject(String id, String label, String type){
+	public DataObject(String id, String label, int type){
 		this.id = id;
 		this.label = label;
 		this.type = type;

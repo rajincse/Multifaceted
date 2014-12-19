@@ -1,5 +1,6 @@
 package multifaceted.main;
 
+import eyeinterestanalyzer.viewer.EyeInterestAnalyzerViewerFactory;
 import imdb.IMDBDataFactory;
 import imdb.IMDBViewerFactory;
 import imdb.analysis.HeatMapAnalysisViewerFactory;
@@ -23,6 +24,6 @@ public class MainClass {
 		e.registerViewerFactory(new RecommendViewerFactory());
 		e.registerViewerFactory(new PivotPathViewerFactory());
 		e.registerViewerFactory(new PivotPathSimulationViewerFactory());
-		
+		e.registerViewerFactory(new EyeInterestAnalyzerViewerFactory());
 	}
 }

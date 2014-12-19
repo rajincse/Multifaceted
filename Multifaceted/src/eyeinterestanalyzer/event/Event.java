@@ -2,7 +2,7 @@ package eyeinterestanalyzer.event;
 
 public class Event{
 	protected String type;
-	protected long time;
+	public long time;
 	
 	public Event(String type, long time){
 		this.type = type;

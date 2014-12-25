@@ -13,4 +13,10 @@ public class DataObject{
 		this.label = label;
 		this.type = type;
 	}
+	
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return "{id:"+id+", label:"+label+", type:"+type+"}";
+	}
 }

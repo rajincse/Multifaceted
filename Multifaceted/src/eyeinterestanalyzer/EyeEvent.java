@@ -15,5 +15,11 @@ public class EyeEvent extends Event{
 		this.target = target;
 		this.score = score;	
 		this.prob = prob;
-	}	
+	}
+	
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return "{target:"+target+", type:"+type+", time:"+time+"}";
+	}
 }

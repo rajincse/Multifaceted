@@ -13,6 +13,8 @@ import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
+import multifaceted.Util;
+
 public class User{
 	String name;
 	
@@ -30,6 +32,8 @@ public class User{
 	
 	BufferedImage heatmap = null;
 	ArrayList<DataObject> viewedObjects;
+	
+	BufferedImage scarfplot=null;
 	
 	double[][] heatmapVal;
 	
@@ -115,7 +119,7 @@ public class User{
 	        		//if (gazeSpeed > 70) 
 	        		//	continue;
 	        		
-	        		//System.out.println(line);
+//	        		System.out.println(line);
 	        		long t = Long.parseLong(split[1]) - startTime;
 	        		double s = Double.parseDouble(split[5]);
 	        		double p = Double.parseDouble(split[8]);
@@ -226,13 +230,132 @@ public class User{
 	        timePeriodStart = 0;
 	        timePeriodEnd = events.get(events.size()-1).time;
 	        createHeatmap();
+	        createScarfplot();
 	    }
 		catch(Exception e){
 			e.printStackTrace();
 	    }
 	}
 	
+	public void createScarfplot()
+	{
+		long ts = timePeriodStart;
+		long te = timePeriodEnd;
+		
+		System.out.println("creating scarfplot ..");
+		
+		long lastTime = events.get(events.size()-1).time;
+		int totalTimeCells = (int)(lastTime/timeStep + 1);
+		ArrayList[][] eventMap = new ArrayList[dataObjects.size()][];
+		
+		for (int i=0; i<eventMap.length; i++){
+			eventMap[i] = new ArrayList[totalTimeCells];
+			for (int j=0; j<eventMap[i].length; j++)
+				eventMap[i][j] = new ArrayList<Event>();
+		}		
+
+		
+		for (int i=0; i<events.size(); i++)
+			if (events.get(i) instanceof EyeEvent){
+				EyeEvent e = (EyeEvent)events.get(i);
+				
+				if (e.time < ts || e.time > te)
+					continue;
+				
+				int dataIndex = dataToIndex.get(e.target);
+				int timeIndex = (int)(e.time / timeStep);
+
+
+				eventMap[dataIndex][timeIndex].add(e);
+			}
+		
+		double[][] heatmap = new double[eventMap.length][];
+		for (int i=0; i<heatmap.length; i++)
+			heatmap[i] = new double[eventMap[i].length];
+		
+		double avgCell = 0;
+		int nonZeroCellCount = 0;
+		for (int i=0; i<heatmap.length; i++)
+			for (int j=0; j<heatmap[i].length; j++){
+				ArrayList<EyeEvent> l = eventMap[i][j];
+				double sum = 0;
+				if (l.size() > 0){
+				for (int k=0; k<l.size(); k++){
+					
+					if (withProb)
+						sum += l.get(k).score;
+					else{
+					if (l.get(k).prob >= 0)
+						sum += l.get(k).score / l.get(k).prob;
+					else
+						sum += l.get(k).score;
+					}
+				}
+				}
+				heatmap[i][j] = sum/Math.max(l.size(),Math.sqrt(timeStep/1000.*60));
+				
+				if (heatmap[i][j] != 0){
+					avgCell += heatmap[i][j];
+					nonZeroCellCount++;
+				}
+			}
+		avgCell /= nonZeroCellCount;
+		
+		for (int i=0; i<heatmap.length; i++)
+			for (int j=0; j<heatmap[i].length; j++)
+				if (heatmap[i][j] < cellFilter*avgCell)
+					heatmap[i][j] = 0;
+		
 	
+		
+		
+		
+		System.out.println("Time step:"+timeStep);
+		
+		
+		int imWidth = cellWidth * totalTimeCells;
+		int imHeight = cellHeight ;
+		BufferedImage bim = new BufferedImage(imWidth, imHeight, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = bim.createGraphics();
+		
+		
+		int maxIndex =0;
+		double maxVal =- 1;
+		for(int j=0;j<totalTimeCells;j++)
+		{
+			for(int i=0;i<heatmap.length;i++)
+			{
+				if(heatmap[i][j] > maxVal)
+				{
+					maxVal = heatmap[i][j];
+					maxIndex = i;
+				}
+			}
+			if(maxVal > 0)
+			{
+				DataObject object = dataObjects.get(maxIndex);
+				int type = object.type;
+				Color c =   Util.getColor(type);
+				Color c1 = new Color(c.getRed(), c.getGreen(), c.getBlue());
+				g.setColor(c1);
+				g.fillRect(j*cellWidth, 0, cellWidth, cellHeight);
+			}
+			maxVal =- 1;
+		}
+
+		
+		System.out.println("done creating scarfplot ..");
+		this.scarfplot = bim;
+		
+		try {
+			ImageIO.write(bim, "PNG", new File("C:/work/rajin1.png" ));
+		} catch (IOException e) {
+			
+			e.printStackTrace();
+		}
+		
+		
+	}
 	public void createHeatmap(){
 		
 		long ts = timePeriodStart;
@@ -536,6 +659,7 @@ public class User{
 	public void setCellWidth(int cw){
 		cellWidth = cw;
 		createHeatmap();
+		createScarfplot();
 		
 
 	}
@@ -543,7 +667,7 @@ public class User{
 	public void setTimeStep(int ts){
 		timeStep = ts;
 		createHeatmap();
-		
+		createScarfplot();
 		
 	/*	ArrayList<ArrayList<String>> c = this.changeCodingTimeBase(ts);
 		
@@ -643,6 +767,7 @@ public class User{
 		timePeriodEnd = events.get(events.size()-1).time;
 		
 		createHeatmap();
+		createScarfplot();
 	}
 	
 	public void loadCoding(String path){
@@ -713,21 +838,26 @@ public class User{
 	public void setCellFilter(double cf) {
 		this.cellFilter = cf;
 		this.createHeatmap();
+		createScarfplot();
 		
 	}
 
 	public void setRowFilter(double rf) {
 		this.rowFilter = rf;
 		this.createHeatmap();
-		
+		createScarfplot();
 	}
 
 	public void setSort(String sort) {
 		this.sort = sort;
 		this.createHeatmap();
-		
+		createScarfplot();
 	}
 	
-	
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return "{ name:"+name+", }";
+	}
 
 }

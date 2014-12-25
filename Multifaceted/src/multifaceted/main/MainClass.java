@@ -1,6 +1,7 @@
 package multifaceted.main;
 
 import eyeinterestanalyzer.EyeInterestAnalyzerViewerFactory;
+import eyeinterestanalyzer.ScarfplotViewer;
 import imdb.IMDBDataFactory;
 import imdb.IMDBViewerFactory;
 import imdb.analysis.HeatMapAnalysisViewerFactory;
@@ -25,5 +26,7 @@ public class MainClass {
 		e.registerViewerFactory(new PivotPathViewerFactory());
 		e.registerViewerFactory(new PivotPathSimulationViewerFactory());
 		e.registerViewerFactory(new EyeInterestAnalyzerViewerFactory());
+		
+		e.addViewer(new ScarfplotViewer("Scarfplot"));
 	}
 }

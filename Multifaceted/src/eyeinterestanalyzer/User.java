@@ -13,9 +13,11 @@ import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
+import eyeinterestanalyzer.clustering.ClusteringStringItem;
+
 import multifaceted.Util;
 
-public class User{
+public class User implements ClusteringStringItem{
 	String name;
 	
 	ArrayList<Event> events;
@@ -236,7 +238,91 @@ public class User{
 			e.printStackTrace();
 	    }
 	}
-	
+	private String stringValue="";
+	private void calculateStringValue()
+	{
+		this.stringValue ="";
+		int totalTimeCells = (int)events.get(events.size()-1).time+1;
+		ArrayList[][] eventMap = new ArrayList[dataObjects.size()][];
+		
+		for (int i=0; i<eventMap.length; i++){
+			eventMap[i] = new ArrayList[totalTimeCells];
+			for (int j=0; j<eventMap[i].length; j++)
+				eventMap[i][j] = new ArrayList<Event>();
+		}		
+
+		
+		for (int i=0; i<events.size(); i++)
+			if (events.get(i) instanceof EyeEvent){
+				EyeEvent e = (EyeEvent)events.get(i);
+				
+				
+				int dataIndex = dataToIndex.get(e.target);
+				int timeIndex = (int)(e.time / timeStep);
+
+
+				eventMap[dataIndex][timeIndex].add(e);
+			}
+		
+		double[][] heatmap = new double[eventMap.length][];
+		for (int i=0; i<heatmap.length; i++)
+			heatmap[i] = new double[eventMap[i].length];
+		
+		double avgCell = 0;
+		int nonZeroCellCount = 0;
+		for (int i=0; i<heatmap.length; i++)
+			for (int j=0; j<heatmap[i].length; j++){
+				ArrayList<EyeEvent> l = eventMap[i][j];
+				double sum = 0;
+				if (l.size() > 0){
+				for (int k=0; k<l.size(); k++){
+					
+					if (withProb)
+						sum += l.get(k).score;
+					else{
+					if (l.get(k).prob >= 0)
+						sum += l.get(k).score / l.get(k).prob;
+					else
+						sum += l.get(k).score;
+					}
+				}
+				}
+				heatmap[i][j] = sum/Math.max(l.size(),Math.sqrt(timeStep/1000.*60));
+				
+				if (heatmap[i][j] != 0){
+					avgCell += heatmap[i][j];
+					nonZeroCellCount++;
+				}
+			}
+		avgCell /= nonZeroCellCount;
+		
+		for (int i=0; i<heatmap.length; i++)
+			for (int j=0; j<heatmap[i].length; j++)
+				if (heatmap[i][j] < cellFilter*avgCell)
+					heatmap[i][j] = 0;
+		
+		
+		
+		int maxIndex =0;
+		double maxVal =- 1;
+		for(int j=0;j<totalTimeCells;j++)
+		{
+			for(int i=0;i<heatmap.length;i++)
+			{
+				if(heatmap[i][j] > maxVal)
+				{
+					maxVal = heatmap[i][j];
+					maxIndex = i;
+				}
+			}
+			if(maxVal > 0)
+			{
+				DataObject object = dataObjects.get(maxIndex);
+				this.stringValue += object.getStringValue();
+			}
+			maxVal =- 1;
+		}
+	}
 	public void createScarfplot()
 	{
 		long ts = timePeriodStart;
@@ -347,12 +433,6 @@ public class User{
 		System.out.println("done creating scarfplot ..");
 		this.scarfplot = bim;
 		
-		try {
-			ImageIO.write(bim, "PNG", new File("C:/work/rajin1.png" ));
-		} catch (IOException e) {
-			
-			e.printStackTrace();
-		}
 		
 		
 	}
@@ -858,6 +938,28 @@ public class User{
 	public String toString() {
 		// TODO Auto-generated method stub
 		return "{ name:"+name+", }";
+	}
+
+	@Override
+	public String getId() {
+		// TODO Auto-generated method stub
+		return this.name;
+	}
+
+	@Override
+	public String getStringValue() {
+		// TODO Auto-generated method stub
+		if(this.stringValue.isEmpty())
+		{
+			this.calculateStringValue();
+		}
+		return this.stringValue;
+	}
+
+	@Override
+	public int getDistance(ClusteringStringItem otherItem) {
+		// TODO Auto-generated method stub
+		return LevenshteinDistance.getLevenshteinDistance(this.stringValue, otherItem.getStringValue());
 	}
 
 }

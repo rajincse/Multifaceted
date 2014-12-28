@@ -19,4 +19,9 @@ public class DataObject{
 		// TODO Auto-generated method stub
 		return "{id:"+id+", label:"+label+", type:"+type+"}";
 	}
+	
+	public String getStringValue()
+	{
+		return ""+this.type;
+	}
 }

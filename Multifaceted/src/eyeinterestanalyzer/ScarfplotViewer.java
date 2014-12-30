@@ -9,6 +9,10 @@ import java.util.ArrayList;
 
 import javax.jws.soap.SOAPBinding.Use;
 
+import eyeinterestanalyzer.clustering.Cluster;
+import eyeinterestanalyzer.clustering.ClusteringStringItem;
+import eyeinterestanalyzer.clustering.HierarchicalClustering;
+
 import perspectives.base.Property;
 import perspectives.base.Viewer;
 import perspectives.properties.PDouble;
@@ -21,11 +25,10 @@ import perspectives.two_d.JavaAwtRenderer;
 public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 	public static final String PROPERTY_LOAD_USER = "Load User";
 	public static final String PROPERTY_USERS = "Users";
-	public static int HEATMAP_X_OFFSET = 100;
-	public static int HEATMAP_Y_OFFSET = 650;
+	public static int CLUSTER_SHIFT_X = 30;
 	
-	public static int VALUE_CELL_WIDTH =20;
-	public static int VALUE_TIME_STEP =1;
+	public static int VALUE_CELL_WIDTH =1;
+	public static int VALUE_TIME_STEP =600;
 	
 	ArrayList<User> users;
 	User currentUser =null;
@@ -45,7 +48,7 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 	
 	int heatmapYOffset = 50;
 	
-	
+	private Cluster clusterRoot =null;
 	
 	
 
@@ -79,6 +82,7 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 					}
 					
 				}
+				createCluster();
 				
 				return super.updating(newvalue);
 			}
@@ -145,85 +149,177 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 		
 		
 		
-//		PFileInput pFile = new  PFileInput("E:/Graph/UserStudy/Scarfplot/EyeEventSmall.txt");
+//		PFileInput pFile = new  PFileInput("E:/Graph/UserStudy/ScarfplotFull/Ajay.txt");
 //		PFileInput pFile = new  PFileInput("E:/Graph/UserStudy/Ajay/20141121_185223_RESULT.txt");
 //		pLoad.setValue(pFile);
 //		pCellWidth.setValue(new PInteger(VALUE_CELL_WIDTH));
 //		pTimeStep.setValue(new PInteger(VALUE_TIME_STEP));
 		
 	}
+	private void createCluster()
+	{
+		ArrayList<ClusteringStringItem> items = new ArrayList<ClusteringStringItem>();
+		for(User u: users)
+		{
+			items.add(u);
+		}
+		HierarchicalClustering clustering = new HierarchicalClustering(items);
+		this.clusterRoot = clustering.getRoot();
+	}
+
+	private void drawAnchor(Graphics2D g, int x, int y)
+	{
+		Color previousColor = g.getColor();
+		
+		g.setColor(Color.black);
+		int rad = 5;
+		g.fillOval(x-rad, y-rad, 2*rad, 2*rad);
+		
+		g.setColor(previousColor);
+	}
+
+	private void renderCluster(Graphics2D g, Cluster cluster)
+	{
+		if(cluster.getChildren()== null || cluster.getChildren().isEmpty())
+		{
+			g.setColor(Color.black);				
+			g.drawLine(0,currentUser.cellHeight/2,cluster.getParent().getHeight() * CLUSTER_SHIFT_X, currentUser.cellHeight/2);
+			
+			g.translate(cluster.getParent().getHeight() * CLUSTER_SHIFT_X, 0);
+			for(ClusteringStringItem item: cluster.getItems())
+			{
+				if(item instanceof User)					
+				{
+					User user = (User) item;
+					boolean dataHovered = false;
+					if(dataObjectHovered >=0 && user.name.equals(users.get(dataObjectHovered).name))						
+					{
+						dataHovered = true;
+					}
+					this.renderUser(g, user, dataHovered);
+					g.translate(0, user.cellHeight);
+					
+				}
+			}
+			g.translate(0,  -  cluster.getItems().size()* currentUser.cellHeight);
+			g.translate(-cluster.getParent().getHeight() * CLUSTER_SHIFT_X, 0);
+		}
+		else
+		{
+			int totalUsers =cluster.getItems().size();
+			Point anchor = getAnchorPosition(0, 0, 0, totalUsers* currentUser.cellHeight);
+			
+//			this.drawAnchor(g, anchor.x, anchor.y);
+			int lastMaxY =0;
+			for(Cluster child: cluster.getChildren())
+			{
+				int maxY = lastMaxY+ child.getItems().size()* currentUser.cellHeight;
+				Point childAnchor = getAnchorPosition(CLUSTER_SHIFT_X, lastMaxY, CLUSTER_SHIFT_X, maxY);
+				g.setColor(Color.black);				
+				g.drawLine(anchor.x, anchor.y, anchor.x, childAnchor.y);
+				g.drawLine(anchor.x, childAnchor.y, childAnchor.x, childAnchor.y);
+				
+				g.translate(CLUSTER_SHIFT_X,lastMaxY);
+				this.renderCluster(g, child);
+				g.translate(-CLUSTER_SHIFT_X, -lastMaxY );
+				
+				lastMaxY = maxY;
+			}
+		}
+		
+	}
+	private Point getAnchorPosition(int minX, int minY, int maxX, int maxY)
+	{
+		return new Point((minX+maxX)/2,(minY+maxY)/2);
+	}
 	
-
-
+	private void renderUser(Graphics2D g, User user, boolean dataHovered)
+	{
+		g.setColor(Color.cyan);
+		g.fillRect(0, 0, 200,user.cellHeight-1);
+		g.setColor(Color.black);
+		g.setFont(g.getFont().deriveFont(10f));
+		g.drawString(user.name, 0, user.cellHeight-2);
+		if(user.scarfplot != null)
+		{
+			g.drawImage(user.scarfplot,  user.heatmapXOffset, 0,null);
+			
+			if (dataHovered)
+				g.drawRect(0, 0, user.scarfplot.getWidth(), user.cellHeight);
+	
+		}
+	}
+	
 	@Override
 	public void render(Graphics2D g) {		
 		if (users == null || users.isEmpty())
 			return;
 		
-//		g.drawString("" + currentUser.currentTime/100, 0, -80);
 
 		g.setColor(Color.black);
-		for(int ii=0;ii< users.size();ii++)
+		g.translate(0,  heatmapYOffset);
+		this.renderCluster(g, clusterRoot);
+//		for(int ii=0;ii< users.size();ii++)
+//		{
+//			User user = users.get(ii);
+//			
+//			boolean dataHovered = false;
+//			if(dataObjectHovered == ii)
+//			{
+//				dataHovered = true;
+//			}
+//			
+//			this.renderUser(g, user, dataHovered);
+//			
+//			g.translate(0, user.cellHeight);
+//			
+//		}
+//		g.translate(0,  - users.size()* currentUser.cellHeight);
+		g.translate(0,  -heatmapYOffset);
+		
+		g.translate((this.clusterRoot.getHeight()+1)* CLUSTER_SHIFT_X, 0);
+		if( currentUser.scarfplot!=null)
 		{
-			User user = users.get(ii);
-			g.setColor(Color.black);
-			g.setFont(g.getFont().deriveFont(10f));
-			g.drawString(user.name, 0, heatmapYOffset+user.cellHeight*ii+user.cellHeight-2);
-			if(user.scarfplot != null)
-			{
-				g.drawImage(user.scarfplot,  user.heatmapXOffset, heatmapYOffset+user.cellHeight*ii,null);
-				
-				int timeLine = user.timeToPixel(user.currentTime);
-				g.setColor(new Color(0,0,0,100));
-				g.fillRect(timeLine,heatmapYOffset-50,user.cellWidth,user.scarfplot.getHeight()+100);
-				g.drawString(user.currentTime+"ms", timeLine, heatmapYOffset-50);			
-				if (timeLineHovered != null)
-					g.drawLine(timeLine-5, timeLineHovered.y, timeLine+5, timeLineHovered.y);
-				
-				int sp = user.timeToPixel(user.timePeriodStart);
-				g.setColor(new Color(0,150,0,100));
-				g.drawLine(sp,heatmapYOffset-50,sp,heatmapYOffset-50+user.scarfplot.getHeight()+100);
-				g.drawString(user.timePeriodStart+"ms", sp, heatmapYOffset-50);
-				if (startPeriodHovered != null)
-					g.drawLine(sp-5, startPeriodHovered.y, sp+5, startPeriodHovered.y);
-				
-				int ep = user.timeToPixel(user.timePeriodEnd);
-				g.setColor(new Color(150,0,0,100));
-				g.drawLine(ep,heatmapYOffset-50,ep,heatmapYOffset-50+user.scarfplot.getHeight()+100);
-				g.drawString(user.timePeriodEnd+"ms", ep, heatmapYOffset-50);
-				if (endPeriodHovered != null)
-					g.drawLine(ep-5, endPeriodHovered.y, ep+5, endPeriodHovered.y);
-				
-				g.setColor(new Color(100,100,100,50));
-				g.fillRect(user.heatmapXOffset, heatmapYOffset, sp - user.heatmapXOffset, user.scarfplot.getHeight());
-				g.fillRect(ep, heatmapYOffset, user.heatmapXOffset + user.scarfplot.getWidth() - ep, user.scarfplot.getHeight());
-				
-				Rectangle[] vr = getViewEventRectangles();
-				for (int i=0; i<vr.length; i++){
-					if (i % 2 == 0) g.setColor(Color.gray);
-					else g.setColor(Color.black);
-					g.fillRect(vr[i].x, vr[i].y, vr[i].width, vr[i].height);
-				}
-				
-				Rectangle[] hr = getHoverEventRectangles();
-				for (int i=0; i<hr.length; i++){
-					g.setColor(Color.pink);
-					g.fillRect(hr[i].x, hr[i].y, hr[i].width, hr[i].height);
-				}
-				
-				Rectangle[] dr = this.getMouseDragRectangles();
-				for (int i=0; i<dr.length; i++){
-					g.setColor(Color.blue);
-					g.fillRect(dr[i].x, dr[i].y, dr[i].width, dr[i].height);
-				}
-				
-				for (int i=0; i<user.viewedObjects.size(); i++){
-					if (dataObjectHovered == i)
-						g.drawRect(0, heatmapYOffset+user.cellHeight*i, user.heatmapXOffset + user.scarfplot.getWidth(), user.cellHeight);
-				}
+			
+			int sp = currentUser.timeToPixel(currentUser.timePeriodStart);
+			g.setColor(new Color(0,150,0,100));
+			g.drawLine(sp,heatmapYOffset-50,sp,heatmapYOffset-50+users.size() * currentUser.cellHeight+100);
+			g.drawString(currentUser.timePeriodStart+"ms", sp, heatmapYOffset-50);
+			if (startPeriodHovered != null)
+				g.drawLine(sp-5, startPeriodHovered.y, sp+5, startPeriodHovered.y);
+			
+			int ep = currentUser.timeToPixel(currentUser.timePeriodEnd);
+			g.setColor(new Color(150,0,0,100));
+			g.drawLine(ep,heatmapYOffset-50,ep,heatmapYOffset-50+currentUser.scarfplot.getHeight()+100);
+			g.drawString(currentUser.timePeriodEnd+"ms", ep, heatmapYOffset-50);
+			if (endPeriodHovered != null)
+				g.drawLine(ep-5, endPeriodHovered.y, ep+5, endPeriodHovered.y);
+			
+			g.setColor(new Color(100,100,100,50));
+			g.fillRect(currentUser.heatmapXOffset, heatmapYOffset, sp - currentUser.heatmapXOffset, currentUser.scarfplot.getHeight());
+			g.fillRect(ep, heatmapYOffset, currentUser.heatmapXOffset + currentUser.scarfplot.getWidth() - ep, currentUser.scarfplot.getHeight());
+			
+			Rectangle[] vr = getViewEventRectangles();
+			for (int i=0; i<vr.length; i++){
+				if (i % 2 == 0) g.setColor(Color.gray);
+				else g.setColor(Color.black);
+				g.fillRect(vr[i].x, vr[i].y, vr[i].width, vr[i].height);
+			}
+			
+			Rectangle[] hr = getHoverEventRectangles();
+			for (int i=0; i<hr.length; i++){
+				g.setColor(Color.pink);
+				g.fillRect(hr[i].x, hr[i].y, hr[i].width, hr[i].height);
+			}
+			
+			Rectangle[] dr = this.getMouseDragRectangles();
+			for (int i=0; i<dr.length; i++){
+				g.setColor(Color.blue);
+				g.fillRect(dr[i].x, dr[i].y, dr[i].width, dr[i].height);
 			}
 			
 		}
+		g.translate(-(this.clusterRoot.getHeight()+1)* CLUSTER_SHIFT_X, 0);
 	}
 
 	@Override
@@ -299,14 +395,23 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 		
 		this.setToolTipText("");
 		
+//		dataObjectHovered = -1;
+//		for (int i=0; currentUser.viewedObjects != null && i<currentUser.viewedObjects.size(); i++){
+//			r = new Rectangle(0, heatmapYOffset+currentUser.cellHeight*i, currentUser.heatmapXOffset+currentUser.scarfplot.getWidth(),currentUser.cellHeight);
+//			if (r.contains(new Point(x,y))){
+//				dataObjectHovered = i;
+////				this.setToolTipText(currentUser.viewedObjects.get(i).label);
+//			}
+//		}		
+		
 		dataObjectHovered = -1;
-		for (int i=0; currentUser.viewedObjects != null && i<currentUser.viewedObjects.size(); i++){
+		for (int i=0; i< users.size(); i++){
 			r = new Rectangle(0, heatmapYOffset+currentUser.cellHeight*i, currentUser.heatmapXOffset+currentUser.scarfplot.getWidth(),currentUser.cellHeight);
 			if (r.contains(new Point(x,y))){
 				dataObjectHovered = i;
-//				this.setToolTipText(currentUser.viewedObjects.get(i).label);
+				this.setToolTipText(users.get(i).name);
 			}
-		}		
+		}	
 //		
 //		Rectangle[] vr = this.getViewEventRectangles();
 //		for (int i=0; i<vr.length; i++)
@@ -338,28 +443,28 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 	@Override
 	public boolean mousedragged(int currentx, int currenty, int oldx, int oldy) {
 
-		if (timeLineDragging){
-			currentUser.changeTime(currentUser.pixelToTime(currentx));
-			this.requestRender();
-			return true;
-		}
-		if (startPeriodDragging){
-			currentUser.setPeriodStart(currentUser.pixelToTime(currentx));
-			requestRender();
-			return true;
-		}
-		if (endPeriodDragging){
-			currentUser.setPeriodEnd(currentUser.pixelToTime(currentx));
-			requestRender();
-			return true;
-		}
+//		if (timeLineDragging){
+////			currentUser.changeTime(currentUser.pixelToTime(currentx));
+//			this.requestRender();
+//			return true;
+//		}
+//		if (startPeriodDragging){
+//			currentUser.setPeriodStart(currentUser.pixelToTime(currentx));
+//			requestRender();
+//			return true;
+//		}
+//		if (endPeriodDragging){
+//			currentUser.setPeriodEnd(currentUser.pixelToTime(currentx));
+//			requestRender();
+//			return true;
+//		}
 		
-		if (heatmapPicked != null){
-			 
-			currentUser.heatmapXOffset = currentx - heatmapPicked.x;
-			requestRender();
-			return true;
-		}
+//		if (heatmapPicked != null){
+//			 
+//			currentUser.heatmapXOffset = currentx - heatmapPicked.x;
+//			requestRender();
+//			return true;
+//		}
 		return false;
 	}
 

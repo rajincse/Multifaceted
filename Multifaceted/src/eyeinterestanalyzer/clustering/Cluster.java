@@ -6,6 +6,10 @@ public class Cluster {
 	protected ArrayList<Cluster> children;
 	protected ArrayList<ClusteringStringItem> items;
 	protected ArrayList<Integer> itemIndices;
+	
+	protected int height;
+	protected Cluster parent;
+	
 	public Cluster(ClusteringStringItem item, int index)
 	{
 		this.children = null;
@@ -14,6 +18,8 @@ public class Cluster {
 		
 		this.itemIndices = new ArrayList<Integer>();
 		this.itemIndices.add(index);
+		this.height =0;
+		this.parent = null;
 	}
 	public Cluster(ArrayList<Cluster> children)
 	{
@@ -22,15 +28,37 @@ public class Cluster {
 		this.itemIndices = new ArrayList<Integer>();
 		if(this.children != null)
 		{
+			int maxHeight =0;
 			for(Cluster cluster: children)
 			{
+				if(cluster.getHeight() > maxHeight)
+				{
+					maxHeight = cluster.getHeight();
+				}
 				items.addAll(cluster.getItems());
 				this.itemIndices.addAll(cluster.getIndices());
+				cluster.setParent(this);
 			}
+			
+			this.height = maxHeight+1;
 		}
 
 	}
-	
+	public int getHeight() {
+		return height;
+	}
+	public void setHeight(int height) {
+		this.height = height;
+	}
+	public Cluster getParent() {
+		return parent;
+	}
+	public void setParent(Cluster parent) {
+		this.parent = parent;
+	}
+	public ArrayList<Cluster> getChildren() {
+		return children;
+	}
 	public ArrayList<ClusteringStringItem> getItems()
 	{
 		return this.items;
@@ -90,9 +118,9 @@ public class Cluster {
 	
 	@Override
 	public String toString() {
-		String str ="{";
+		String str ="{ height:"+this.height+", ";
 		if(this.children != null)
-		{
+		{	
 			str+="\"children\":[";
 			for(Cluster cluster: children)
 			{
@@ -105,7 +133,7 @@ public class Cluster {
 			str+="\"item\":";
 			for(ClusteringStringItem item: items)
 			{
-				str+="{\"id\":"+item.getId()+", \"value\":\""+item.getStringValue()+"\"}";
+				str+="{\"id\":"+item.getId()+", \"value\":\""+item.getStringValue().subSequence(0, 10)+"\"}";
 			}
 			
 		}

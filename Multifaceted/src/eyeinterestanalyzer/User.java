@@ -242,7 +242,13 @@ public class User implements ClusteringStringItem{
 	private void calculateStringValue()
 	{
 		this.stringValue ="";
-		int totalTimeCells = (int)events.get(events.size()-1).time+1;
+		long ts = timePeriodStart;
+		long te = timePeriodEnd;
+		
+		System.out.println("creating scarfplot ..");
+		
+		long lastTime = events.get(events.size()-1).time;
+		int totalTimeCells = (int)(lastTime/timeStep + 1);
 		ArrayList[][] eventMap = new ArrayList[dataObjects.size()][];
 		
 		for (int i=0; i<eventMap.length; i++){
@@ -256,6 +262,8 @@ public class User implements ClusteringStringItem{
 			if (events.get(i) instanceof EyeEvent){
 				EyeEvent e = (EyeEvent)events.get(i);
 				
+				if (e.time < ts || e.time > te)
+					continue;
 				
 				int dataIndex = dataToIndex.get(e.target);
 				int timeIndex = (int)(e.time / timeStep);
@@ -937,7 +945,7 @@ public class User implements ClusteringStringItem{
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		return "{ name:"+name+", }";
+		return "{ name:"+name+", string:"+this.getStringValue().subSequence(0, 10)+" }";
 	}
 
 	@Override

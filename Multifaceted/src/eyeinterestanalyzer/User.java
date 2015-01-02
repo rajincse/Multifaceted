@@ -412,29 +412,52 @@ public class User implements ClusteringStringItem{
 		BufferedImage bim = new BufferedImage(imWidth, imHeight, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g = bim.createGraphics();
 		
-		
-		int maxIndex =0;
-		double maxVal =- 1;
+		double totalVal=0;
+		double [] typeVal = new double[6];
 		for(int j=0;j<totalTimeCells;j++)
 		{
+			totalVal=0;
+			for(int i=0;i<typeVal.length;i++)
+			{
+				typeVal[i] = 0;
+			}
+			
+			
 			for(int i=0;i<heatmap.length;i++)
 			{
-				if(heatmap[i][j] > maxVal)
+				if(heatmap[i][j] > 0)
 				{
-					maxVal = heatmap[i][j];
-					maxIndex = i;
+					DataObject object = dataObjects.get(i);
+					typeVal[object.type]+= heatmap[i][j];
 				}
 			}
-			if(maxVal > 0)
+			
+			for(int i=0;i<typeVal.length;i++)
 			{
-				DataObject object = dataObjects.get(maxIndex);
-				int type = object.type;
-				Color c =   Util.getColor(type);
-				Color c1 = new Color(c.getRed(), c.getGreen(), c.getBlue());
-				g.setColor(c1);
-				g.fillRect(j*cellWidth, 0, cellWidth, cellHeight);
+				totalVal+= typeVal[i];
+						
 			}
-			maxVal =- 1;
+			if(totalVal > 0)
+			{
+				int lastY=0;
+				for(int i=0;i<typeVal.length;i++)
+				{
+					if(typeVal[i] > 0)
+					{
+						Color c =   Util.getColor(i);
+						Color c1 = new Color(c.getRed(), c.getGreen(), c.getBlue());
+
+						g.setColor(c1);
+						
+						int height =(int)( typeVal[i]* cellHeight/totalVal);
+						g.fillRect(j*cellWidth, lastY, cellWidth, height);
+						lastY+= height;
+					}
+					
+				}
+				
+			}
+			
 		}
 
 		

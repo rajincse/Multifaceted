@@ -8,6 +8,8 @@ public class Cluster {
 	protected ArrayList<Integer> itemIndices;
 	
 	protected int height;
+	protected int depth;
+	
 	protected Cluster parent;
 	
 	public Cluster(ClusteringStringItem item, int index)
@@ -20,6 +22,7 @@ public class Cluster {
 		this.itemIndices.add(index);
 		this.height =0;
 		this.parent = null;
+		this.calculateDepth();
 	}
 	public Cluster(ArrayList<Cluster> children)
 	{
@@ -38,6 +41,7 @@ public class Cluster {
 				items.addAll(cluster.getItems());
 				this.itemIndices.addAll(cluster.getIndices());
 				cluster.setParent(this);
+				cluster.calculateDepth();
 			}
 			
 			this.height = maxHeight+1;
@@ -49,6 +53,26 @@ public class Cluster {
 	}
 	public void setHeight(int height) {
 		this.height = height;
+	}
+	public void calculateDepth() {
+		int depth =0;
+		Cluster parentCluster = this.getParent();
+		while(parentCluster!= null)
+		{
+			depth++;
+			parentCluster = parentCluster.getParent();
+		}
+		this.depth = depth;
+		if(this.children != null)
+		{	
+			for(Cluster cluster: children)
+			{	
+				cluster.calculateDepth();
+			}
+		}
+	}
+	public int getDepth() {
+		return depth;
 	}
 	public Cluster getParent() {
 		return parent;
@@ -118,7 +142,7 @@ public class Cluster {
 	
 	@Override
 	public String toString() {
-		String str ="{ height:"+this.height+", ";
+		String str ="{ height:"+this.height+", depth:"+this.getDepth()+",";
 		if(this.children != null)
 		{	
 			str+="\"children\":[";

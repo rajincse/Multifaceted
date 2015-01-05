@@ -183,9 +183,9 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 		if(cluster.getChildren()== null || cluster.getChildren().isEmpty())
 		{
 			g.setColor(Color.black);				
-			g.drawLine(0,currentUser.cellHeight/2,cluster.getParent().getHeight() * CLUSTER_SHIFT_X, currentUser.cellHeight/2);
+			g.drawLine(0,currentUser.cellHeight/2,(this.clusterRoot.getHeight() - cluster.getDepth()) * CLUSTER_SHIFT_X, currentUser.cellHeight/2);
 			
-			g.translate(cluster.getParent().getHeight() * CLUSTER_SHIFT_X, 0);
+			g.translate((this.clusterRoot.getHeight() - cluster.getDepth()) * CLUSTER_SHIFT_X, 0);			
 			for(ClusteringStringItem item: cluster.getItems())
 			{
 				if(item instanceof User)					
@@ -202,7 +202,7 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 				}
 			}
 			g.translate(0,  -  cluster.getItems().size()* currentUser.cellHeight);
-			g.translate(-cluster.getParent().getHeight() * CLUSTER_SHIFT_X, 0);
+			g.translate(-(this.clusterRoot.getHeight() - cluster.getDepth()) * CLUSTER_SHIFT_X, 0);
 		}
 		else
 		{

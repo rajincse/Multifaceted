@@ -983,7 +983,7 @@ public class User implements ClusteringStringItem{
 	@Override
 	public int getDistance(ClusteringStringItem otherItem) {
 		// TODO Auto-generated method stub
-		return LevenshteinDistance.getLevenshteinDistanceDelimitedString(this.stringValue, otherItem.getStringValue());
+		return LevenshteinDistance.getLevenshteinDistanceDelimitedString(getStringValue(), otherItem.getStringValue());
 	}
 
 }

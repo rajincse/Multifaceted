@@ -2,6 +2,8 @@ package eyeinterestanalyzer;
 
 import java.util.ArrayList;
 
+import eyeinterestanalyzer.clustering.ClusteringStringItem;
+
 public class LevenshteinDistance {
 	 private static int minimum(int a, int b, int c) {                            
 	        return Math.min(Math.min(a, b), c);                                      
@@ -26,7 +28,64 @@ public class LevenshteinDistance {
 	 
 	        return distance[user1.size()][user2.size()];    
 	}
-	
+	public static int getLevenshteinDistanceDelimitedString(String str1,String str2) {
+		String[] string1Array = str1.split(ClusteringStringItem.DELIMITER, str1.length());
+		String[] string2Array = str2.split(ClusteringStringItem.DELIMITER, str2.length());
+		
+		int maxLength = Math.max(string1Array.length, string2Array.length);
+		String modifiedStr1 ="";
+		String modifiedStr2 ="";
+		
+		for(int i=0;i<maxLength;i++)
+		{	
+			if(i< string1Array.length && i< string2Array.length )
+			{
+				if(isSimilar(string1Array[i], string2Array[i]))
+				{
+					modifiedStr1+="1";
+					modifiedStr2+="1";
+				}
+				else
+				{
+					modifiedStr1+="2";
+					modifiedStr2+="3";
+				}
+				
+			}
+			else if(i< string1Array.length )
+			{
+				modifiedStr1+=ClusteringStringItem.DELIMITER;
+			}
+			else if(i< string2Array.length )
+			{
+				modifiedStr2+=ClusteringStringItem.DELIMITER;
+			}
+			
+		}
+		
+		int distance = getLevenshteinDistance(modifiedStr1, modifiedStr2);
+		
+		return distance;
+	}
+	public static boolean isSimilar(String str1,String str2) {
+		if(str1.equals(str2))
+		{
+			return true;
+		}
+		else 
+		{
+			for(int i=0;i<str1.length();i++)
+			{
+				char c = str1.charAt(i);
+				if(str2.contains(""+c))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+		
+	}
 	public static int getLevenshteinDistance(String str1,String str2) {      
         int[][] distance = new int[str1.length() + 1][str2.length() + 1];        
  

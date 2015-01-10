@@ -149,8 +149,8 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 		
 		
 		
-//		PFileInput pFile = new  PFileInput("E:/Graph/UserStudy/ScarfplotFull/Ajay.txt");
-//		PFileInput pFile = new  PFileInput("E:/Graph/UserStudy/Ajay/20141121_185223_RESULT.txt");
+//		PFileInput pFile = new  PFileInput("E:/Graph/UserStudy/Sample/small/Ajay_small.txt");
+//		PFileInput pFile = new  PFileInput("E:/Graph/UserStudy/ScarfplotFull2/Ajay2.txt");
 //		pLoad.setValue(pFile);
 //		pCellWidth.setValue(new PInteger(VALUE_CELL_WIDTH));
 //		pTimeStep.setValue(new PInteger(VALUE_TIME_STEP));
@@ -277,7 +277,7 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 //		g.translate(0,  - users.size()* currentUser.cellHeight);
 		g.translate(0,  -heatmapYOffset);
 		
-		g.translate((this.clusterRoot.getHeight()+1)* CLUSTER_SHIFT_X, 0);
+		g.translate((this.clusterRoot.getHeight())* CLUSTER_SHIFT_X, 0);
 		if( currentUser.scarfplot!=null)
 		{
 			

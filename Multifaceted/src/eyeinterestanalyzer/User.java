@@ -310,24 +310,18 @@ public class User implements ClusteringStringItem{
 		
 		
 		
-		int maxIndex =0;
-		double maxVal =- 1;
 		for(int j=0;j<totalTimeCells;j++)
 		{
+			this.stringValue+= ClusteringStringItem.DELIMITER;
 			for(int i=0;i<heatmap.length;i++)
 			{
-				if(heatmap[i][j] > maxVal)
+				if(heatmap[i][j] > 0)
 				{
-					maxVal = heatmap[i][j];
-					maxIndex = i;
+					DataObject object = dataObjects.get(i);
+					this.stringValue += object.getStringValue();
 				}
 			}
-			if(maxVal > 0)
-			{
-				DataObject object = dataObjects.get(maxIndex);
-				this.stringValue += object.getStringValue();
-			}
-			maxVal =- 1;
+			
 		}
 	}
 	public void createScarfplot()
@@ -989,7 +983,7 @@ public class User implements ClusteringStringItem{
 	@Override
 	public int getDistance(ClusteringStringItem otherItem) {
 		// TODO Auto-generated method stub
-		return LevenshteinDistance.getLevenshteinDistance(this.stringValue, otherItem.getStringValue());
+		return LevenshteinDistance.getLevenshteinDistanceDelimitedString(this.stringValue, otherItem.getStringValue());
 	}
 
 }

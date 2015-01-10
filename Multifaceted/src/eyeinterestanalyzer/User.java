@@ -245,7 +245,6 @@ public class User implements ClusteringStringItem{
 		long ts = timePeriodStart;
 		long te = timePeriodEnd;
 		
-		System.out.println("creating scarfplot ..");
 		
 		long lastTime = events.get(events.size()-1).time;
 		int totalTimeCells = (int)(lastTime/timeStep + 1);

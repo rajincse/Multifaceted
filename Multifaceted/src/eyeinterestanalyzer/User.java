@@ -437,7 +437,7 @@ public class User implements ClusteringStringItem{
 				{
 					if(typeVal[i] > 0)
 					{
-						Color c =   Util.getColor(i);
+						Color c =   Util.getScarfplotColor(i);
 						Color c1 = new Color(c.getRed(), c.getGreen(), c.getBlue());
 
 						g.setColor(c1);

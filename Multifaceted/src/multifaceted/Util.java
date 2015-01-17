@@ -194,6 +194,33 @@ public class Util {
 	    }
 	    return r;
 	}
+	public static Color getScarfplotColor(int type)
+	{
+		if(type== EyeTrackerItem.TYPE_ACTOR)
+		{
+			return new Color(250,200,200);
+		}
+		else if(type== EyeTrackerItem.TYPE_MOVIE)
+		{
+			return  new Color(200,250,200);
+		}
+		else if(type== EyeTrackerItem.TYPE_DIRECTOR)
+		{
+			return new Color(200,200,250);			
+		}	
+		else if(type== EyeTrackerItem.TYPE_GENRE)
+		{
+			return  new Color(250,250,150);
+		}	
+		else if(type== EyeTrackerItem.TYPE_MOVIE_STAR_RATING)
+		{
+			return  new Color(250,150,250);
+		}	
+		else
+		{
+			return Color.black;
+		}
+	}
 	
 	public static Color getColor(int type)
 	{

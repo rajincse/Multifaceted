@@ -13,11 +13,11 @@ import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
-import eyeinterestanalyzer.clustering.ClusteringStringItem;
+import eyeinterestanalyzer.clustering.ClusteringItem;
 
 import multifaceted.Util;
 
-public class User implements ClusteringStringItem{
+public class User implements ClusteringItem{
 	String name;
 	
 	ArrayList<Event> events;
@@ -312,7 +312,7 @@ public class User implements ClusteringStringItem{
 		
 		for(int j=0;j<totalTimeCells;j++)
 		{
-			this.stringValue+= ClusteringStringItem.DELIMITER;
+			this.stringValue+= ClusteringItem.DELIMITER;
 			for(int i=0;i<heatmap.length;i++)
 			{
 				if(heatmap[i][j] > 0)
@@ -981,9 +981,16 @@ public class User implements ClusteringStringItem{
 	}
 
 	@Override
-	public int getDistance(ClusteringStringItem otherItem) {
+	public double getDistance(ClusteringItem otherItem) {
 		// TODO Auto-generated method stub
 		return LevenshteinDistance.getLevenshteinDistanceDelimitedString(getStringValue(), otherItem.getStringValue());
+	}
+
+	int clusteringMethod = 0;
+	@Override
+	public int getClusteringMethod() {
+		// TODO Auto-generated method stub
+		return clusteringMethod;
 	}
 
 }

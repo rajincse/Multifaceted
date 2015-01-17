@@ -4,11 +4,16 @@ import java.util.ArrayList;
 
 public class HierarchicalClustering {
 
-	private int[][] distanceMatrix;
-	private ArrayList<ClusteringStringItem> items;
-	public HierarchicalClustering(ArrayList<ClusteringStringItem> items)
+	public static final String[] METHOD_TYPES_STRINGS = new String[]{"Concrete", "Discrete"};
+	public static final int METHOD_CONCRETE =0;
+	public static final int METHOD_DISCRETE =1;
+	
+	private double[][] distanceMatrix;
+	private ArrayList<ClusteringItem> items;
+	
+	public HierarchicalClustering(ArrayList<ClusteringItem> items)
 	{
-		this.distanceMatrix = new int[items.size()][items.size()];
+		this.distanceMatrix = new double[items.size()][items.size()];
 		this.items = items;
 		for(int i=0;i<this.distanceMatrix.length;i++)
 		{
@@ -20,8 +25,8 @@ public class HierarchicalClustering {
 				}
 				else
 				{
-					ClusteringStringItem item1 = items.get(i);
-					ClusteringStringItem item2 = items.get(j);
+					ClusteringItem item1 = items.get(i);
+					ClusteringItem item2 = items.get(j);
 					this.distanceMatrix[i][j] = item1.getDistance(item2);
 				}
 			}
@@ -50,7 +55,7 @@ public class HierarchicalClustering {
 		int clusterIndex1 =-1;
 		int clusterIndex2 =-1;
 		
-		int minDistance = Integer.MAX_VALUE;
+		double minDistance = Integer.MAX_VALUE;
 		for(int i=0;i<clusters.size()-1;i++)
 		{
 			
@@ -58,7 +63,7 @@ public class HierarchicalClustering {
 			{
 				Cluster cluster1 = clusters.get(i);
 				Cluster cluster2 = clusters.get(j);
-				int distance = cluster1.getMinDistance(cluster2, distanceMatrix);
+				double distance = cluster1.getMinDistance(cluster2, distanceMatrix);
 				
 				if(distance < minDistance)
 				{

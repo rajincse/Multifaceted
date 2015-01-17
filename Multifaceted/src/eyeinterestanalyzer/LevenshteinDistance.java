@@ -2,7 +2,7 @@ package eyeinterestanalyzer;
 
 import java.util.ArrayList;
 
-import eyeinterestanalyzer.clustering.ClusteringStringItem;
+import eyeinterestanalyzer.clustering.ClusteringItem;
 
 public class LevenshteinDistance {
 	 private static int minimum(int a, int b, int c) {                            
@@ -29,8 +29,8 @@ public class LevenshteinDistance {
 	        return distance[user1.size()][user2.size()];    
 	}
 	public static int getLevenshteinDistanceDelimitedString(String str1,String str2) {
-		String[] string1Array = str1.split(ClusteringStringItem.DELIMITER, str1.length());
-		String[] string2Array = str2.split(ClusteringStringItem.DELIMITER, str2.length());
+		String[] string1Array = str1.split(ClusteringItem.DELIMITER, str1.length());
+		String[] string2Array = str2.split(ClusteringItem.DELIMITER, str2.length());
 		
 		int maxLength = Math.max(string1Array.length, string2Array.length);
 		String modifiedStr1 ="";
@@ -54,11 +54,11 @@ public class LevenshteinDistance {
 			}
 			else if(i< string1Array.length )
 			{
-				modifiedStr1+=ClusteringStringItem.DELIMITER;
+				modifiedStr1+=ClusteringItem.DELIMITER;
 			}
 			else if(i< string2Array.length )
 			{
-				modifiedStr2+=ClusteringStringItem.DELIMITER;
+				modifiedStr2+=ClusteringItem.DELIMITER;
 			}
 			
 		}

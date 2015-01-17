@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class Cluster {
 	protected ArrayList<Cluster> children;
-	protected ArrayList<ClusteringStringItem> items;
+	protected ArrayList<ClusteringItem> items;
 	protected ArrayList<Integer> itemIndices;
 	
 	protected int height;
@@ -12,10 +12,10 @@ public class Cluster {
 	
 	protected Cluster parent;
 	
-	public Cluster(ClusteringStringItem item, int index)
+	public Cluster(ClusteringItem item, int index)
 	{
 		this.children = null;
-		this.items = new ArrayList<ClusteringStringItem>();
+		this.items = new ArrayList<ClusteringItem>();
 		items.add(item);
 		
 		this.itemIndices = new ArrayList<Integer>();
@@ -27,7 +27,7 @@ public class Cluster {
 	public Cluster(ArrayList<Cluster> children)
 	{
 		this.children = children;
-		this.items = new ArrayList<ClusteringStringItem>();
+		this.items = new ArrayList<ClusteringItem>();
 		this.itemIndices = new ArrayList<Integer>();
 		if(this.children != null)
 		{
@@ -83,7 +83,7 @@ public class Cluster {
 	public ArrayList<Cluster> getChildren() {
 		return children;
 	}
-	public ArrayList<ClusteringStringItem> getItems()
+	public ArrayList<ClusteringItem> getItems()
 	{
 		return this.items;
 	}
@@ -93,19 +93,19 @@ public class Cluster {
 		return this.itemIndices;
 	}
 	
-	public int getMinDistance(Cluster otherCluster)
+	public double getMinDistance(Cluster otherCluster)
 	{
-		ArrayList<ClusteringStringItem> otherItems = otherCluster.getItems();
-		int minDistance = Integer.MAX_VALUE;
-		for(ClusteringStringItem item1: items)
+		ArrayList<ClusteringItem> otherItems = otherCluster.getItems();
+		double minDistance = Integer.MAX_VALUE;
+		for(ClusteringItem item1: items)
 		{
-			for(ClusteringStringItem item2: otherItems)
+			for(ClusteringItem item2: otherItems)
 			{
 				if(item1.getId().equals(item2.getId()))
 				{
 					continue;
 				}
-				int distance = item1.getDistance(item2);
+				double distance = item1.getDistance(item2);
 				if(distance < minDistance)
 				{
 					minDistance = distance;
@@ -114,10 +114,10 @@ public class Cluster {
 		}
 		return minDistance;
 	}
-	public int getMinDistance(Cluster otherCluster, int[][] distanceMatrix)
+	public double getMinDistance(Cluster otherCluster, double[][] distanceMatrix)
 	{
 		ArrayList<Integer> otherItemIndices = otherCluster.getIndices();
-		int minDistance = Integer.MAX_VALUE;
+		double minDistance = Integer.MAX_VALUE;
 		for(Integer item1index: itemIndices)
 		{
 			for(Integer item2index: otherItemIndices)
@@ -126,7 +126,7 @@ public class Cluster {
 				{
 					continue;
 				}
-				int distance = distanceMatrix[item1index][item2index];
+				double distance = distanceMatrix[item1index][item2index];
 				if(distance < minDistance)
 				{
 					minDistance = distance;
@@ -155,7 +155,7 @@ public class Cluster {
 		else
 		{
 			str+="\"item\":";
-			for(ClusteringStringItem item: items)
+			for(ClusteringItem item: items)
 			{
 				str+="{\"id\":"+item.getId()+", \"value\":\""+item.getStringValue().subSequence(0, 10)+"\"}";
 			}

@@ -14,6 +14,9 @@ import java.util.HashMap;
 import javax.imageio.ImageIO;
 
 import eyeinterestanalyzer.clustering.ClusteringItem;
+import eyeinterestanalyzer.clustering.HierarchicalClustering;
+import eyeinterestanalyzer.clustering.distance.SliceElement;
+import eyeinterestanalyzer.clustering.distance.TimeSlice;
 
 import multifaceted.Util;
 
@@ -324,13 +327,15 @@ public class User implements ClusteringItem{
 			
 		}
 	}
+	
+	ArrayList<TimeSlice> timeSlice = new ArrayList<TimeSlice>();
 	public void createScarfplot()
 	{
 		long ts = timePeriodStart;
 		long te = timePeriodEnd;
 		
 		System.out.println("creating scarfplot ..");
-		
+		this.timeSlice.clear();
 		long lastTime = events.get(events.size()-1).time;
 		int totalTimeCells = (int)(lastTime/timeStep + 1);
 		ArrayList[][] eventMap = new ArrayList[dataObjects.size()][];
@@ -407,6 +412,7 @@ public class User implements ClusteringItem{
 		
 		double totalVal=0;
 		double [] typeVal = new double[6];
+		DataObject[] typeObjects = new DataObject[6];
 		for(int j=0;j<totalTimeCells;j++)
 		{
 			totalVal=0;
@@ -418,9 +424,11 @@ public class User implements ClusteringItem{
 			
 			for(int i=0;i<heatmap.length;i++)
 			{
+				DataObject object = dataObjects.get(i);
+				typeObjects[object.type] = object;
 				if(heatmap[i][j] > 0)
 				{
-					DataObject object = dataObjects.get(i);
+					
 					typeVal[object.type]+= heatmap[i][j];
 				}
 			}
@@ -430,6 +438,7 @@ public class User implements ClusteringItem{
 				totalVal+= typeVal[i];
 						
 			}
+			TimeSlice slice = new TimeSlice();
 			if(totalVal > 0)
 			{
 				int lastY=0;
@@ -446,10 +455,12 @@ public class User implements ClusteringItem{
 						g.fillRect(j*cellWidth, lastY, cellWidth, height);
 						lastY+= height;
 					}
-					
+					SliceElement element = new SliceElement(typeObjects[i], typeVal[i]/totalVal, i);
+					slice.getSliceElements().add(element);
 				}
 				
 			}
+			this.timeSlice.add(slice);
 			
 		}
 
@@ -983,14 +994,36 @@ public class User implements ClusteringItem{
 	@Override
 	public double getDistance(ClusteringItem otherItem) {
 		// TODO Auto-generated method stub
-		return LevenshteinDistance.getLevenshteinDistanceDelimitedString(getStringValue(), otherItem.getStringValue());
+		if(clusteringMethod == HierarchicalClustering.METHOD_CONCRETE)
+		{
+			return LevenshteinDistance.getLevenshteinDistanceDelimitedString(getStringValue(), otherItem.getStringValue());
+		}
+		else if(clusteringMethod == HierarchicalClustering.METHOD_DISCRETE)
+		{
+			return LevenshteinDistance.getDiscreteDistance(getTimeSlice(), otherItem.getTimeSlice());
+		}
+		else
+		{
+			return LevenshteinDistance.INFINITY;
+		}
+		
 	}
 
-	int clusteringMethod = 0;
+	int clusteringMethod =0;
 	@Override
 	public int getClusteringMethod() {
 		// TODO Auto-generated method stub
 		return clusteringMethod;
+	}
+
+	@Override
+	public ArrayList<TimeSlice> getTimeSlice() {
+		// TODO Auto-generated method stub
+		if(this.timeSlice.isEmpty())
+		{
+			createScarfplot();
+		}
+		return this.timeSlice;
 	}
 
 }

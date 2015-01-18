@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import javax.jws.soap.SOAPBinding.Use;
 
 import eyeinterestanalyzer.clustering.Cluster;
-import eyeinterestanalyzer.clustering.ClusteringStringItem;
+import eyeinterestanalyzer.clustering.ClusteringItem;
 import eyeinterestanalyzer.clustering.HierarchicalClustering;
 
 import perspectives.base.Property;
@@ -25,6 +25,10 @@ import perspectives.two_d.JavaAwtRenderer;
 public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 	public static final String PROPERTY_LOAD_USER = "Load User";
 	public static final String PROPERTY_USERS = "Users";
+	public static final String PROPERTY_CLUSTERING_METHOD ="ClusterMethod";
+	
+	
+	
 	public static int CLUSTER_SHIFT_X = 30;
 	
 	public static int VALUE_CELL_WIDTH =1;
@@ -90,6 +94,25 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 		};
 		
 		addProperty(pLoad);
+		
+		POptions methods = new POptions(HierarchicalClustering.METHOD_TYPES_STRINGS);
+		Property<POptions> pMethods = new Property<POptions>(PROPERTY_CLUSTERING_METHOD,methods)
+				{
+					@Override
+					protected boolean updating(POptions newvalue) {
+						// TODO Auto-generated method stub
+						int method = newvalue.selectedIndex;
+						for(User u: users)
+						{
+							u.clusteringMethod = method;
+						}
+						createCluster();
+						requestRender();
+						return super.updating(newvalue);
+					}
+				};
+		addProperty(pMethods);
+		
 		
 		Property<PList> pUserList = new Property<PList>("Users", new PList()){
 			@Override
@@ -158,7 +181,7 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 	}
 	private void createCluster()
 	{
-		ArrayList<ClusteringStringItem> items = new ArrayList<ClusteringStringItem>();
+		ArrayList<ClusteringItem> items = new ArrayList<ClusteringItem>();
 		for(User u: users)
 		{
 			items.add(u);
@@ -186,7 +209,7 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 			g.drawLine(0,currentUser.cellHeight/2,(this.clusterRoot.getHeight() - cluster.getDepth()) * CLUSTER_SHIFT_X, currentUser.cellHeight/2);
 			
 			g.translate((this.clusterRoot.getHeight() - cluster.getDepth()) * CLUSTER_SHIFT_X, 0);			
-			for(ClusteringStringItem item: cluster.getItems())
+			for(ClusteringItem item: cluster.getItems())
 			{
 				if(item instanceof User)					
 				{

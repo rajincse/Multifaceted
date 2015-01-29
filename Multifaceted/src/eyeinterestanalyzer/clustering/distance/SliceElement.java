@@ -31,5 +31,9 @@ public class SliceElement {
 		this.type = type;
 	}
 	
-	
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return "{obj:"+this.object+", val:"+String.format("%.2f", this.value)+"}";
+	}
 }

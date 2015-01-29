@@ -454,9 +454,12 @@ public class User implements ClusteringItem{
 						int height =(int)( typeVal[i]* cellHeight/totalVal);
 						g.fillRect(j*cellWidth, lastY, cellWidth, height);
 						lastY+= height;
+						
+						SliceElement element = new SliceElement(typeObjects[i], typeVal[i]/totalVal, i);
+						slice.getSliceElements().add(element);
 					}
-					SliceElement element = new SliceElement(typeObjects[i], typeVal[i]/totalVal, i);
-					slice.getSliceElements().add(element);
+					
+					
 				}
 				
 			}

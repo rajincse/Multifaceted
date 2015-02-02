@@ -105,6 +105,7 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 						for(User u: users)
 						{
 							u.clusteringMethod = method;
+							u.createScarfplot();
 						}
 						createCluster();
 						requestRender();

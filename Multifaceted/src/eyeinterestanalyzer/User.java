@@ -10,6 +10,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 
 import javax.imageio.ImageIO;
 
@@ -398,7 +399,7 @@ public class User implements ClusteringItem{
 		
 		return heatmap;
 	}
-	
+	HashMap<String, Color> colorStore = new HashMap<String, Color>();
 	ArrayList<TimeSlice> timeSlice = new ArrayList<TimeSlice>();
 	public void createScarfplot()
 	{
@@ -451,11 +452,41 @@ public class User implements ClusteringItem{
 				{
 					if(typeVal[i] > 0)
 					{
-						Color c =   Util.getScarfplotColor(i);
-						Color c1 = new Color(c.getRed(), c.getGreen(), c.getBlue());
+						if(clusteringMethod == HierarchicalClustering.METHOD_PARTICULAR)
+						{
+							Color color = Color.black;
+							String id = typeObjects[i].id;
+							if(colorStore.containsKey(id))
+							{
+								color = colorStore.get(id);							
+							}
+							else
+							{
+								Random rand = new Random();
+								int red = rand.nextInt(255);
+								int green = rand.nextInt(255);
+								int blue = rand.nextInt(255);
+								color = new Color(red, green, blue);
+								while(colorStore.containsValue(color))
+								{
+									red = rand.nextInt(255);
+									green = rand.nextInt(255);
+									blue = rand.nextInt(255);
+									color = new Color(red, green, blue);
+								}
+								colorStore.put(id, color);
+							}
+							g.setColor(color);
+						}
+						else
+						{
+							Color c =   Util.getScarfplotColor(i);
+							Color c1 = new Color(c.getRed(), c.getGreen(), c.getBlue());
 
-						g.setColor(c1);
-						
+							g.setColor(c1);
+
+						}
+												
 						int height =(int)( typeVal[i]* cellHeight/totalVal);
 						g.fillRect(j*cellWidth, lastY, cellWidth, height);
 						lastY+= height;

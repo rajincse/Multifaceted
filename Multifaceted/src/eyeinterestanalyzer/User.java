@@ -328,14 +328,12 @@ public class User implements ClusteringItem{
 		}
 	}
 	
-	ArrayList<TimeSlice> timeSlice = new ArrayList<TimeSlice>();
-	public void createScarfplot()
+	private double[][] getHeatmapArray()
 	{
 		long ts = timePeriodStart;
 		long te = timePeriodEnd;
 		
-		System.out.println("creating scarfplot ..");
-		this.timeSlice.clear();
+		
 		long lastTime = events.get(events.size()-1).time;
 		int totalTimeCells = (int)(lastTime/timeStep + 1);
 		ArrayList[][] eventMap = new ArrayList[dataObjects.size()][];
@@ -398,12 +396,19 @@ public class User implements ClusteringItem{
 				if (heatmap[i][j] < cellFilter*avgCell)
 					heatmap[i][j] = 0;
 		
+		return heatmap;
+	}
 	
+	ArrayList<TimeSlice> timeSlice = new ArrayList<TimeSlice>();
+	public void createScarfplot()
+	{
+
+		System.out.println("creating scarfplot ..");
+		this.timeSlice.clear();
+		long lastTime = events.get(events.size()-1).time;
+		int totalTimeCells = (int)(lastTime/timeStep + 1);
 		
-		
-		
-		System.out.println("Time step:"+timeStep);
-		
+		double[][] heatmap = getHeatmapArray();
 		
 		int imWidth = cellWidth * totalTimeCells;
 		int imHeight = cellHeight ;
@@ -1004,6 +1009,10 @@ public class User implements ClusteringItem{
 		else if(clusteringMethod == HierarchicalClustering.METHOD_DISCRETE)
 		{
 			return LevenshteinDistance.getDiscreteDistance(getTimeSlice(), otherItem.getTimeSlice());
+		}
+		else if(clusteringMethod == HierarchicalClustering.METHOD_PARTICULAR)
+		{
+			return LevenshteinDistance.getParticularDistance(getTimeSlice(), otherItem.getTimeSlice());
 		}
 		else
 		{

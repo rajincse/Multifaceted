@@ -4,9 +4,10 @@ import java.util.ArrayList;
 
 public class HierarchicalClustering {
 
-	public static final String[] METHOD_TYPES_STRINGS = new String[]{"Concrete", "Discrete"};
+	public static final String[] METHOD_TYPES_STRINGS = new String[]{"Concrete", "Discrete", "Particular"};
 	public static final int METHOD_CONCRETE =0;
 	public static final int METHOD_DISCRETE =1;
+	public static final int METHOD_PARTICULAR =2;
 	
 	private double[][] distanceMatrix;
 	private ArrayList<ClusteringItem> items;

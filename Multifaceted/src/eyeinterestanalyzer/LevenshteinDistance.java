@@ -26,6 +26,32 @@ public class LevenshteinDistance {
 		}
 		return distance;
 	}
+	public static double getParticularDistance(ArrayList<TimeSlice> slice1, ArrayList<TimeSlice> slice2)
+	{
+		double distance = Math.abs( slice1.size() - slice2.size());
+		int minSize = Math.min(slice1.size(), slice2.size());
+		for(int i=0;i<minSize;i++)
+		{
+			TimeSlice timeSlice1= slice1.get(i);
+			TimeSlice timeSlice2= slice2.get(i);
+			
+			if(
+				!(
+					timeSlice1 != null && timeSlice2 != null
+					&& 
+					timeSlice1.getMaxValueElement() != null && timeSlice2.getMaxValueElement() != null
+					&&
+					timeSlice1.getMaxValueElement().getObject().id.equals(timeSlice2.getMaxValueElement().getObject().id)
+				)
+			)
+			{
+				distance+= 1;
+			}
+				
+		}
+		
+		return distance;
+	}
 	public static double getSliceDifference(TimeSlice slice1, TimeSlice slice2)
 	{
 		String string1 =slice1.getSliceString(PRECISION);

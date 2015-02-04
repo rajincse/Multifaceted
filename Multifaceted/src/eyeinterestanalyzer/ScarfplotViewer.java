@@ -173,7 +173,7 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 		
 		
 		
-//		PFileInput pFile = new  PFileInput("E:/Graph/UserStudy/Sample/small/Ajay_small.txt");
+//		PFileInput pFile = new  PFileInput("E:/Graph/UserStudy/ScarfplotFull/Ajay.txt");
 //		PFileInput pFile = new  PFileInput("E:/Graph/UserStudy/ScarfplotFull2/Ajay2.txt");
 //		pLoad.setValue(pFile);
 //		pCellWidth.setValue(new PInteger(VALUE_CELL_WIDTH));
@@ -191,16 +191,7 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 		this.clusterRoot = clustering.getRoot();
 	}
 
-	private void drawAnchor(Graphics2D g, int x, int y)
-	{
-		Color previousColor = g.getColor();
-		
-		g.setColor(Color.black);
-		int rad = 5;
-		g.fillOval(x-rad, y-rad, 2*rad, 2*rad);
-		
-		g.setColor(previousColor);
-	}
+	
 
 	private void renderCluster(Graphics2D g, Cluster cluster)
 	{
@@ -215,8 +206,8 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 				if(item instanceof User)					
 				{
 					User user = (User) item;
-					boolean dataHovered = false;
-					if(dataObjectHovered >=0 && user.name.equals(users.get(dataObjectHovered).name))						
+					boolean dataHovered = false;					
+					if(dataObjectHovered >=0 && user.name.equals(this.clusterRoot.getItems().get(dataObjectHovered).getId()))						
 					{
 						dataHovered = true;
 					}
@@ -260,7 +251,8 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 	private void renderUser(Graphics2D g, User user, boolean dataHovered)
 	{
 		g.setColor(Color.cyan);
-		g.fillRect(0, 0, 200,user.cellHeight-1);
+		int userNameRectWidth =200;
+		g.fillRect(0, 0, userNameRectWidth,user.cellHeight-1);
 		g.setColor(Color.black);
 		g.setFont(g.getFont().deriveFont(10f));
 		g.drawString(user.name, 0, user.cellHeight-2);
@@ -269,7 +261,7 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 			g.drawImage(user.scarfplot,  user.heatmapXOffset, 0,null);
 			
 			if (dataHovered)
-				g.drawRect(0, 0, user.scarfplot.getWidth(), user.cellHeight);
+				g.drawRect(0, 0, user.scarfplot.getWidth()+userNameRectWidth, user.cellHeight);
 	
 		}
 	}
@@ -283,22 +275,6 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 		g.setColor(Color.black);
 		g.translate(0,  heatmapYOffset);
 		this.renderCluster(g, clusterRoot);
-//		for(int ii=0;ii< users.size();ii++)
-//		{
-//			User user = users.get(ii);
-//			
-//			boolean dataHovered = false;
-//			if(dataObjectHovered == ii)
-//			{
-//				dataHovered = true;
-//			}
-//			
-//			this.renderUser(g, user, dataHovered);
-//			
-//			g.translate(0, user.cellHeight);
-//			
-//		}
-//		g.translate(0,  - users.size()* currentUser.cellHeight);
 		g.translate(0,  -heatmapYOffset);
 		
 		g.translate((this.clusterRoot.getHeight())* CLUSTER_SHIFT_X, 0);
@@ -433,7 +409,7 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 			r = new Rectangle(0, heatmapYOffset+currentUser.cellHeight*i, currentUser.heatmapXOffset+currentUser.scarfplot.getWidth(),currentUser.cellHeight);
 			if (r.contains(new Point(x,y))){
 				dataObjectHovered = i;
-				this.setToolTipText(users.get(i).name);
+				this.setToolTipText(this.clusterRoot.getItems().get(i).getId());
 			}
 		}	
 //		

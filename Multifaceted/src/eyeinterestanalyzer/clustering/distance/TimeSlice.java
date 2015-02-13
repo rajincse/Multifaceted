@@ -5,9 +5,17 @@ import java.util.ArrayList;
 public class TimeSlice {
 
 	private ArrayList<SliceElement> sliceElements;
-	public TimeSlice()
+	private double totalValue;
+	public TimeSlice(double totalValue)
 	{
 		this.sliceElements = new ArrayList<SliceElement>();
+		this.totalValue = totalValue;
+	}
+	public double getTotalValue() {
+		return totalValue;
+	}
+	public void setTotalValue(double totalValue) {
+		this.totalValue = totalValue;
 	}
 	public ArrayList<SliceElement> getSliceElements() {
 		return sliceElements;

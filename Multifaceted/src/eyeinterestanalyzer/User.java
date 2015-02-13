@@ -18,6 +18,8 @@ import eyeinterestanalyzer.clustering.ClusteringItem;
 import eyeinterestanalyzer.clustering.HierarchicalClustering;
 import eyeinterestanalyzer.clustering.distance.SliceElement;
 import eyeinterestanalyzer.clustering.distance.TimeSlice;
+import eyeinterestanalyzer.feature.Feature;
+import eyeinterestanalyzer.feature.PercentileFeature;
 
 import multifaceted.Util;
 
@@ -401,111 +403,135 @@ public class User implements ClusteringItem{
 	}
 	HashMap<String, Color> colorStore = new HashMap<String, Color>();
 	ArrayList<TimeSlice> timeSlice = new ArrayList<TimeSlice>();
+	Feature feature = null;
+	
+	
+	public Feature getFeature() {
+		return feature;
+	}
+
+	public void setFeature(Feature feature) {
+		this.feature = feature;
+	}
+
 	public void createScarfplot()
 	{
 
-		System.out.println("creating scarfplot ..");
-		this.timeSlice.clear();
+		System.out.println("creating scarfplot .."+this.name);
+		
 		long lastTime = events.get(events.size()-1).time;
 		int totalTimeCells = (int)(lastTime/timeStep + 1);
 		
 		double[][] heatmap = getHeatmapArray();
 		
-		int imWidth = cellWidth * totalTimeCells;
-		int imHeight = cellHeight ;
-		BufferedImage bim = new BufferedImage(imWidth, imHeight, BufferedImage.TYPE_INT_ARGB);
-		Graphics2D g = bim.createGraphics();
-		
-		double totalVal=0;
-		double [] typeVal = new double[6];
-		DataObject[] typeObjects = new DataObject[6];
-		for(int j=0;j<totalTimeCells;j++)
+		if(clusteringMethod == HierarchicalClustering.METHOD_FEATURE && feature != null)
 		{
-			totalVal=0;
-			for(int i=0;i<typeVal.length;i++)
-			{
-				typeVal[i] = 0;
-			}
+			System.out.println("Feature plot"+this.name);
+			int imWidth = cellWidth * totalTimeCells;
+			int imHeight = cellHeight ;
+			BufferedImage bim = new BufferedImage(imWidth, imHeight, BufferedImage.TYPE_INT_ARGB);
+			Graphics2D g = bim.createGraphics();
+			 feature.render(g, heatmap, totalTimeCells, imWidth, imHeight, dataObjects);
+			this.scarfplot = bim;
+		}
+		else
+		{
+			int imWidth = cellWidth * totalTimeCells;
+			int imHeight = cellHeight ;
+			BufferedImage bim = new BufferedImage(imWidth, imHeight, BufferedImage.TYPE_INT_ARGB);
+			Graphics2D g = bim.createGraphics();
 			
-			
-			for(int i=0;i<heatmap.length;i++)
+			double totalVal=0;
+			double [] typeVal = new double[6];
+			DataObject[] typeObjects = new DataObject[6];
+			for(int j=0;j<totalTimeCells;j++)
 			{
-				DataObject object = dataObjects.get(i);
-				typeObjects[object.type] = object;
-				if(heatmap[i][j] > 0)
-				{
-					
-					typeVal[object.type]+= heatmap[i][j];
-				}
-			}
-			
-			for(int i=0;i<typeVal.length;i++)
-			{
-				totalVal+= typeVal[i];
-						
-			}
-			TimeSlice slice = new TimeSlice();
-			if(totalVal > 0)
-			{
-				int lastY=0;
+				totalVal=0;
 				for(int i=0;i<typeVal.length;i++)
 				{
-					if(typeVal[i] > 0)
+					typeVal[i] = 0;
+				}
+				
+				
+				for(int i=0;i<heatmap.length;i++)
+				{
+					DataObject object = dataObjects.get(i);
+					typeObjects[object.type] = object;
+					if(heatmap[i][j] > 0)
 					{
-						if(clusteringMethod == HierarchicalClustering.METHOD_PARTICULAR)
+						
+						typeVal[object.type]+= heatmap[i][j];
+					}
+				}
+				
+				for(int i=0;i<typeVal.length;i++)
+				{
+					totalVal+= typeVal[i];
+							
+				}
+				
+				if(totalVal > 0)
+				{
+					int lastY=0;
+					for(int i=0;i<typeVal.length;i++)
+					{
+						if(typeVal[i] > 0)
 						{
-							Color color = Color.black;
-							String id = typeObjects[i].id;
-							if(colorStore.containsKey(id))
+							if(clusteringMethod == HierarchicalClustering.METHOD_PARTICULAR)
 							{
-								color = colorStore.get(id);							
+								Color color = Color.black;
+								String id = typeObjects[i].id;
+								if(colorStore.containsKey(id))
+								{
+									color = colorStore.get(id);							
+								}
+								else
+								{
+									Random rand = new Random();
+									int red = rand.nextInt(255);
+									int green = rand.nextInt(255);
+									int blue = rand.nextInt(255);
+									color = new Color(red, green, blue);
+									while(colorStore.containsValue(color))
+									{
+										red = rand.nextInt(255);
+										green = rand.nextInt(255);
+										blue = rand.nextInt(255);
+										color = new Color(red, green, blue);
+									}
+									colorStore.put(id, color);
+								}
+								g.setColor(color);
 							}
 							else
 							{
-								Random rand = new Random();
-								int red = rand.nextInt(255);
-								int green = rand.nextInt(255);
-								int blue = rand.nextInt(255);
-								color = new Color(red, green, blue);
-								while(colorStore.containsValue(color))
-								{
-									red = rand.nextInt(255);
-									green = rand.nextInt(255);
-									blue = rand.nextInt(255);
-									color = new Color(red, green, blue);
-								}
-								colorStore.put(id, color);
+								Color c =   Util.getScarfplotColor(i);
+								Color c1 = new Color(c.getRed(), c.getGreen(), c.getBlue());
+
+								g.setColor(c1);
+
 							}
-							g.setColor(color);
+													
+							int height =(int)( typeVal[i]* cellHeight/totalVal);
+							g.fillRect(j*cellWidth, lastY, cellWidth, height);
+							lastY+= height;
+							
+							
 						}
-						else
-						{
-							Color c =   Util.getScarfplotColor(i);
-							Color c1 = new Color(c.getRed(), c.getGreen(), c.getBlue());
-
-							g.setColor(c1);
-
-						}
-												
-						int height =(int)( typeVal[i]* cellHeight/totalVal);
-						g.fillRect(j*cellWidth, lastY, cellWidth, height);
-						lastY+= height;
 						
-						SliceElement element = new SliceElement(typeObjects[i], typeVal[i]/totalVal, i);
-						slice.getSliceElements().add(element);
+						
 					}
-					
 					
 				}
 				
 			}
-			this.timeSlice.add(slice);
-			
-		}
 
+			
+			System.out.println("done creating scarfplot ..");
+			this.scarfplot = bim;
+		}
 		
-		System.out.println("done creating scarfplot ..");
-		this.scarfplot = bim;
+		
 		
 		
 		
@@ -1045,6 +1071,14 @@ public class User implements ClusteringItem{
 		{
 			return LevenshteinDistance.getParticularDistance(getTimeSlice(), otherItem.getTimeSlice());
 		}
+		else if(clusteringMethod == HierarchicalClustering.METHOD_FEATURE && feature != null)
+		{		
+			String user1 = this.getId();
+			String user2 = otherItem.getId();
+			double distance =feature.getFeatureDistance(this.getTimeSlice(), otherItem.getTimeSlice());
+			System.out.println(user1+"<=>"+user2 +" :"+distance);
+			return distance;
+		}
 		else
 		{
 			return LevenshteinDistance.INFINITY;
@@ -1058,13 +1092,68 @@ public class User implements ClusteringItem{
 		// TODO Auto-generated method stub
 		return clusteringMethod;
 	}
+	private void calculateTimeSlice()
+	{
+		this.timeSlice.clear();
+		long lastTime = events.get(events.size()-1).time;
+		int totalTimeCells = (int)(lastTime/timeStep + 1);
+		
+		double[][] heatmap = getHeatmapArray();
+		double totalVal=0;
+		double [] typeVal = new double[6];
+		DataObject[] typeObjects = new DataObject[6];
+		for(int j=0;j<totalTimeCells;j++)
+		{
+			totalVal=0;
+			for(int i=0;i<typeVal.length;i++)
+			{
+				typeVal[i] = 0;
+			}
+			
+			
+			for(int i=0;i<heatmap.length;i++)
+			{
+				DataObject object = dataObjects.get(i);
+				typeObjects[object.type] = object;
+				if(heatmap[i][j] > 0)
+				{
+					
+					typeVal[object.type]+= heatmap[i][j];
+				}
+			}
+			
+			for(int i=0;i<typeVal.length;i++)
+			{
+				totalVal+= typeVal[i];
+						
+			}
+			TimeSlice slice = new TimeSlice(totalVal);
+			if(totalVal > 0)
+			{
+				int lastY=0;
+				for(int i=0;i<typeVal.length;i++)
+				{
+					if(typeVal[i] > 0)
+					{
+						
+						SliceElement element = new SliceElement(typeObjects[i], typeVal[i]/totalVal, i);
+						slice.getSliceElements().add(element);
+					}
+					
+					
+				}
+				
+			}
+			this.timeSlice.add(slice);
+		}
+	}
 
 	@Override
 	public ArrayList<TimeSlice> getTimeSlice() {
 		// TODO Auto-generated method stub
 		if(this.timeSlice.isEmpty())
 		{
-			createScarfplot();
+			calculateTimeSlice();
 		}
 		return this.timeSlice;
 	}

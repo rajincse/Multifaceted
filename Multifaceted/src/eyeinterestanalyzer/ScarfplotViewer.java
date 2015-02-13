@@ -12,6 +12,9 @@ import javax.jws.soap.SOAPBinding.Use;
 import eyeinterestanalyzer.clustering.Cluster;
 import eyeinterestanalyzer.clustering.ClusteringItem;
 import eyeinterestanalyzer.clustering.HierarchicalClustering;
+import eyeinterestanalyzer.feature.Feature;
+import eyeinterestanalyzer.feature.ParticularPercentile;
+import eyeinterestanalyzer.feature.PercentileFeature;
 
 import perspectives.base.Property;
 import perspectives.base.Viewer;
@@ -27,6 +30,10 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 	public static final String PROPERTY_USERS = "Users";
 	public static final String PROPERTY_CLUSTERING_METHOD ="ClusterMethod";
 	
+	public static final String PROPERTY_FEATURES = "Features";
+	public static final String[] FEATURE_NAMES = new String[]{"Generic Percentile","Particular Percentile"};
+	public static final int FEATURE_GENERIC_PERCENTILE =0;
+	public static final int FEATURE_PARTICULAR_PERCENTILE =1;
 	
 	
 	public static int CLUSTER_SHIFT_X = 30;
@@ -95,20 +102,46 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 		
 		addProperty(pLoad);
 		
+		POptions featureType = new POptions(FEATURE_NAMES);
+		Property<POptions> pFeature = new Property<POptions>(PROPERTY_FEATURES, featureType)
+				{
+					@Override
+					protected boolean updating(POptions newvalue) {
+						// TODO Auto-generated method stub
+						int featureType = newvalue.selectedIndex;
+						featureUpdate(featureType);
+						return super.updating(newvalue);
+					}
+				};
+		pFeature.setDisabled(true);
+		addProperty(pFeature);		
+		
 		POptions methods = new POptions(HierarchicalClustering.METHOD_TYPES_STRINGS);
 		Property<POptions> pMethods = new Property<POptions>(PROPERTY_CLUSTERING_METHOD,methods)
 				{
 					@Override
 					protected boolean updating(POptions newvalue) {
 						// TODO Auto-generated method stub
+						
 						int method = newvalue.selectedIndex;
-						for(User u: users)
+						if(method == HierarchicalClustering.METHOD_FEATURE)
 						{
-							u.clusteringMethod = method;
-							u.createScarfplot();
+							Property<POptions> pFeature = (Property<POptions>)getProperty(PROPERTY_FEATURES);
+							pFeature.setDisabled(false);
+							featureUpdate(pFeature.getValue().selectedIndex);
+							
 						}
-						createCluster();
-						requestRender();
+						else
+						{
+							for(User u: users)
+							{
+								u.clusteringMethod = method;
+								u.createScarfplot();
+							}
+							createCluster();
+							requestRender();
+						}
+						
 						return super.updating(newvalue);
 					}
 				};
@@ -173,12 +206,35 @@ public class ScarfplotViewer extends Viewer implements JavaAwtRenderer{
 		
 		
 		
-//		PFileInput pFile = new  PFileInput("E:/Graph/UserStudy/ScarfplotFull/Ajay.txt");
+		PFileInput pFile = new  PFileInput("E:/Graph/UserStudy/ScarfplotFull/Ajay.txt");
 //		PFileInput pFile = new  PFileInput("E:/Graph/UserStudy/ScarfplotFull2/Ajay2.txt");
-//		pLoad.setValue(pFile);
+		pLoad.setValue(pFile);
 //		pCellWidth.setValue(new PInteger(VALUE_CELL_WIDTH));
 //		pTimeStep.setValue(new PInteger(VALUE_TIME_STEP));
 		
+	}
+	private void featureUpdate(int featureType)
+	{
+		Feature feature=null;
+		if(featureType == FEATURE_GENERIC_PERCENTILE)
+		{
+			feature = new PercentileFeature();
+		}
+		else if(featureType == FEATURE_PARTICULAR_PERCENTILE)
+		{
+			feature = new ParticularPercentile();
+		}
+		if(feature != null)
+		{
+			for(User u: users)
+			{
+				u.clusteringMethod = HierarchicalClustering.METHOD_FEATURE;
+				u.setFeature(feature);
+				u.createScarfplot();
+			}
+			createCluster();
+			requestRender();
+		}
 	}
 	private void createCluster()
 	{

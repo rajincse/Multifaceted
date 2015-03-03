@@ -36,7 +36,7 @@ public class EyeInterestAnalyzer extends Viewer implements JavaAwtRenderer {
 	
 	Point heatmapPicked = null;
 	
-	int heatmapYOffset = 650;
+	int heatmapYOffset = 800;
 	
 	
 	

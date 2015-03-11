@@ -11,6 +11,7 @@ import perspectives.base.Environment;
 import pivotpath.PivotPathViewerFactory;
 import pivotpath.analysis.PivotPathSimulationViewerFactory;
 import recommend.RecommendViewerFactory;
+import stat.ElementStatViewerFactory;
 
 public class MainClass {
 	
@@ -26,7 +27,7 @@ public class MainClass {
 		e.registerViewerFactory(new PivotPathViewerFactory());
 		e.registerViewerFactory(new PivotPathSimulationViewerFactory());
 		e.registerViewerFactory(new EyeInterestAnalyzerViewerFactory());
-		
-		e.addViewer(new ScarfplotViewer("Scarfplot"));
+		e.registerViewerFactory(new ElementStatViewerFactory());
+//		e.addViewer(new ScarfplotViewer("Scarfplot"));
 	}
 }

@@ -85,9 +85,9 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	
 	private static final int SELECT_FROM_ACTED=0;
 	private static final int SELECT_FROM_DIRECTED=1;
-	private static final int MAX_MOVIE =15;
-	private static final int MAX_ACTOR=5;
-	private static final int MIN_ACTOR=5;
+	public static final int MAX_MOVIE =15;
+	public static final int MAX_ACTOR=5;
+	public static final int MIN_ACTOR=5;
 	
 	private static final int MAX_SIMULATION =10;
 	private static final int SIMULATION_SPEED =20;
@@ -1165,6 +1165,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			((ViewerContainer2D)this.getContainer()).rightButtonDown = false;
 			if(isMouseGazeOn())
 			{
+				System.out.println("Mouse gaze:"+x+", "+y);
 				et.processScreenPoint(new Point(x,y));	
 			}
 			

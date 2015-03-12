@@ -1,15 +1,8 @@
 package stat;
 
 import imdb.IMDBDataSource;
-import imdb.entity.CompactMovie;
-import imdb.entity.CompactPerson;
-import imdb.entity.Genre;
-import imdb.entity.Movie;
-import imdb.entity.Person;
-
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
@@ -17,20 +10,12 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.PriorityQueue;
-
-import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
-
 import eyetrack.EyeTrackerItem;
 
 import perspectives.base.Property;
 import perspectives.base.Viewer;
 import perspectives.properties.PFileInput;
 import perspectives.two_d.JavaAwtRenderer;
-import pivotpath.MovieSortingItem;
-import pivotpath.PivotPathViewer;
-import pivotpath.analysis.PivotPathFrame;
 
 public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 
@@ -46,14 +31,13 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		try
 		{
 			PFileInput inputFile = new PFileInput();
-			inputFile.onlyDirectories = true;
+//			inputFile.onlyDirectories = true;
 			Property<PFileInput> pLoad = new Property<PFileInput>(PROPERTY_LOAD, inputFile)
 					{
 						@Override
 						protected boolean updating(PFileInput newvalue) {
 							// TODO Auto-generated method stub
-							readUserDirectory(newvalue.path);
-//							readUserFile(newvalue.path);
+							processFile(newvalue.path);
 							return super.updating(newvalue);
 						}
 					};
@@ -65,6 +49,21 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		}
 	}
 
+	private void processFile(String filePath)
+	{
+//		readUserDirectory(filePath);
+		System.out.println("Reading: "+filePath+"\r\n----------------------------");
+		readUserFile(filePath);
+		fillupPresetElementNames();
+		populateCount();
+		for(StatElement elem: this.elementNames)
+		{
+			System.out.println("View\t"+elem.getName()+"\t"+elem.getId()+"\t"+elem.getType()+"\t"+elem.getElementCount());
+			elem.printItems();
+		}
+		
+		this.elementNames.clear();
+	}
 	private void readUserDirectory(String path)
 	{
 		File rootDirectory = new File(path);
@@ -93,16 +92,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 			
 			for(File dataFile: dataFiles)
 			{
-				System.out.println("Reading: "+dataFile.getPath()+"\r\n----------------------------");
-				readUserFile(dataFile.getPath());
-				fillupPresetElementNames();
-				populateCount();
-				for(StatElement elem: this.elementNames)
-				{
-					System.out.println(elem.getName()+"\t"+elem.getId()+"\t"+elem.getType()+"\t"+elem.getElementCount());
-				}
-				
-				this.elementNames.clear();
+				processFile(dataFile.getPath());
 			}
 			
 			
@@ -252,174 +242,46 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 	{
 		for(StatElement elem: this.elementNames)
 		{
-			if(elem.getType() == EyeTrackerItem.TYPE_MOVIE)
-			{
-				int count = getMovieViewElementCount(elem.getId());
-				elem.setElementCount(count);
-			}
-			else if(elem.getType() == EyeTrackerItem.TYPE_ACTOR || elem.getType()== EyeTrackerItem.TYPE_DIRECTOR)
-			{
-				int count = getPersonViewElementCount(elem.getId(), elem.getType());
-				elem.setElementCount(count);
-			}
+			ArrayList<ViewItem> relevantList = getInitialRelevantList(elem);
+			elem.processItems(data, relevantList);
 		}
+	}
+	private ArrayList<ViewItem> getInitialRelevantList(StatElement elem)
+	{
+		ArrayList<ViewItem> relevantList = new ArrayList<ViewItem>();
+		if(elem.getId() == 2172814) // Goodfellas
+		{
+			ViewItem itemGoodfellas = new ViewItem(2172814, EyeTrackerItem.TYPE_MOVIE, "Goodfellas");
+			ViewItem itemRaging = new ViewItem(2507895, EyeTrackerItem.TYPE_MOVIE, "Raging Bull");
+			relevantList.add(itemGoodfellas);
+			relevantList.add(itemRaging);
+		}
+		else if(elem.getId() == 2508103) // Raiders of the Lost Ark
+		{
+			ViewItem item1 = new ViewItem(2508103, EyeTrackerItem.TYPE_MOVIE, "Raiders of the Lost Ark");
+			ViewItem item2 = new ViewItem(2237387, EyeTrackerItem.TYPE_MOVIE, "Indiana Jones and the Last Crusade");
+			relevantList.add(item1);
+			relevantList.add(item2);
+		}
+		else if(elem.getId() == 2243248) // Invictus
+		{
+			ViewItem item1 = new ViewItem(2243248, EyeTrackerItem.TYPE_MOVIE, "Invictus");
+			ViewItem item2 = new ViewItem(2385786, EyeTrackerItem.TYPE_MOVIE, "Million Dollar Baby");
+			relevantList.add(item1);
+			relevantList.add(item2);
+		}
+		else if(elem.getId() == 2236590) // Inception
+		{
+			ViewItem item1 = new ViewItem(2236590, EyeTrackerItem.TYPE_MOVIE, "Inception");
+			ViewItem item2 = new ViewItem(2652720, EyeTrackerItem.TYPE_MOVIE, "The Dark Knight Rises");
+			relevantList.add(item1);
+			relevantList.add(item2);
+		}
+		return relevantList;
 	}
 	
-	private int getMovieViewElementCount(long id)
-	{
-		if(id == 2546014)
-		{
-			System.out.println("Got savings");
-		}
-		ArrayList<CompactMovie> movieList = this.createMovieList(new CompactMovie(id, "title",1900));
-		return getElementCount(movieList);
-	}
 	
-	private int getPersonViewElementCount(long id, int type)
-	{
-		CompactPerson compactPerson = new CompactPerson(id, "Name","sex");
-		Person person = this.data.getPerson(compactPerson);
-		ArrayList<CompactMovie> movieList=null;
-		if(type == EyeTrackerItem.TYPE_ACTOR)
-		{
-			movieList = person.getActedMovieList();
-		}
-		else
-		{
-			movieList = person.getDirectedMovieList();
-		}
-		return getElementCount(movieList);
-	}
 	
-	private int getElementCount(ArrayList<CompactMovie> movieList)
-	{
-		int movieCount = Math.min( PivotPathViewer.MAX_MOVIE, movieList.size());
-		ArrayList<CompactPerson> actorList = new ArrayList<CompactPerson>();
-		ArrayList<CompactPerson> directorList = new ArrayList<CompactPerson>();
-		ArrayList<Genre> genreList = new ArrayList<Genre>();
-		
-		
-		for(int i=0;i<movieCount;i++)
-		{
-			CompactMovie compactMovie = movieList.get(i);
-			Movie movie = this.data.getMovie(compactMovie);
-			for(CompactPerson director: movie.getDirectors())
-			{
-				if(!directorList.contains(director))
-				{
-					directorList.add(director);
-				}
-			}
-			
-			for(Genre genre: movie.getGenreList())
-			{
-				if(!genreList.contains(genre))
-				{
-					genreList.add(genre);
-				}
-			}
-			int actorCount=0;
-			for(CompactPerson actor: movie.getActors())
-			{
-				if(!actorList.contains(actor))
-				{
-					actorList.add(actor);
-					actorCount++;
-				}
-				if(actorCount >= PivotPathViewer.MAX_ACTOR)
-				{
-					break;
-				}
-			}
-		}
-		
-		int total = movieCount+actorList.size()+directorList.size()+genreList.size();
-		total += movieCount; // Star Rating
-		return total;
-	}
-	private ArrayList<CompactMovie> createMovieList(CompactMovie compactMovie)
-	{
-		ArrayList<CompactMovie> movieList = new ArrayList<CompactMovie>();
-		movieList.add(compactMovie);
-		
-		PriorityQueue<MovieSortingItem> priorityQueue = new PriorityQueue<MovieSortingItem>();
-		MovieSortingItem item =new MovieSortingItem(compactMovie,PivotPathViewer.MAX_MOVIE+1);
-		priorityQueue.add(item);
-		HashMap<Long, MovieSortingItem> movieSortingMap = new HashMap<Long, MovieSortingItem>();
-		movieSortingMap.put(item.getMovie().getId(), item);
-		
-		
-		Movie movie = this.data.getMovie(compactMovie);
-		ArrayList<CompactPerson> actorList = movie.getActors();
-		int actorCount =0;
-		for(CompactPerson actor: actorList)
-		{
-			ArrayList<CompactMovie> actedMovieList = this.data.getActedMovieList(actor);
-			int index=0;
-			for(CompactMovie actedMovie: actedMovieList)
-			{
-				
-				if(movieSortingMap.containsKey(actedMovie.getId()))
-				{
-					MovieSortingItem movieitem = movieSortingMap.get(actedMovie.getId());
-					priorityQueue.remove(movieitem);
-					movieitem.setValue(movieitem.getValue()+PivotPathViewer.MAX_MOVIE-index+1);
-					priorityQueue.add(movieitem);
-				}
-				else
-				{
-					MovieSortingItem movieitem =new MovieSortingItem(actedMovie, PivotPathViewer.MAX_MOVIE-index+1);
-					priorityQueue.add(movieitem);
-					movieSortingMap.put(movieitem.getMovie().getId(), movieitem);
-				}
-				index++;
-			}
-			
-			actorCount++;
-			if(actorCount>= PivotPathViewer.MAX_ACTOR)
-			{
-				break;
-			}
-		}
-		ArrayList<CompactPerson> directorList = movie.getDirectors();
-		for(CompactPerson director: directorList)
-		{
-			ArrayList<CompactMovie> directedMovieList = this.data.getDirectedMovieList(director);
-			int index=0;
-			for(CompactMovie directedMovie: directedMovieList)
-			{
-				
-				if(movieSortingMap.containsKey(directedMovie.getId()))
-				{
-					MovieSortingItem movieitem = movieSortingMap.get(directedMovie.getId());					
-					priorityQueue.remove(movieitem);					
-					movieitem.setValue(movieitem.getValue()+PivotPathViewer.MAX_MOVIE-index+1);
-					priorityQueue.add(movieitem);
-				}
-				else
-				{	
-					MovieSortingItem movieitem =new MovieSortingItem(directedMovie, PivotPathViewer.MAX_MOVIE-index+1);
-					priorityQueue.add(movieitem);
-					movieSortingMap.put(movieitem.getMovie().getId(), movieitem);
-				}		
-				index++;
-			}
-		}
-		int count =1;
-		while(!priorityQueue.isEmpty() && count <= PivotPathViewer.MAX_MOVIE)
-		{
-			MovieSortingItem movieitem = priorityQueue.poll();
-//			System.out.println(movieitem);
-			if(!movieList.contains(movieitem.getMovie()))
-			{
-				
-				movieList.add(movieitem.getMovie());
-				count++;
-			}
-			
-		}
-		return movieList;
-	}
 	@Override
 	public Color getBackgroundColor() {
 		// TODO Auto-generated method stub

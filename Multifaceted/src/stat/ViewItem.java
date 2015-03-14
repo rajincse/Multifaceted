@@ -1,7 +1,7 @@
 package stat;
 
 
-public class ViewItem {
+public class ViewItem implements Comparable<ViewItem>{
 
 	private long id;
 	private int type;
@@ -58,5 +58,10 @@ public class ViewItem {
 			return super.equals(obj);
 		}
 		
+	}
+	@Override
+	public int compareTo(ViewItem o) {
+		// TODO Auto-generated method stub
+		return this.getRelevance() - o.getRelevance();
 	}
 }

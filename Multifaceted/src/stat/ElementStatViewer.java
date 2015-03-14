@@ -10,6 +10,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+
 import eyetrack.EyeTrackerItem;
 
 import perspectives.base.Property;
@@ -20,28 +22,58 @@ import perspectives.two_d.JavaAwtRenderer;
 public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 
 	public static final String PROPERTY_LOAD="Load";
+	public static final String PROPERTY_LOAD_RELEVANT_LIST="Load Relevant List";
+	public static final String PROPERTY_LOAD_IGNORE_LIST="Load Ignore List";
 	
 	
 	private ArrayList<StatElement> elementNames = new ArrayList<StatElement>();
+	private HashMap<Long, ArrayList<ViewItem>> relevantItemMap = new HashMap<Long, ArrayList<ViewItem>>(); 
+	private ArrayList<String> ignoreList = new ArrayList<String>();
 	private IMDBDataSource data;
 	public ElementStatViewer(String name,IMDBDataSource data) {
 		super(name);
 		this.data = data;
 		this.elementNames = new ArrayList<StatElement>();
+		
+		
 		try
 		{
+			Property<PFileInput> pLoadIgnore = new Property<PFileInput>(PROPERTY_LOAD_IGNORE_LIST, new PFileInput())
+					{
+						@Override
+						protected boolean updating(PFileInput newvalue) {
+							// TODO Auto-generated method stub
+							readIgnoreList(newvalue.path);
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pLoadIgnore);
+			
+			Property<PFileInput> pLoadRelevantList = new Property<PFileInput>(PROPERTY_LOAD_RELEVANT_LIST, new PFileInput())
+					{
+						@Override
+						protected boolean updating(PFileInput newvalue) {
+							// TODO Auto-generated method stub
+							readRelevantListFile(newvalue.path);
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pLoadRelevantList);
 			PFileInput inputFile = new PFileInput();
-//			inputFile.onlyDirectories = true;
+			inputFile.onlyDirectories = true;
 			Property<PFileInput> pLoad = new Property<PFileInput>(PROPERTY_LOAD, inputFile)
 					{
 						@Override
 						protected boolean updating(PFileInput newvalue) {
 							// TODO Auto-generated method stub
-							processFile(newvalue.path);
+//							processFile(newvalue.path);
+							readSingleUser(newvalue.path);
 							return super.updating(newvalue);
 						}
 					};
 			addProperty(pLoad);
+			
+			
 		}
 		catch(Exception ex)
 		{
@@ -51,18 +83,44 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 
 	private void processFile(String filePath)
 	{
-//		readUserDirectory(filePath);
 		System.out.println("Reading: "+filePath+"\r\n----------------------------");
-		readUserFile(filePath);
-		fillupPresetElementNames();
-		populateCount();
-		for(StatElement elem: this.elementNames)
+		if(!isInIgnoreList(filePath))
 		{
-			System.out.println("View\t"+elem.getName()+"\t"+elem.getId()+"\t"+elem.getType()+"\t"+elem.getElementCount());
-			elem.printItems();
+			readUserFile(filePath);
+			fillupPresetElementNames();
+			populateCount();
+			for(StatElement elem: this.elementNames)
+			{
+				System.out.println("View\t"+elem.getName()+"\t"+elem.getId()+"\t"+elem.getType()+"\t"+elem.getElementCount());
+				elem.printItems();
+			}
+		}		
+		this.elementNames.clear();
+		
+	}
+	private boolean isInIgnoreList(String filePath)
+	{
+		String fileName = filePath.toUpperCase().substring(filePath.lastIndexOf("\\")+1);
+		return this.ignoreList.contains(fileName);
+	}
+	private void readSingleUser(String path)
+	{
+		File rootDirectory = new File(path);
+		File[] dataFiles = rootDirectory.listFiles(new FileFilter() {
+			
+			@Override
+			public boolean accept(File pathname) {
+				// TODO Auto-generated method stub
+				return pathname.getName().toUpperCase().endsWith(".TXT");
+			}
+		});
+		
+		for(File dataFile: dataFiles)
+		{
+			
+			processFile(dataFile.getPath());
 		}
 		
-		this.elementNames.clear();
 	}
 	private void readUserDirectory(String path)
 	{
@@ -246,37 +304,81 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 			elem.processItems(data, relevantList);
 		}
 	}
+	private void readIgnoreList(String filePath)
+	{
+		try {
+
+			
+			File file = new File(filePath);
+			FileReader fStream;
+			fStream = new FileReader(file);		
+			BufferedReader bufferedReader = new BufferedReader(fStream);
+			
+			String fileline = bufferedReader.readLine();
+			
+			while(fileline != null)
+			{	
+				this.ignoreList.add(fileline);
+				fileline = bufferedReader.readLine();
+			}
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+
+	private void readRelevantListFile(String filePath)
+	{
+		try {
+
+			
+			File file = new File(filePath);
+			FileReader fStream;
+			fStream = new FileReader(file);		
+			BufferedReader bufferedReader = new BufferedReader(fStream);
+			
+			String fileline = bufferedReader.readLine();
+			
+			while(fileline != null)
+			{	
+				String[] data  = fileline.split("\t");
+				if(data.length >=3)
+				{
+					long elemId = Long.parseLong(data[0]);
+					if(!this.relevantItemMap.containsKey(elemId))
+					{
+						ArrayList<ViewItem> itemList = new ArrayList<ViewItem>();
+						this.relevantItemMap.put(elemId, itemList);
+					}
+					long id = Long.parseLong(data[1]);
+					int type = Integer.parseInt(data[2]);
+					ViewItem item = new ViewItem(id,type,"Item");
+					this.relevantItemMap.get(elemId).add(item);
+				}
+				fileline = bufferedReader.readLine();
+			}
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
 	private ArrayList<ViewItem> getInitialRelevantList(StatElement elem)
 	{
-		ArrayList<ViewItem> relevantList = new ArrayList<ViewItem>();
-		if(elem.getId() == 2172814) // Goodfellas
-		{
-			ViewItem itemGoodfellas = new ViewItem(2172814, EyeTrackerItem.TYPE_MOVIE, "Goodfellas");
-			ViewItem itemRaging = new ViewItem(2507895, EyeTrackerItem.TYPE_MOVIE, "Raging Bull");
-			relevantList.add(itemGoodfellas);
-			relevantList.add(itemRaging);
-		}
-		else if(elem.getId() == 2508103) // Raiders of the Lost Ark
-		{
-			ViewItem item1 = new ViewItem(2508103, EyeTrackerItem.TYPE_MOVIE, "Raiders of the Lost Ark");
-			ViewItem item2 = new ViewItem(2237387, EyeTrackerItem.TYPE_MOVIE, "Indiana Jones and the Last Crusade");
-			relevantList.add(item1);
-			relevantList.add(item2);
-		}
-		else if(elem.getId() == 2243248) // Invictus
-		{
-			ViewItem item1 = new ViewItem(2243248, EyeTrackerItem.TYPE_MOVIE, "Invictus");
-			ViewItem item2 = new ViewItem(2385786, EyeTrackerItem.TYPE_MOVIE, "Million Dollar Baby");
-			relevantList.add(item1);
-			relevantList.add(item2);
-		}
-		else if(elem.getId() == 2236590) // Inception
-		{
-			ViewItem item1 = new ViewItem(2236590, EyeTrackerItem.TYPE_MOVIE, "Inception");
-			ViewItem item2 = new ViewItem(2652720, EyeTrackerItem.TYPE_MOVIE, "The Dark Knight Rises");
-			relevantList.add(item1);
-			relevantList.add(item2);
-		}
+		ArrayList<ViewItem> relevantList = this.relevantItemMap.get(elem.getId());
 		return relevantList;
 	}
 	

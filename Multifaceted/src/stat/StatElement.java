@@ -7,6 +7,8 @@ import imdb.entity.Genre;
 import imdb.entity.Movie;
 import imdb.entity.Person;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 
@@ -93,9 +95,11 @@ public class StatElement {
 	public void printItems()
 	{
 		System.out.println("------------------------------------");
-		for(ViewItem item: this.items)
+		ArrayList<ViewItem> sortedList = new ArrayList<ViewItem>(this.items);
+		Collections.sort(sortedList);
+		for(ViewItem item: sortedList)
 		{
-			System.out.println("Item\t"+item.getName()+"\t"+item.getId()+"\t"+item.getType());
+			System.out.println("Item\t"+item.getName()+"\t"+item.getId()+"\t"+item.getType()+"\t"+item.getRelevance());
 		}
 		System.out.println("------------------------------------");
 	}
@@ -200,17 +204,21 @@ public class StatElement {
 	 {
 		 calculateCount(data);
 //		 printGraph();
-		 for(ViewItem item: relevantList)
+		 if(relevantList != null)
 		 {
-			 int index = this.items.indexOf(item);
-			 if(index >= 0)
+			 for(ViewItem item: relevantList)
 			 {
-				 ViewItem relevantItem = this.items.get(index);
-				 relevantItem.setRelevance(0);
-				 propagateRelevance(relevantItem);
+				 int index = this.items.indexOf(item);
+				 if(index >= 0)
+				 {
+					 ViewItem relevantItem = this.items.get(index);
+					 relevantItem.setRelevance(0);
+					 propagateRelevance(relevantItem);
+				 }
+				 
 			 }
-			 
 		 }
+		 
 		 
 		 
 	 }

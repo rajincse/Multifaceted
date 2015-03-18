@@ -6,6 +6,8 @@ import imdb.entity.CompactPerson;
 import imdb.entity.Genre;
 import imdb.entity.Movie;
 import imdb.entity.Person;
+
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,7 +18,7 @@ import pivotpath.MovieSortingItem;
 import pivotpath.PivotPathViewer;
 import eyetrack.EyeTrackerItem;
 
-public class StatElement {
+public class StatElement implements Serializable {
 	public static final int INVALID =-1;
 	public static final int INFINITY_RELEVANCE =1000;
 	
@@ -24,10 +26,11 @@ public class StatElement {
 	private String name;
 	private int type=INVALID;
 	private int elementCount =0;
+	private int task = INVALID;
 	private ArrayList<ViewItem> items = new ArrayList<ViewItem>();
 	private HashMap<ViewItem, ArrayList<ViewItem>> adjacencyList = new HashMap<ViewItem, ArrayList<ViewItem>>();
 	
-	public StatElement(String name)
+	public StatElement(String name, int task)
 	{
 		if(name.contains("_"))
 		{
@@ -37,7 +40,7 @@ public class StatElement {
 		{
 			this.name = name;
 		}
-		
+		this.task = task;
 	}
 
 	public int getElementCount() {
@@ -79,12 +82,23 @@ public class StatElement {
 		this.items = items;
 	}
 
+	public int getTask() {
+		return task;
+	}
+
+	public void setTask(int task) {
+		this.task = task;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if(obj instanceof StatElement)
 		{
 			StatElement otherElement = (StatElement) obj;
-			return otherElement.getName().equals(this.getName());
+			return  otherElement.getName().equals(this.getName()) 
+					&&	this.getTask() == otherElement.getTask();
+//					&& this.getType() == otherElement.getType());
+			
 		}
 		else
 		{
@@ -223,93 +237,7 @@ public class StatElement {
 		 
 	 }
 	
-//	 private boolean isConnected(ViewItem src, ViewItem dest)
-//	 {
-//		 if(this.adjacencyList.containsKey(src))
-//		 {
-//			 return this.adjacencyList.get(src).contains(dest);
-//		 }
-//		 else
-//		 {
-//			 return false;
-//		 }
-//	 }
-	 /*
-	 private boolean isConnected(ViewItem src, ViewItem dest,IMDBDataSource data)
-	 {
-		 
-		 ViewItem movieItem;
-		 ViewItem otherItem;
-		 
-		 if(src.getType() == dest.getType())
-		 {
-			 return false;
-		 }
-		 else if(src.getType() == EyeTrackerItem.TYPE_MOVIE)
-		 {
-			 movieItem = src;
-			 otherItem = dest;
-			 
-		 }
-		 else if(dest.getType() == EyeTrackerItem.TYPE_MOVIE)
-		 {
-			 movieItem = dest;
-			 otherItem = src;
-		 }
-		 else
-		 {
-			 return false;
-		 }
-		 
-		 CompactMovie compactMovie = new CompactMovie(movieItem.getId(), movieItem.getName(),1900);
-		 Movie movie = data.getMovie(compactMovie);
-		 if(otherItem.getId() == movieItem.getId() && otherItem.getType() == EyeTrackerItem.TYPE_MOVIE_STAR_RATING)
-		 {
-			 return true;
-		 }
-		 else if(otherItem.getType() == EyeTrackerItem.TYPE_ACTOR)
-		 {
-			CompactPerson actor = new CompactPerson(otherItem.getId(), otherItem.getName(), "M");
-			if(movie.getActors().contains(actor))
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		 }
-		 else if(otherItem.getType() == EyeTrackerItem.TYPE_DIRECTOR)
-		 {
-			CompactPerson director = new CompactPerson(otherItem.getId(), otherItem.getName(), "M");
-			if(movie.getDirectors().contains(director))
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		 }
-		 else if(otherItem.getType() == EyeTrackerItem.TYPE_GENRE)
-		 {
-			Genre genre = new Genre(otherItem.getId(), otherItem.getName());
-			if(movie.getGenreList().contains(genre))
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		 }
-		 else
-		 {
-			 return false;
-		 }
-			 
-	 }
-	 */
+
 	 private int getMovieViewElementCount(long id, IMDBDataSource data)
 		{
 			

@@ -1,7 +1,9 @@
 package stat;
 
+import java.io.Serializable;
 
-public class ViewItem implements Comparable<ViewItem>{
+
+public class ViewItem implements Comparable<ViewItem>, Serializable{
 
 	private long id;
 	private int type;

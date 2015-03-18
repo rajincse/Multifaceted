@@ -6,9 +6,13 @@ import java.awt.Graphics2D;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -17,6 +21,7 @@ import eyetrack.EyeTrackerItem;
 import perspectives.base.Property;
 import perspectives.base.Viewer;
 import perspectives.properties.PFileInput;
+import perspectives.properties.PFileOutput;
 import perspectives.two_d.JavaAwtRenderer;
 
 public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
@@ -24,11 +29,16 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 	public static final String PROPERTY_LOAD="Load";
 	public static final String PROPERTY_LOAD_RELEVANT_LIST="Load Relevant List";
 	public static final String PROPERTY_LOAD_IGNORE_LIST="Load Ignore List";
+	public static final String PROPERTY_LOAD_Task_LIST="Load Task List";
+	public static final String PROPERTY_SAVE_DATA = "Save Data";
+	public static final String PROPERTY_LOAD_SAVED_DATA = "Load Saved Data";
 	
 	
 	private ArrayList<StatElement> elementNames = new ArrayList<StatElement>();
 	private HashMap<Long, ArrayList<ViewItem>> relevantItemMap = new HashMap<Long, ArrayList<ViewItem>>(); 
 	private ArrayList<String> ignoreList = new ArrayList<String>();
+	private HashMap<String, Integer> taskList = new HashMap<String, Integer>();
+	private HashMap<String, String> taskUserList = new HashMap<String, String>();
 	private IMDBDataSource data;
 	public ElementStatViewer(String name,IMDBDataSource data) {
 		super(name);
@@ -59,6 +69,20 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 						}
 					};
 			addProperty(pLoadRelevantList);
+			
+			Property<PFileInput> pLoadTaskList = new Property<PFileInput>(PROPERTY_LOAD_Task_LIST, new PFileInput())
+					{
+						@Override
+						protected boolean updating(PFileInput newvalue) {
+							// TODO Auto-generated method stub
+							readTaskListFile(newvalue.path);
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pLoadTaskList);
+			
+			
+			
 			PFileInput inputFile = new PFileInput();
 			inputFile.onlyDirectories = true;
 			Property<PFileInput> pLoad = new Property<PFileInput>(PROPERTY_LOAD, inputFile)
@@ -67,17 +91,90 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 						protected boolean updating(PFileInput newvalue) {
 							// TODO Auto-generated method stub
 //							processFile(newvalue.path);
-							readSingleUser(newvalue.path);
+//							readSingleUser(newvalue.path);
+							readUserDirectory(newvalue.path);
 							return super.updating(newvalue);
 						}
 					};
 			addProperty(pLoad);
 			
+			Property<PFileOutput> pSaveData = new Property<PFileOutput>(PROPERTY_SAVE_DATA, new PFileOutput())
+					{
+						@Override
+						protected boolean updating(PFileOutput newvalue) {
+							// TODO Auto-generated method stub
+							saveData(newvalue.path);
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pSaveData);
 			
+			Property<PFileInput> pLoadSavedData = new Property<PFileInput>(PROPERTY_LOAD_SAVED_DATA, new PFileInput())
+					{
+						@Override
+						protected boolean updating(PFileInput newvalue) {
+							// TODO Auto-generated method stub
+							loadSavedData(newvalue.path);
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pLoadSavedData);
 		}
 		catch(Exception ex)
 		{
 			
+		}
+	}
+	private void loadSavedData(String filePath)
+	{
+		try {
+			File file =new File(filePath);
+			FileInputStream fOutput = new FileInputStream(file);
+		
+			ObjectInputStream out = new ObjectInputStream(fOutput);
+			
+			RelevanceData data = (RelevanceData) out.readObject();
+			
+			out.close();
+			fOutput.close();
+			for(StatElement elem: data.getElementNames())
+			{
+				System.out.println("View\t"+elem.getName()+"("+elem.getTask()+")\t"+elem.getId()+"\t"+elem.getType()+"\t"+elem.getElementCount());
+				elem.printItems();
+			}
+			
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	private void saveData(String filePath)
+	{
+		
+		try {
+			File file =new File(filePath);
+			FileOutputStream fOutput = new FileOutputStream(file);
+		
+			ObjectOutputStream out = new ObjectOutputStream(fOutput);
+			
+			RelevanceData data = new RelevanceData(elementNames, relevantItemMap, ignoreList, taskList, taskUserList);
+			out.writeObject(data);
+			out.close();
+			fOutput.close();
+			
+			System.out.println("Saved:"+filePath);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
@@ -91,11 +188,11 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 			populateCount();
 			for(StatElement elem: this.elementNames)
 			{
-				System.out.println("View\t"+elem.getName()+"\t"+elem.getId()+"\t"+elem.getType()+"\t"+elem.getElementCount());
-				elem.printItems();
+				System.out.println("View\t"+elem.getName()+"("+elem.getTask()+")\t"+elem.getId()+"\t"+elem.getType()+"\t"+elem.getElementCount());
+//				elem.printItems();
 			}
 		}		
-		this.elementNames.clear();
+//		this.elementNames.clear();
 		
 	}
 	private boolean isInIgnoreList(String filePath)
@@ -155,6 +252,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 			
 			
 		}
+		System.out.println("Done reading:"+path);
 	}
 	private void fillupPresetElementNames()	
 	{
@@ -172,6 +270,21 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 								,"Futbaal  The Price of Dreams"
 								,"The Boondock Saints II  All Saints Day"
 								};
+		int [] tasks = new int[]
+				{
+				2,
+				2,
+				2,
+				2,
+				4,
+				4,
+				4,
+				4,
+				4,
+				4,
+				4,
+				4
+				};
 		long[] ids = new long[]{
 									984258, //"Ang Lee",
 									237997,//	"Tim Burton",
@@ -204,7 +317,8 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		for(int i=0;i<elementNames.length;i++)
 		{
 			String elemName = elementNames[i];
-			int index = this.elementNames.indexOf(new StatElement(elemName));
+			int task = tasks[i];
+			int index = this.elementNames.indexOf(new StatElement(elemName, task));
 			if(index >=0)
 			{
 				StatElement elem = this.elementNames.get(index);
@@ -238,6 +352,12 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 				fileline = bufferedReader.readLine();
 			}
 			
+			int task = StatElement.INVALID;
+			if(this.taskList.containsKey(file.getName().toUpperCase()))
+			{
+				task = this.taskList.get(file.getName().toUpperCase());
+			}
+			
 			for(String line:fileLines)
 			{
 				String[] splits =line.split("\t");
@@ -247,12 +367,11 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 				
 					String elementName = imageFileName.substring(16, imageFileName.length()-9);
 					elementName = elementName.replaceAll("[0-9]", "");
-//					System.out.println("line=>"+line+", image=>"+imageFileName+", elem=>"+elementName);
-					StatElement element = new StatElement(elementName);
-					
-					
+					StatElement element = new StatElement(elementName, task);
+
 					if(!this.elementNames.contains(element))
 					{
+						
 						this.elementNames.add(element);
 					}
 				}
@@ -265,7 +384,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 				if(splits[0].equals("Eye"))
 				{
 					String elementName = splits[3].trim();	
-					int index = this.elementNames.indexOf(new StatElement(elementName));
+					int index = this.elementNames.indexOf(new StatElement(elementName, task));
 					if(index >= 0)
 					{
 						StatElement elem = this.elementNames.get(index);
@@ -278,10 +397,6 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 					}
 				}
 			}
-//			for(StatElement elem: this.elementNames)
-//			{
-//				System.out.println("Elem:"+elem);
-//			}
 			
 			
 		} catch (FileNotFoundException e) {
@@ -302,6 +417,43 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		{
 			ArrayList<ViewItem> relevantList = getInitialRelevantList(elem);
 			elem.processItems(data, relevantList);
+		}
+	}
+	private void readTaskListFile(String filePath)
+	{
+		try {
+
+			
+			File file = new File(filePath);
+			FileReader fStream;
+			fStream = new FileReader(file);		
+			BufferedReader bufferedReader = new BufferedReader(fStream);
+			
+			String fileline = bufferedReader.readLine();
+			
+			while(fileline != null)
+			{	
+				String[] data  = fileline.split("\t");
+				if(data.length >=3)
+				{
+					String userName = data[0].toUpperCase();
+					String fileName = data[1].toUpperCase();
+					int task = Integer.parseInt(data[2]);
+					this.taskList.put(fileName, task);
+					this.taskUserList.put(fileName, userName);
+				}
+				fileline = bufferedReader.readLine();
+			}
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
 		}
 	}
 	private void readIgnoreList(String filePath)

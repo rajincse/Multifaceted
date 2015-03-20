@@ -16,6 +16,8 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import multifaceted.Util;
+
 import eyetrack.EyeTrackerItem;
 
 import perspectives.base.Property;
@@ -29,9 +31,10 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 	public static final String PROPERTY_LOAD="Load";
 	public static final String PROPERTY_LOAD_RELEVANT_LIST="Load Relevant List";
 	public static final String PROPERTY_LOAD_IGNORE_LIST="Load Ignore List";
-	public static final String PROPERTY_LOAD_Task_LIST="Load Task List";
+	public static final String PROPERTY_LOAD_TASK_LIST="Load Task List";
 	public static final String PROPERTY_SAVE_DATA = "Save Data";
 	public static final String PROPERTY_LOAD_SAVED_DATA = "Load Saved Data";
+	public static final String PROPERTY_LOAD_VIEWED_DATA = "Load Viewed Data";
 	
 	
 	private ArrayList<StatElement> elementNames = new ArrayList<StatElement>();
@@ -39,6 +42,10 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 	private ArrayList<String> ignoreList = new ArrayList<String>();
 	private HashMap<String, Integer> taskList = new HashMap<String, Integer>();
 	private HashMap<String, String> taskUserList = new HashMap<String, String>();
+	
+	private HashMap<String, HashMap<Integer, ViewScore>> nameTaskViewingMap = new HashMap<String, HashMap<Integer,ViewScore>>();
+	private HashMap<String, HashMap<Integer, ViewItem>> nameTaskRelevanceMap = new HashMap<String, HashMap<Integer,ViewItem>>();
+	
 	private IMDBDataSource data;
 	public ElementStatViewer(String name,IMDBDataSource data) {
 		super(name);
@@ -70,7 +77,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 					};
 			addProperty(pLoadRelevantList);
 			
-			Property<PFileInput> pLoadTaskList = new Property<PFileInput>(PROPERTY_LOAD_Task_LIST, new PFileInput())
+			Property<PFileInput> pLoadTaskList = new Property<PFileInput>(PROPERTY_LOAD_TASK_LIST, new PFileInput())
 					{
 						@Override
 						protected boolean updating(PFileInput newvalue) {
@@ -115,13 +122,152 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 						protected boolean updating(PFileInput newvalue) {
 							// TODO Auto-generated method stub
 							loadSavedData(newvalue.path);
+							processNameTaskRelevanceMap();
 							return super.updating(newvalue);
 						}
 					};
 			addProperty(pLoadSavedData);
+			
+			PFileInput inputViewedDir = new PFileInput();
+			inputViewedDir.onlyDirectories = true;
+			Property<PFileInput> pLoadViewedData = new Property<PFileInput>(PROPERTY_LOAD_VIEWED_DATA, inputViewedDir)
+					{
+						@Override
+						protected boolean updating(PFileInput newvalue) {
+							// TODO Auto-generated method stub
+							readViewedDirectory(newvalue.path);
+							
+							requestRender();
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pLoadViewedData);
 		}
 		catch(Exception ex)
 		{
+			
+		}
+	}
+	private void readViewedDirectory(String path)
+	{
+		File rootDirectory = new File(path);
+		String taskString = rootDirectory.getName().substring(rootDirectory.getName().length()-1);
+		int task = Integer.parseInt(taskString);
+		File[] dataFiles = rootDirectory.listFiles(new FileFilter() {
+			
+			@Override
+			public boolean accept(File pathname) {
+				// TODO Auto-generated method stub
+				return pathname.getName().toUpperCase().endsWith(".TXT");
+			}
+		});
+		
+		for(File dataFile: dataFiles)
+		{
+			
+			readViewedFile(dataFile.getAbsolutePath(), task);
+		}
+		System.out.println("Loaded:"+path);
+	}
+	
+	private void readViewedFile(String filePath, int task)
+	{
+		try {
+
+			
+			File file = new File(filePath);
+			FileReader fStream;
+			fStream = new FileReader(file);		
+			BufferedReader bufferedReader = new BufferedReader(fStream);
+			
+
+			
+			String fileline = bufferedReader.readLine();
+			
+			while(fileline != null)
+			{	
+				String[] data  = fileline.split("\t");
+				if(data.length >=2)
+				{
+					String name = data[0];
+					double viewingScore = Double.parseDouble(data[1]);
+					
+				
+					if(!this.nameTaskViewingMap.containsKey(name))
+					{
+						HashMap<Integer, ViewScore> taskRelevanceMap = new HashMap<Integer, ViewScore>();
+						ViewScore score = new ViewScore(viewingScore);
+						taskRelevanceMap.put(task, score);
+						
+						this.nameTaskViewingMap.put(name, taskRelevanceMap);
+					}
+					else
+					{
+						HashMap<Integer, ViewScore> taskRelevanceMap = this.nameTaskViewingMap.get(name);
+						if(taskRelevanceMap == null)
+						{
+							taskRelevanceMap = new HashMap<Integer, ViewScore>();
+							ViewScore score = new ViewScore(viewingScore);
+							taskRelevanceMap.put(task, score);
+							
+							this.nameTaskViewingMap.put(name, taskRelevanceMap);
+						}
+						else 
+						{
+							ViewScore score = taskRelevanceMap.get(task);
+							score.addScore(viewingScore);
+						}
+					}
+				}
+				fileline = bufferedReader.readLine();
+			}
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	private void processNameTaskRelevanceMap()
+	{
+		if(this.elementNames != null && !this.elementNames.isEmpty())
+		{
+			for(StatElement elem: this.elementNames)
+			{
+				for(ViewItem item: elem.getItems())
+				{
+					
+					if(!this.nameTaskRelevanceMap.containsKey(item.getName()))
+					{
+						HashMap<Integer, ViewItem> taskRelevanceMap = new HashMap<Integer, ViewItem>();
+						taskRelevanceMap.put(elem.getTask(), item);
+						
+						this.nameTaskRelevanceMap.put(item.getName(), taskRelevanceMap);
+					}
+					else
+					{
+						HashMap<Integer, ViewItem> taskRelevanceMap = this.nameTaskRelevanceMap.get(item.getName());
+						if(taskRelevanceMap == null)
+						{
+							taskRelevanceMap = new HashMap<Integer, ViewItem>();
+							taskRelevanceMap.put(elem.getTask(), item);
+							
+							this.nameTaskRelevanceMap.put(item.getName(), taskRelevanceMap);
+						}
+						else 
+						{
+							taskRelevanceMap.put(elem.getTask(), item);
+						}
+					}
+					
+				}
+			}
+			System.out.println("Done");
 			
 		}
 	}
@@ -134,14 +280,14 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 			ObjectInputStream out = new ObjectInputStream(fOutput);
 			
 			RelevanceData data = (RelevanceData) out.readObject();
-			
+			this.elementNames = data.getElementNames();
+			this.relevantItemMap = data.getRelevantItemMap();
+			this.ignoreList = data.getIgnoreList();
+			this.taskList = data.getTaskList();
+			this.taskUserList = data.getTaskUserList();
 			out.close();
 			fOutput.close();
-			for(StatElement elem: data.getElementNames())
-			{
-				System.out.println("View\t"+elem.getName()+"("+elem.getTask()+")\t"+elem.getId()+"\t"+elem.getType()+"\t"+elem.getElementCount());
-				elem.printItems();
-			}
+			System.out.println("Loaded:"+filePath);
 			
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -579,9 +725,112 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 	}
 
 	@Override
-	public void render(Graphics2D arg0) {
+	public void render(Graphics2D g) {
 		// TODO Auto-generated method stub
+		g.setColor(Color.black);
 		
+		int originX =10;
+		int originY = 800;
+		
+		
+		int maxYLength =800;
+		int factor =50;
+		int maxRelevanceWidth =200;
+		int maxTaskWidth =200;
+		
+		
+		int maxRelevance =0;
+		double maxScore =0;
+		double minScore =1;
+		if(this.nameTaskRelevanceMap != null && this.nameTaskViewingMap != null
+				&& !this.nameTaskRelevanceMap.isEmpty()
+				&& !this.nameTaskViewingMap.isEmpty()
+		)
+		{
+			for(String elementName: this.nameTaskViewingMap.keySet())
+			{
+				HashMap<Integer, ViewScore> taskViewingMap =this.nameTaskViewingMap.get(elementName); 
+				for(Integer task: taskViewingMap.keySet())
+				{
+					if(this.nameTaskRelevanceMap.get(elementName) != null && this.nameTaskRelevanceMap.get(elementName).containsKey(task))
+					{
+						
+						ViewItem item = this.nameTaskRelevanceMap.get(elementName).get(task);
+						double score = taskViewingMap.get(task).getAverage();
+						
+						int pointX = originX+  item.getRelevance()* maxRelevanceWidth+ (task-1)*maxTaskWidth+ (int)(Math.random()*maxTaskWidth);
+						int pointY = originY - (int) (score*factor * maxYLength);
+						
+						Color c = Util.getRelevanceChartColor(item.getType());
+						Util.drawCircle(pointX, pointY,10, c, g);
+						
+						if(item.getRelevance() > maxRelevance && item.getRelevance() != StatElement.INFINITY_RELEVANCE)
+						{
+							maxRelevance = item.getRelevance();
+						}
+						
+						if(score > maxScore)
+						{
+							maxScore = score;
+						}
+						
+						if(score < minScore)
+						{
+							minScore = score;
+						}
+						if(item.getRelevance() ==0)
+						{
+							System.out.println("item:"+item+", score:"+score);
+						}
+					}
+					else
+					{
+						System.out.println("Element "+elementName+"("+task+") not found in relevance map");
+					}
+				}
+			}
+		}
+		System.out.println("MaxRelevance: "+maxRelevance+", max:"+maxScore+", minScore:"+minScore);
+		
+		g.setColor(Color.black);
+		
+		//Draw Axis
+		g.drawLine(originX,originY, originX, originY-maxYLength);
+		g.drawLine(originX,originY, originX+(maxRelevance +1)* maxRelevanceWidth, originY);
+		
+		// Draw Legends
+		g.setFont(g.getFont().deriveFont(30f));
+		int startType =EyeTrackerItem.TYPE_ACTOR;
+		int endType = EyeTrackerItem.TYPE_MOVIE_STAR_RATING;
+		String [] typeName = new String[]{"INIT", "Actor", "Movie", "Director", "Genre", "Star"};
+		for(int i=startType;i<= endType;i++)
+		{
+			int x = originX+(maxRelevance+1)*maxRelevanceWidth+50;
+			int y = originY- maxYLength/2 + i * 50;
+			
+			Color c = Util.getRelevanceChartColor(i);
+			Util.drawCircle(x, y, 10, c, g);
+			g.drawString(typeName[i], x+25, y+15);
+		}
+		
+		//Draw Relevance Partitions
+		for(int i=0;i<=maxRelevance;i++)
+		{
+			g.drawLine(originX+(i+1)*maxRelevanceWidth,originY, originX+(i+1)*maxRelevanceWidth, originY-maxYLength);
+			
+			g.drawString("Relevace:"+i, originX+i*maxRelevanceWidth+20, originY+70);
+		}
+		
+		
+		int totalPartitions =4;
+		for(int i=0;i<=totalPartitions;i++)
+		{
+			int y = originY -  i * maxYLength/totalPartitions;
+			g.drawLine(originX-30,y, originX+30, y);
+			
+			double scoreValue = i * 1.0 / factor / totalPartitions;
+			g.drawString(""+scoreValue, originX-100, y);
+		}
 	}
 
 }

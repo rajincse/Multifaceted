@@ -31,6 +31,13 @@ public class Util {
 		g.fillOval(x-rad, y-rad, 2*rad, 2*rad);
 		g.setColor(previousColor);
 	}
+	public static void drawCircle(int x, int y, int rad, Color c, Graphics2D g)
+	{
+		Color previousColor = g.getColor();
+		g.setColor(c);
+		g.fillOval(x-rad, y-rad, 2*rad, 2*rad);
+		g.setColor(previousColor);
+	}
 	public static void drawAxis(int x, int y, Color cx, Color cy, Graphics2D g)
 	{
 		Color previousColor = g.getColor();
@@ -215,6 +222,34 @@ public class Util {
 		else if(type== EyeTrackerItem.TYPE_MOVIE_STAR_RATING)
 		{
 			return  new Color(250,150,250);
+		}	
+		else
+		{
+			return Color.black;
+		}
+	}
+	
+	public static Color getRelevanceChartColor(int type)
+	{
+		if(type== EyeTrackerItem.TYPE_ACTOR)
+		{
+			return new Color(255,55,0, 200);
+		}
+		else if(type== EyeTrackerItem.TYPE_MOVIE)
+		{
+			return  new Color(0,34,255,200);
+		}
+		else if(type== EyeTrackerItem.TYPE_DIRECTOR)
+		{
+			return new Color(0,250,29,200);			
+		}	
+		else if(type== EyeTrackerItem.TYPE_GENRE)
+		{
+			return  new Color(250,242,0,200);
+		}	
+		else if(type== EyeTrackerItem.TYPE_MOVIE_STAR_RATING)
+		{
+			return  new Color(212,0,250,200);
 		}	
 		else
 		{

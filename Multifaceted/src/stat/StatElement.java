@@ -404,7 +404,7 @@ public class StatElement implements Serializable {
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		return "{name:"+name+", id:"+(this.id==INVALID?"Invalid":this.id)+", type:"+(type==INVALID?"Invalid":this.type)+" count:"+this.elementCount+"}";
+		return "{name:"+name+", task:"+task+", id:"+(this.id==INVALID?"Invalid":this.id)+", type:"+(type==INVALID?"Invalid":this.type)+" count:"+this.elementCount+"}";
 	}
 	
 }

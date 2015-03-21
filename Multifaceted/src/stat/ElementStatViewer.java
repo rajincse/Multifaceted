@@ -259,15 +259,19 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 							
 							this.nameTaskRelevanceMap.put(item.getName(), taskRelevanceMap);
 						}
-						else 
+						else if(item.getType() != EyeTrackerItem.TYPE_MOVIE_STAR_RATING )
 						{
-							taskRelevanceMap.put(elem.getTask(), item);
+							ViewItem existingItem = taskRelevanceMap.get(elem.getTask());
+							if(existingItem != null && existingItem.getRelevance() > item.getRelevance())
+							{
+								taskRelevanceMap.put(elem.getTask(), item);
+							}
+							
 						}
 					}
 					
 				}
 			}
-			System.out.println("Done");
 			
 		}
 	}
@@ -758,11 +762,15 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 						ViewItem item = this.nameTaskRelevanceMap.get(elementName).get(task);
 						double score = taskViewingMap.get(task).getAverage();
 						
-						int pointX = originX+  item.getRelevance()* maxRelevanceWidth+ (task-1)*maxTaskWidth+ (int)(Math.random()*maxTaskWidth);
+						int radius = 10;
+						int pointX = originX+  item.getRelevance()* maxRelevanceWidth+
+								radius+
+								(task-1)*maxTaskWidth+
+								(int)(Math.random()*(maxTaskWidth-2*radius));
 						int pointY = originY - (int) (score*factor * maxYLength);
 						
 						Color c = Util.getRelevanceChartColor(item.getType());
-						Util.drawCircle(pointX, pointY,10, c, g);
+						Util.drawCircle(pointX, pointY,radius, c, g);
 						
 						if(item.getRelevance() > maxRelevance && item.getRelevance() != StatElement.INFINITY_RELEVANCE)
 						{
@@ -778,10 +786,6 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 						{
 							minScore = score;
 						}
-						if(item.getRelevance() ==0)
-						{
-							System.out.println("item:"+item+", score:"+score);
-						}
 					}
 					else
 					{
@@ -790,7 +794,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 				}
 			}
 		}
-		System.out.println("MaxRelevance: "+maxRelevance+", max:"+maxScore+", minScore:"+minScore);
+//		System.out.println("MaxRelevance: "+maxRelevance+", max:"+maxScore+", minScore:"+minScore);
 		
 		g.setColor(Color.black);
 		

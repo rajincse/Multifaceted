@@ -1,8 +1,11 @@
 package stat;
 
 import imdb.IMDBDataSource;
+
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Stroke;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
@@ -34,6 +37,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 	public static final String PROPERTY_LOAD_TASK_LIST="Load Task List";
 	public static final String PROPERTY_SAVE_DATA = "Save Data";
 	public static final String PROPERTY_LOAD_SAVED_DATA = "Load Saved Data";
+	public static final String PROPERTY_LOAD_SUBTASK_VIEW_NAME = "Load Subtask View Name";
 	public static final String PROPERTY_LOAD_VIEWED_DATA = "Load Viewed Data";
 	
 	
@@ -43,8 +47,9 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 	private HashMap<String, Integer> taskList = new HashMap<String, Integer>();
 	private HashMap<String, String> taskUserList = new HashMap<String, String>();
 	
-	private HashMap<String, HashMap<Integer, ViewScore>> nameTaskViewingMap = new HashMap<String, HashMap<Integer,ViewScore>>();
-	private HashMap<String, HashMap<Integer, ViewItem>> nameTaskRelevanceMap = new HashMap<String, HashMap<Integer,ViewItem>>();
+	private HashMap<String, HashMap<Integer, HashMap<Integer,ViewScore>>> nameTaskViewingMap = new HashMap<String, HashMap<Integer, HashMap<Integer,ViewScore>>>();
+	private HashMap<String, HashMap<Integer, HashMap<String,ViewItem>>> nameTaskRelevanceMap = new HashMap<String, HashMap<Integer,HashMap<String,ViewItem>>>();
+	private HashMap<Integer, HashMap<Integer, ArrayList<String>>> subtaskViewNameMap = new HashMap<Integer, HashMap<Integer,ArrayList<String>>>(); 
 	
 	private IMDBDataSource data;
 	public ElementStatViewer(String name,IMDBDataSource data) {
@@ -128,6 +133,17 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 					};
 			addProperty(pLoadSavedData);
 			
+			Property<PFileInput> pLoadSubtaskView = new Property<PFileInput>(PROPERTY_LOAD_SUBTASK_VIEW_NAME, new PFileInput())
+					{
+						@Override
+						protected boolean updating(PFileInput newvalue) {
+							// TODO Auto-generated method stub
+							readSubtaskViewName(newvalue.path);
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pLoadSubtaskView);
+			
 			PFileInput inputViewedDir = new PFileInput();
 			inputViewedDir.onlyDirectories = true;
 			Property<PFileInput> pLoadViewedData = new Property<PFileInput>(PROPERTY_LOAD_VIEWED_DATA, inputViewedDir)
@@ -180,6 +196,9 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 			fStream = new FileReader(file);		
 			BufferedReader bufferedReader = new BufferedReader(fStream);
 			
+			int dotIndex =file.getName().lastIndexOf("."); 
+			String subTaskString = file.getName().substring(dotIndex-1, dotIndex);
+			int subtask = Integer.parseInt(subTaskString);
 
 			
 			String fileline = bufferedReader.readLine();
@@ -195,32 +214,129 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 				
 					if(!this.nameTaskViewingMap.containsKey(name))
 					{
-						HashMap<Integer, ViewScore> taskRelevanceMap = new HashMap<Integer, ViewScore>();
+						HashMap<Integer, HashMap<Integer,ViewScore>> taskViewMap = new HashMap<Integer, HashMap<Integer,ViewScore>>();
 						ViewScore score = new ViewScore(viewingScore);
-						taskRelevanceMap.put(task, score);
 						
-						this.nameTaskViewingMap.put(name, taskRelevanceMap);
+						HashMap<Integer,ViewScore> subtaskViewMap = new HashMap<Integer, ViewScore>();
+						subtaskViewMap.put(subtask, score);
+						
+						taskViewMap.put(task, subtaskViewMap);
+						
+						this.nameTaskViewingMap.put(name, taskViewMap);
 					}
 					else
 					{
-						HashMap<Integer, ViewScore> taskRelevanceMap = this.nameTaskViewingMap.get(name);
-						if(taskRelevanceMap == null)
+						HashMap<Integer, HashMap<Integer,ViewScore>> taskViewMap = this.nameTaskViewingMap.get(name);
+						if(taskViewMap == null)
 						{
-							taskRelevanceMap = new HashMap<Integer, ViewScore>();
+							taskViewMap = new HashMap<Integer, HashMap<Integer,ViewScore>>();
 							ViewScore score = new ViewScore(viewingScore);
-							taskRelevanceMap.put(task, score);
 							
-							this.nameTaskViewingMap.put(name, taskRelevanceMap);
+							HashMap<Integer,ViewScore> subtaskViewMap = new HashMap<Integer, ViewScore>();
+							subtaskViewMap.put(subtask, score);
+							
+							taskViewMap.put(task, subtaskViewMap);
+							
+							this.nameTaskViewingMap.put(name, taskViewMap);
 						}
 						else 
 						{
-							ViewScore score = taskRelevanceMap.get(task);
-							score.addScore(viewingScore);
+							HashMap<Integer,ViewScore> subtaskViewMap =  taskViewMap.get(task);
+							if(subtaskViewMap == null)
+							{
+								
+								ViewScore score = new ViewScore(viewingScore);
+								
+								subtaskViewMap = new HashMap<Integer, ViewScore>();
+								subtaskViewMap.put(subtask, score);
+							}
+							else
+							{
+								ViewScore score = subtaskViewMap.get(subtask);
+								if(score != null)
+								{
+									score.addScore(viewingScore);
+								}
+								else
+								{
+									score = new ViewScore(viewingScore);
+									subtaskViewMap.put(subtask, score);
+								}
+								
+							}
+							
 						}
 					}
 				}
 				fileline = bufferedReader.readLine();
 			}
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	private void readSubtaskViewName(String filePath)
+	{
+		try {
+
+			
+			File file = new File(filePath);
+			FileReader fStream;
+			fStream = new FileReader(file);		
+			BufferedReader bufferedReader = new BufferedReader(fStream);
+			
+			
+			
+			String fileline = bufferedReader.readLine();
+			
+			while(fileline != null)
+			{	
+				String[] data = fileline.split("\t");
+				
+				if(data.length > 2)
+				{
+					String name = data[0];
+					int task = Integer.parseInt(data[1]);
+					int subtask = Integer.parseInt(data[2]);
+					
+					HashMap<Integer, ArrayList<String>> subtaskView = this.subtaskViewNameMap.get(task);
+					if(subtaskView == null)
+					{
+						subtaskView = new HashMap<Integer, ArrayList<String>>();
+						ArrayList<String> nameList = new ArrayList<String>();
+						nameList.add(name);
+						subtaskView.put(subtask, nameList);
+						this.subtaskViewNameMap.put(task, subtaskView);
+					}
+					else
+					{
+						ArrayList<String> nameList = subtaskView.get(subtask);
+						if(nameList == null)
+						{
+							nameList = new ArrayList<String>();
+							nameList.add(name);
+							subtaskView.put(subtask, nameList);
+						}
+						else
+						{
+							nameList.add(name);
+						}
+							
+					}
+					
+				}
+				fileline = bufferedReader.readLine();
+			}
+			
+			System.out.println("Loaded:"+filePath);
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -242,31 +358,57 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 				for(ViewItem item: elem.getItems())
 				{
 					
-					if(!this.nameTaskRelevanceMap.containsKey(item.getName()))
+					if(item.getType() != EyeTrackerItem.TYPE_MOVIE_STAR_RATING )
 					{
-						HashMap<Integer, ViewItem> taskRelevanceMap = new HashMap<Integer, ViewItem>();
-						taskRelevanceMap.put(elem.getTask(), item);
-						
-						this.nameTaskRelevanceMap.put(item.getName(), taskRelevanceMap);
-					}
-					else
-					{
-						HashMap<Integer, ViewItem> taskRelevanceMap = this.nameTaskRelevanceMap.get(item.getName());
-						if(taskRelevanceMap == null)
+						if(!this.nameTaskRelevanceMap.containsKey(item.getName()))
 						{
-							taskRelevanceMap = new HashMap<Integer, ViewItem>();
-							taskRelevanceMap.put(elem.getTask(), item);
+							HashMap<Integer, HashMap<String,ViewItem>> taskRelevanceMap = new HashMap<Integer, HashMap<String,ViewItem>>();
+							HashMap<String,ViewItem> viewItemMap =new HashMap<String, ViewItem>();
+							viewItemMap.put(elem.getName(), item);
+							taskRelevanceMap.put(elem.getTask(), viewItemMap);
 							
 							this.nameTaskRelevanceMap.put(item.getName(), taskRelevanceMap);
 						}
-						else if(item.getType() != EyeTrackerItem.TYPE_MOVIE_STAR_RATING )
+						else
 						{
-							ViewItem existingItem = taskRelevanceMap.get(elem.getTask());
-							if(existingItem != null && existingItem.getRelevance() > item.getRelevance())
+							HashMap<Integer, HashMap<String,ViewItem>> taskRelevanceMap = this.nameTaskRelevanceMap.get(item.getName());
+							if(taskRelevanceMap == null)
 							{
-								taskRelevanceMap.put(elem.getTask(), item);
+								taskRelevanceMap = new HashMap<Integer, HashMap<String,ViewItem>>();
+								HashMap<String,ViewItem> viewItemMap =new HashMap<String, ViewItem>();
+								viewItemMap.put(elem.getName(), item);
+								taskRelevanceMap.put(elem.getTask(), viewItemMap);
+								
+								this.nameTaskRelevanceMap.put(item.getName(), taskRelevanceMap);
 							}
-							
+							else 
+							{
+								HashMap<String,ViewItem> viewItemMap =taskRelevanceMap.get(elem.getTask());
+								if(viewItemMap == null)
+								{
+									viewItemMap =new HashMap<String, ViewItem>();
+									viewItemMap.put(elem.getName(), item);
+									taskRelevanceMap.put(elem.getTask(), viewItemMap);
+								}
+								else
+								{
+									ViewItem existingItem = viewItemMap.get(elem.getName());
+									if(existingItem != null )
+									{
+										if(existingItem.getRelevance() > item.getRelevance())
+										{
+											viewItemMap.put(elem.getName(), item);
+										}
+										
+									}
+									else
+									{
+										viewItemMap.put(elem.getName(), item);
+									}
+								}
+								
+								
+							}
 						}
 					}
 					
@@ -740,9 +882,9 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		int maxYLength =800;
 		int factor =50;
 		int maxRelevanceWidth =200;
-		int maxTaskWidth =200;
+		int maxTaskWidth =50;
 		
-		
+		int totalSubtask =4;
 		int maxRelevance =0;
 		double maxScore =0;
 		double minScore =1;
@@ -753,43 +895,72 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		{
 			for(String elementName: this.nameTaskViewingMap.keySet())
 			{
-				HashMap<Integer, ViewScore> taskViewingMap =this.nameTaskViewingMap.get(elementName); 
+				HashMap<Integer, HashMap<Integer, ViewScore>> taskViewingMap =this.nameTaskViewingMap.get(elementName); 
+				
+				
 				for(Integer task: taskViewingMap.keySet())
 				{
+					
 					if(this.nameTaskRelevanceMap.get(elementName) != null && this.nameTaskRelevanceMap.get(elementName).containsKey(task))
 					{
+						HashMap<Integer, ViewScore> subtaskViewMap = taskViewingMap.get(task);
 						
-						ViewItem item = this.nameTaskRelevanceMap.get(elementName).get(task);
-						double score = taskViewingMap.get(task).getAverage();
-						
-						int radius = 10;
-						int pointX = originX+  item.getRelevance()* maxRelevanceWidth+
-								radius+
-								(task-1)*maxTaskWidth+
-								(int)(Math.random()*(maxTaskWidth-2*radius));
-						int pointY = originY - (int) (score*factor * maxYLength);
-						
-						Color c = Util.getRelevanceChartColor(item.getType());
-						Util.drawCircle(pointX, pointY,radius, c, g);
-						
-						if(item.getRelevance() > maxRelevance && item.getRelevance() != StatElement.INFINITY_RELEVANCE)
+						for(Integer subTask: subtaskViewMap.keySet())
 						{
-							maxRelevance = item.getRelevance();
+//							String viewName = this.subtaskViewName[subTask-1];
+							
+							HashMap<String, ViewItem> itemRelevance =this.nameTaskRelevanceMap.get(elementName).get(task);
+							if(this.subtaskViewNameMap.containsKey(task) && this.subtaskViewNameMap.get(task).containsKey(subTask))
+							{
+								for(String viewName: this.subtaskViewNameMap.get(task).get(subTask))
+								{
+									if(itemRelevance.containsKey(viewName))
+									{
+										ViewItem item = this.nameTaskRelevanceMap.get(elementName).get(task).get(viewName);
+										double score = taskViewingMap.get(task).get(subTask).getAverage();
+										
+										int radius = 10;
+										int pointX = originX+  item.getRelevance()* maxRelevanceWidth+
+												radius+
+												(subTask-1)*maxTaskWidth+
+												(int)(Math.random()*(maxTaskWidth-2*radius));
+										int pointY = originY - (int) (score*factor * maxYLength);
+										
+										Color c = Util.getRelevanceChartColor(item.getType());
+										Util.drawCircle(pointX, pointY,radius, c, g);
+										
+										if(item.getRelevance() > maxRelevance && item.getRelevance() != StatElement.INFINITY_RELEVANCE)
+										{
+											maxRelevance = item.getRelevance();
+										}
+										
+										if(score > maxScore)
+										{
+											maxScore = score;
+										}
+										
+										if(score < minScore)
+										{
+											minScore = score;
+										}
+										
+										
+										break;
+									}
+									else
+									{
+//										System.out.println("View name doesn't match:"+viewName+",Element "+elementName+"("+task+"."+subTask+")");
+									}
+								}
+							}
+							
 						}
 						
-						if(score > maxScore)
-						{
-							maxScore = score;
-						}
 						
-						if(score < minScore)
-						{
-							minScore = score;
-						}
 					}
 					else
 					{
-						System.out.println("Element "+elementName+"("+task+") not found in relevance map");
+						//System.out.println("Element "+elementName+"("+task+") not found in relevance map");
 					}
 				}
 			}
@@ -823,6 +994,21 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 			g.drawLine(originX+(i+1)*maxRelevanceWidth,originY, originX+(i+1)*maxRelevanceWidth, originY-maxYLength);
 			
 			g.drawString("Relevace:"+i, originX+i*maxRelevanceWidth+20, originY+70);
+			Stroke previousStroke = g.getStroke();
+			Stroke dashed =  new BasicStroke(1.0f,
+                    BasicStroke.CAP_BUTT,
+                    BasicStroke.JOIN_MITER,
+                    10.0f, new float[]{10f}, 0.0f);
+			g.setStroke(dashed);
+			g.setFont(g.getFont().deriveFont(15f));
+			
+			for(int j=0;j<totalSubtask;j++)
+			{	
+				g.drawLine(originX+i*maxRelevanceWidth+j*maxTaskWidth,originY, originX+i*maxRelevanceWidth+j*maxTaskWidth, originY-maxYLength);
+				g.drawString("t"+(j+1), originX+i*maxRelevanceWidth+j*maxTaskWidth+10, originY+30);
+			}
+			g.setStroke(previousStroke);
+			g.setFont(g.getFont().deriveFont(30f));
 		}
 		
 		

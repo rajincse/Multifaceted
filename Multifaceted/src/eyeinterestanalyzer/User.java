@@ -21,6 +21,7 @@ import eyeinterestanalyzer.clustering.distance.TimeSlice;
 import eyeinterestanalyzer.feature.Feature;
 import eyeinterestanalyzer.feature.PercentileFeature;
 
+import multifaceted.ColorScheme;
 import multifaceted.Util;
 
 public class User implements ClusteringItem{
@@ -700,8 +701,8 @@ public class User implements ClusteringItem{
 			
 			v++;
 			for (int j=0; j<heatmap[index[i]].length; j++){
-				
-				Color c = perspectives.util.Util.getColorFromRange(new Color[]{Color.white,Color.green,Color.yellow,Color.red}, heatmap[index[i]][j]);
+				Color[] colorScheme = ColorScheme.DEFAULT;
+				Color c = perspectives.util.Util.getColorFromRange(colorScheme, heatmap[index[i]][j]);
 				g.setColor(c);
 				g.fillRect(j*cellWidth, v*cellHeight, cellWidth, cellHeight);
 			}

@@ -888,6 +888,9 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		int maxRelevance =0;
 		double maxScore =0;
 		double minScore =1;
+		
+		ArrayList<ErrorBarGlyph> errorBarGlyphList = new ArrayList<ErrorBarGlyph>();
+		
 		if(this.nameTaskRelevanceMap != null && this.nameTaskViewingMap != null
 				&& !this.nameTaskRelevanceMap.isEmpty()
 				&& !this.nameTaskViewingMap.isEmpty()
@@ -907,7 +910,6 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 						
 						for(Integer subTask: subtaskViewMap.keySet())
 						{
-//							String viewName = this.subtaskViewName[subTask-1];
 							
 							HashMap<String, ViewItem> itemRelevance =this.nameTaskRelevanceMap.get(elementName).get(task);
 							if(this.subtaskViewNameMap.containsKey(task) && this.subtaskViewNameMap.get(task).containsKey(subTask))
@@ -919,7 +921,8 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 										ViewItem item = this.nameTaskRelevanceMap.get(elementName).get(task).get(viewName);
 										double score = taskViewingMap.get(task).get(subTask).getAverage();
 										
-										int radius = 10;
+										
+										int radius = 5;
 										int pointX = originX+  item.getRelevance()* maxRelevanceWidth+
 												radius+
 												(subTask-1)*maxTaskWidth+
@@ -944,6 +947,18 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 											minScore = score;
 										}
 										
+										int index = errorBarGlyphList.indexOf(ErrorBarGlyph.getInstance(item.getRelevance(), subTask));
+										if(index >=0)
+										{
+											ErrorBarGlyph average = errorBarGlyphList.get(index);
+											average.addScore(score);
+										}
+										else
+										{
+											ErrorBarGlyph average = new ErrorBarGlyph(item.getRelevance(), subTask);
+											average.addScore(score);
+											errorBarGlyphList.add(average);
+										}
 										
 										break;
 									}
@@ -1020,6 +1035,12 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 			
 			double scoreValue = i * 1.0 / factor / totalPartitions;
 			g.drawString(""+scoreValue, originX-100, y);
+		}
+		
+		//Error Bars
+		for(ErrorBarGlyph average: errorBarGlyphList)
+		{
+			average.render(g, originX, originY, maxYLength, maxRelevanceWidth, maxTaskWidth,factor);
 		}
 	}
 

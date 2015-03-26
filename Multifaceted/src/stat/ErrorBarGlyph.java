@@ -2,11 +2,12 @@ package stat;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.util.ArrayList;
 
 import multifaceted.Util;
 
-public class ErrorBarGlyph {
+public class ErrorBarGlyph implements Comparable<ErrorBarGlyph> {
 	private ArrayList<Double> scoreList;
 	private int relevance;
 	private int subtask;
@@ -79,7 +80,7 @@ public class ErrorBarGlyph {
 	{
 		return new ErrorBarGlyph(relevance, subtask);
 	}
-	public void render(Graphics2D g, int originX, int originY, int maxYLength, int maxRelevanceWidth, int maxTaskWidth, int factor)
+	public Point draw(Graphics2D g, int originX, int originY, int maxYLength, int maxRelevanceWidth, int maxTaskWidth, int factor)
 	{
 		Color previousColor = g.getColor();
 		int radius =5;
@@ -103,10 +104,10 @@ public class ErrorBarGlyph {
 		g.drawLine(x, y, x, y-(int) errorBar);
 		g.drawLine(x-radius, y-(int) errorBar, x+radius, y-(int) errorBar);
 		
-		
-		
-		
 		g.setColor(previousColor);
+		
+		return new Point(x,y);
+		
 	}
 	@Override
 	public String toString() {
@@ -124,6 +125,20 @@ public class ErrorBarGlyph {
 		else
 		{
 			return super.equals(obj);
+		}
+		
+	}
+	@Override
+	public int compareTo(ErrorBarGlyph o) {
+		// TODO Auto-generated method stub
+		int difference = this.getRelevance()- o.getRelevance();
+		if(difference == 0)
+		{
+			return this.getSubtask() - o.getSubtask();
+		}
+		else
+		{
+			return difference;
 		}
 		
 	}

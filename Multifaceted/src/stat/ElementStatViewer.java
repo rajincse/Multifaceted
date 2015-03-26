@@ -5,6 +5,7 @@ import imdb.IMDBDataSource;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Stroke;
 import java.io.BufferedReader;
 import java.io.File;
@@ -17,6 +18,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 
 import multifaceted.Util;
@@ -47,7 +50,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 	private HashMap<String, Integer> taskList = new HashMap<String, Integer>();
 	private HashMap<String, String> taskUserList = new HashMap<String, String>();
 	
-	private HashMap<String, HashMap<Integer, HashMap<Integer,ViewScore>>> nameTaskViewingMap = new HashMap<String, HashMap<Integer, HashMap<Integer,ViewScore>>>();
+	private HashMap<String,  HashMap<Integer,ViewScore>> nameTaskViewingMap = new HashMap<String,  HashMap<Integer,ViewScore>>();
 	private HashMap<String, HashMap<Integer, HashMap<String,ViewItem>>> nameTaskRelevanceMap = new HashMap<String, HashMap<Integer,HashMap<String,ViewItem>>>();
 	private HashMap<Integer, HashMap<Integer, ArrayList<String>>> subtaskViewNameMap = new HashMap<Integer, HashMap<Integer,ArrayList<String>>>(); 
 	
@@ -164,11 +167,12 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 			
 		}
 	}
+	private int currentTask;
 	private void readViewedDirectory(String path)
 	{
 		File rootDirectory = new File(path);
 		String taskString = rootDirectory.getName().substring(rootDirectory.getName().length()-1);
-		int task = Integer.parseInt(taskString);
+		currentTask= Integer.parseInt(taskString);
 		File[] dataFiles = rootDirectory.listFiles(new FileFilter() {
 			
 			@Override
@@ -181,12 +185,12 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		for(File dataFile: dataFiles)
 		{
 			
-			readViewedFile(dataFile.getAbsolutePath(), task);
+			readViewedFile(dataFile.getAbsolutePath());
 		}
 		System.out.println("Loaded:"+path);
 	}
 	
-	private void readViewedFile(String filePath, int task)
+	private void readViewedFile(String filePath)
 	{
 		try {
 
@@ -214,55 +218,38 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 				
 					if(!this.nameTaskViewingMap.containsKey(name))
 					{
-						HashMap<Integer, HashMap<Integer,ViewScore>> taskViewMap = new HashMap<Integer, HashMap<Integer,ViewScore>>();
+						
 						ViewScore score = new ViewScore(viewingScore);
 						
 						HashMap<Integer,ViewScore> subtaskViewMap = new HashMap<Integer, ViewScore>();
 						subtaskViewMap.put(subtask, score);
 						
-						taskViewMap.put(task, subtaskViewMap);
 						
-						this.nameTaskViewingMap.put(name, taskViewMap);
+						this.nameTaskViewingMap.put(name, subtaskViewMap);
 					}
 					else
 					{
-						HashMap<Integer, HashMap<Integer,ViewScore>> taskViewMap = this.nameTaskViewingMap.get(name);
-						if(taskViewMap == null)
+						
+						HashMap<Integer,ViewScore> subtaskViewMap =  this.nameTaskViewingMap.get(name);
+						if(subtaskViewMap == null)
 						{
-							taskViewMap = new HashMap<Integer, HashMap<Integer,ViewScore>>();
+							
 							ViewScore score = new ViewScore(viewingScore);
 							
-							HashMap<Integer,ViewScore> subtaskViewMap = new HashMap<Integer, ViewScore>();
+							subtaskViewMap = new HashMap<Integer, ViewScore>();
 							subtaskViewMap.put(subtask, score);
-							
-							taskViewMap.put(task, subtaskViewMap);
-							
-							this.nameTaskViewingMap.put(name, taskViewMap);
 						}
-						else 
+						else
 						{
-							HashMap<Integer,ViewScore> subtaskViewMap =  taskViewMap.get(task);
-							if(subtaskViewMap == null)
+							ViewScore score = subtaskViewMap.get(subtask);
+							if(score != null)
 							{
-								
-								ViewScore score = new ViewScore(viewingScore);
-								
-								subtaskViewMap = new HashMap<Integer, ViewScore>();
-								subtaskViewMap.put(subtask, score);
+								score.addScore(viewingScore);
 							}
 							else
 							{
-								ViewScore score = subtaskViewMap.get(subtask);
-								if(score != null)
-								{
-									score.addScore(viewingScore);
-								}
-								else
-								{
-									score = new ViewScore(viewingScore);
-									subtaskViewMap.put(subtask, score);
-								}
-								
+								score = new ViewScore(viewingScore);
+								subtaskViewMap.put(subtask, score);
 							}
 							
 						}
@@ -898,28 +885,23 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		{
 			for(String elementName: this.nameTaskViewingMap.keySet())
 			{
-				HashMap<Integer, HashMap<Integer, ViewScore>> taskViewingMap =this.nameTaskViewingMap.get(elementName); 
-				
-				
-				for(Integer task: taskViewingMap.keySet())
-				{
 					
-					if(this.nameTaskRelevanceMap.get(elementName) != null && this.nameTaskRelevanceMap.get(elementName).containsKey(task))
+					if(this.nameTaskRelevanceMap.get(elementName) != null && this.nameTaskRelevanceMap.get(elementName).containsKey(currentTask))
 					{
-						HashMap<Integer, ViewScore> subtaskViewMap = taskViewingMap.get(task);
+						HashMap<Integer, ViewScore> subtaskViewMap = this.nameTaskViewingMap.get(elementName); 
 						
 						for(Integer subTask: subtaskViewMap.keySet())
 						{
 							
-							HashMap<String, ViewItem> itemRelevance =this.nameTaskRelevanceMap.get(elementName).get(task);
-							if(this.subtaskViewNameMap.containsKey(task) && this.subtaskViewNameMap.get(task).containsKey(subTask))
+							HashMap<String, ViewItem> itemRelevance =this.nameTaskRelevanceMap.get(elementName).get(currentTask);
+							if(this.subtaskViewNameMap.containsKey(currentTask) && this.subtaskViewNameMap.get(currentTask).containsKey(subTask))
 							{
-								for(String viewName: this.subtaskViewNameMap.get(task).get(subTask))
+								for(String viewName: this.subtaskViewNameMap.get(currentTask).get(subTask))
 								{
 									if(itemRelevance.containsKey(viewName))
 									{
-										ViewItem item = this.nameTaskRelevanceMap.get(elementName).get(task).get(viewName);
-										double score = taskViewingMap.get(task).get(subTask).getAverage();
+										ViewItem item = this.nameTaskRelevanceMap.get(elementName).get(currentTask).get(viewName);
+										double score = subtaskViewMap.get(subTask).getAverage();
 										
 										
 										int radius = 5;
@@ -978,7 +960,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 						//System.out.println("Element "+elementName+"("+task+") not found in relevance map");
 					}
 				}
-			}
+			
 		}
 //		System.out.println("MaxRelevance: "+maxRelevance+", max:"+maxScore+", minScore:"+minScore);
 		
@@ -1038,10 +1020,41 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		}
 		
 		//Error Bars
+		Collections.sort(errorBarGlyphList);
+		Point[] previousPointPerSubtask = new Point[totalSubtask];
 		for(ErrorBarGlyph average: errorBarGlyphList)
 		{
-			average.render(g, originX, originY, maxYLength, maxRelevanceWidth, maxTaskWidth,factor);
+			if(average.getRelevance() != StatElement.INFINITY_RELEVANCE)
+			{
+				Point p =average.draw(g, originX, originY, maxYLength, maxRelevanceWidth, maxTaskWidth,factor);
+				if(previousPointPerSubtask[average.getSubtask()-1] != null)
+				{
+					g.setStroke(getStroke(average.getSubtask()));
+					g.drawLine(previousPointPerSubtask[average.getSubtask()-1].x, previousPointPerSubtask[average.getSubtask()-1].y, p.x, p.y);
+				}
+				
+				previousPointPerSubtask[average.getSubtask()-1] = p;
+			}
+			
 		}
+	}
+	
+	private Stroke getStroke(int subtask)
+	{
+		Stroke[] dashed = { 
+			new BasicStroke(1.5f,BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,10.0f, new float[]{10f}, 0.0f),
+			new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 10.0f, new float[]{5f, 10.0f, 15.0f}, 0.0f),
+			new BasicStroke(1.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_ROUND, 10.0f, new float[]{15f}, 0.0f),
+			new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10.0f, new float[]{20f}, 0.0f),
+			
+		};
+		
+		if(subtask <=dashed.length )
+		{
+			return dashed[subtask-1];
+		}
+		
+		return new BasicStroke();
 	}
 
 }

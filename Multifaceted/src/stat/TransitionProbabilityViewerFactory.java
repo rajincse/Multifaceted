@@ -1,7 +1,9 @@
 package stat;
 
+import imdb.IMDBDataSource;
 import perspectives.base.Viewer;
 import perspectives.base.ViewerFactory;
+import perspectives.base.ViewerFactory.RequiredData;
 
 public class TransitionProbabilityViewerFactory extends ViewerFactory {
 
@@ -13,7 +15,7 @@ public class TransitionProbabilityViewerFactory extends ViewerFactory {
 	@Override
 	public Viewer create(String name) {
 		// TODO Auto-generated method stub
-		return new TransitionProbabilityViewer(name);
+		return new TransitionProbabilityViewer(name, (IMDBDataSource)this.getData().get(0));
 	}
 
 	@Override
@@ -25,7 +27,8 @@ public class TransitionProbabilityViewerFactory extends ViewerFactory {
 	@Override
 	public RequiredData requiredData() {
 		// TODO Auto-generated method stub
-		return null;
+		RequiredData rd = new RequiredData("IMDBDataSource","1");
+		return rd;
 	}
 
 }

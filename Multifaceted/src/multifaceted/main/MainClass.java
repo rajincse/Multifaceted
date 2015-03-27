@@ -12,6 +12,7 @@ import pivotpath.PivotPathViewerFactory;
 import pivotpath.analysis.PivotPathSimulationViewerFactory;
 import recommend.RecommendViewerFactory;
 import stat.ElementStatViewerFactory;
+import stat.TransitionProbabilityViewerFactory;
 
 public class MainClass {
 	
@@ -22,7 +23,7 @@ public class MainClass {
 		e.registerViewerFactory(new IMDBViewerFactory());
 		e.registerViewerFactory(new StripViewerFactory());
 		e.registerViewerFactory(new HeatMapAnalysisViewerFactory());
-		e.registerViewerFactory(new ProbabilityViewerFactory());
+		e.registerViewerFactory(new TransitionProbabilityViewerFactory());
 		e.registerViewerFactory(new RecommendViewerFactory());
 		e.registerViewerFactory(new PivotPathViewerFactory());
 		e.registerViewerFactory(new PivotPathSimulationViewerFactory());

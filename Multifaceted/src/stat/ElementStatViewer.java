@@ -7,6 +7,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Stroke;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
@@ -18,9 +19,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import javax.imageio.ImageIO;
 
 import multifaceted.Util;
 
@@ -42,6 +43,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 	public static final String PROPERTY_LOAD_SAVED_DATA = "Load Saved Data";
 	public static final String PROPERTY_LOAD_SUBTASK_VIEW_NAME = "Load Subtask View Name";
 	public static final String PROPERTY_LOAD_VIEWED_DATA = "Load Viewed Data";
+	public static final String PROPERTY_SAVE_VIEW = "Save View";
 	
 	
 	private ArrayList<StatElement> elementNames = new ArrayList<StatElement>();
@@ -53,7 +55,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 	private HashMap<String,  HashMap<Integer,ViewScore>> nameTaskViewingMap = new HashMap<String,  HashMap<Integer,ViewScore>>();
 	private HashMap<String, HashMap<Integer, HashMap<String,ViewItem>>> nameTaskRelevanceMap = new HashMap<String, HashMap<Integer,HashMap<String,ViewItem>>>();
 	private HashMap<Integer, HashMap<Integer, ArrayList<String>>> subtaskViewNameMap = new HashMap<Integer, HashMap<Integer,ArrayList<String>>>(); 
-	
+	private int currentTask;
 	private IMDBDataSource data;
 	public ElementStatViewer(String name,IMDBDataSource data) {
 		super(name);
@@ -161,13 +163,53 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 						}
 					};
 			addProperty(pLoadViewedData);
+			
+			PFileOutput saveView = new PFileOutput();
+			
+			Property<PFileOutput> pSaveView = new Property<PFileOutput>(PROPERTY_SAVE_VIEW, saveView)
+					{
+							@Override
+							protected boolean updating(PFileOutput newvalue) {
+								// TODO Auto-generated method stub
+								saveView(newvalue.path);
+								return super.updating(newvalue);
+							}
+					};
+			addProperty(pSaveView);
 		}
 		catch(Exception ex)
 		{
 			
 		}
 	}
-	private int currentTask;
+	
+	private void saveView(String filePath)
+	{	
+		
+		// TODO Auto-generated method stub
+		BufferedImage bim = new BufferedImage(2000,1200, BufferedImage.TYPE_INT_ARGB);
+		
+		Graphics2D g = bim.createGraphics();
+		
+		g.translate(200, 200);
+		render(g);
+		
+		if(!filePath.contains(".PNG"))
+		{
+			filePath+=".PNG";
+		}
+		
+		try {
+			ImageIO.write(bim, "PNG", new File(filePath));
+		
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+			
+	
+	}
+	
 	private void readViewedDirectory(String path)
 	{
 		File rootDirectory = new File(path);
@@ -995,7 +1037,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 			Stroke dashed =  new BasicStroke(1.0f,
                     BasicStroke.CAP_BUTT,
                     BasicStroke.JOIN_MITER,
-                    10.0f, new float[]{10f}, 0.0f);
+                    10.0f, new float[]{2f}, 0.0f);
 			g.setStroke(dashed);
 			g.setFont(g.getFont().deriveFont(15f));
 			
@@ -1029,8 +1071,10 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 				Point p =average.draw(g, originX, originY, maxYLength, maxRelevanceWidth, maxTaskWidth,factor);
 				if(previousPointPerSubtask[average.getSubtask()-1] != null)
 				{
+					Stroke previousStroke = g.getStroke();
 					g.setStroke(getStroke(average.getSubtask()));
 					g.drawLine(previousPointPerSubtask[average.getSubtask()-1].x, previousPointPerSubtask[average.getSubtask()-1].y, p.x, p.y);
+					g.setStroke(previousStroke);
 				}
 				
 				previousPointPerSubtask[average.getSubtask()-1] = p;
@@ -1042,10 +1086,10 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 	private Stroke getStroke(int subtask)
 	{
 		Stroke[] dashed = { 
-			new BasicStroke(1.5f,BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,10.0f, new float[]{10f}, 0.0f),
-			new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 10.0f, new float[]{5f, 10.0f, 15.0f}, 0.0f),
-			new BasicStroke(1.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_ROUND, 10.0f, new float[]{15f}, 0.0f),
-			new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10.0f, new float[]{20f}, 0.0f),
+			new BasicStroke(1.5f,BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,10.0f, new float[]{3f}, 0.0f),
+			new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 10.0f, new float[]{6f}, 0.0f),
+			new BasicStroke(1.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_ROUND, 10.0f, new float[]{12f}, 0.0f),
+			new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10.0f, new float[]{18f}, 0.0f),
 			
 		};
 		

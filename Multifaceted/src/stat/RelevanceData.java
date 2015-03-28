@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class RelevanceData implements Serializable {
+	private static final long serialVersionUID = 6336495023670801322L;
+	
 	private ArrayList<StatElement> elementNames = new ArrayList<StatElement>();
 	private HashMap<Long, ArrayList<ViewItem>> relevantItemMap = new HashMap<Long, ArrayList<ViewItem>>(); 
 	private ArrayList<String> ignoreList = new ArrayList<String>();

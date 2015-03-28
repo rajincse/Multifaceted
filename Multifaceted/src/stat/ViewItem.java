@@ -4,7 +4,8 @@ import java.io.Serializable;
 
 
 public class ViewItem implements Comparable<ViewItem>, Serializable{
-
+	private static final long serialVersionUID = 9148949409946794644L;
+	
 	private long id;
 	private int type;
 	private String name;

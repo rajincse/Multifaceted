@@ -9,7 +9,6 @@ import imdb.entity.Person;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.PriorityQueue;
@@ -19,6 +18,8 @@ import pivotpath.PivotPathViewer;
 import eyetrack.EyeTrackerItem;
 
 public class StatElement implements Serializable {
+	private static final long serialVersionUID = 2635885605671044885L;
+	
 	public static final int INVALID =-1;
 	public static final int INFINITY_RELEVANCE =1000;
 	
@@ -88,6 +89,10 @@ public class StatElement implements Serializable {
 
 	public void setTask(int task) {
 		this.task = task;
+	}
+
+	public HashMap<ViewItem, ArrayList<ViewItem>> getAdjacencyList() {
+		return adjacencyList;
 	}
 
 	@Override

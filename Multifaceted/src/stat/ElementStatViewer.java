@@ -242,9 +242,18 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 			fStream = new FileReader(file);		
 			BufferedReader bufferedReader = new BufferedReader(fStream);
 			
-			int dotIndex =file.getName().lastIndexOf("."); 
-			String subTaskString = file.getName().substring(dotIndex-1, dotIndex);
-			int subtask = Integer.parseInt(subTaskString);
+			int subtask =1;
+			try
+			{
+				int dotIndex =file.getName().lastIndexOf("."); 
+				
+				String subTaskString = file.getName().substring(dotIndex-1, dotIndex);
+				 subtask =Integer.parseInt(subTaskString);
+			}
+			catch(NumberFormatException ex)
+			{
+				System.out.println("Reading subtask from :"+filePath);
+			}
 
 			
 			String fileline = bufferedReader.readLine();
@@ -364,6 +373,25 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 				}
 				fileline = bufferedReader.readLine();
 			}
+			
+			//populate Special names:
+			int task = 4;
+			int subtask = 1;
+			
+			HashMap<Integer, ArrayList<String>> subtaskView = new HashMap<Integer, ArrayList<String>>();
+			
+			ArrayList<String> nameList = new ArrayList<String>();
+			
+			for(String elemName: this.nameTaskRelevanceMap.keySet())
+			{
+				if(this.nameTaskRelevanceMap.get(elemName).containsKey(task))
+				{
+					nameList.addAll(this.nameTaskRelevanceMap.get(elemName).get(task).keySet());
+				}
+				
+			}
+			subtaskView.put(subtask, nameList);
+			this.subtaskViewNameMap.put(task, subtaskView);
 			
 			System.out.println("Loaded:"+filePath);
 		} catch (FileNotFoundException e) {
@@ -851,7 +879,39 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 	}
 	private ArrayList<ViewItem> getInitialRelevantList(StatElement elem)
 	{
-		ArrayList<ViewItem> relevantList = this.relevantItemMap.get(elem.getId());
+		if(elem.getTask() == 4)
+		{
+			return getSpecialRelevantList();
+		}
+		else
+		{
+			ArrayList<ViewItem> relevantList = this.relevantItemMap.get(elem.getId());
+			return relevantList;
+		}
+		
+	}
+	
+	// Task 4
+	private ArrayList<ViewItem> getSpecialRelevantList()
+	{
+		int types[] = new int[]{EyeTrackerItem.TYPE_ACTOR, 
+								EyeTrackerItem.TYPE_ACTOR, 
+								EyeTrackerItem.TYPE_ACTOR,
+								EyeTrackerItem.TYPE_MOVIE,
+								EyeTrackerItem.TYPE_MOVIE,
+								EyeTrackerItem.TYPE_MOVIE
+								};
+		long ids[] = new long[]{1034789, 1242483, 441598,2643725, 2696365, 2595417};
+		String names[] = new String[]{" Rob Lowe"," Judd Nelson"," Matt Dillon", "The Breakfast Club", "The Outsiders", "St. Elmo's Fire"};
+		
+		ArrayList<ViewItem> relevantList = new ArrayList<ViewItem>();
+		
+		for(int i=0;i<types.length;i++)			
+		{
+			ViewItem item = new ViewItem(ids[i],types[i], names[i]);
+			relevantList.add(item);
+		}
+		
 		return relevantList;
 	}
 	

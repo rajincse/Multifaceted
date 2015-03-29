@@ -62,7 +62,7 @@ public class TransitionProbabilityViewer extends Viewer implements JavaAwtRender
 	private ArrayList<StatElement> elementNames = new ArrayList<StatElement>();
 	private IMDBDataSource data = null;
 	
-	private int currentTask=0;
+	private Element currentHover=null;
 	private StatElement currentView =null;
 	public TransitionProbabilityViewer(String name, IMDBDataSource data) {
 		super(name);
@@ -197,7 +197,7 @@ public class TransitionProbabilityViewer extends Viewer implements JavaAwtRender
 		int dotIndex =filePath.lastIndexOf("."); 
 		
 		String taskString = filePath.substring(dotIndex-1, dotIndex);
-		currentTask =Integer.parseInt(taskString);
+		int currentTask =Integer.parseInt(taskString);
 		 
 		ArrayList<String> fileTextLines = IOUtil.readTextFile(filePath);
 		ArrayList<Element> lastElementList = new ArrayList<TransitionProbabilityViewer.Element>();
@@ -234,7 +234,12 @@ public class TransitionProbabilityViewer extends Viewer implements JavaAwtRender
 							int elementIndex  = currentElementList.indexOf(elem);
 							if(elementIndex >=0)
 							{
-								currentElementList.get(elementIndex).isHovered = true;
+								currentHover=currentElementList.get(elementIndex); 
+								currentHover.isHovered = true;
+							}
+							else
+							{
+								currentHover = elem;
 							}
 						}
 						else if(elementData.length >= COLUMNS_PER_ELEMENT)
@@ -358,40 +363,62 @@ public class TransitionProbabilityViewer extends Viewer implements JavaAwtRender
 		if(currentView != null && currentView.getAdjacencyList().containsKey(sourceItem))
 		{
 			HashMap<ViewItem, ArrayList<ViewItem>> adjacencyList = currentView.getAdjacencyList();
+			ViewItem hoverItem = getViewItem(currentHover, currentView);
+			
+			ArrayList<ViewItem> allItems = currentView.getItems();
+			ArrayList<ViewItem> neighbors = adjacencyList.get(sourceItem);
+			
+			ArrayList<ViewItem> hoverItems = new ArrayList<ViewItem>();
+			hoverItems.add(hoverItem);
+			if(hoverItem != null && adjacencyList.containsKey(hoverItem))
+			{
+				ArrayList<ViewItem> hoveredNeighbors = adjacencyList.get(hoverItem);
+				hoverItems.addAll(hoveredNeighbors);
+			}
+			
+			
 			for( int destinationType = EyeTrackerItem.TYPE_ACTOR;destinationType< TOTAL_TYPES;destinationType++)
 			{
-				ArrayList<ViewItem> allItems = currentView.getItems();			
-				int totalDistinationTypeItems =0;
+				
 				for(ViewItem item: allItems)
 				{
 					if(item.getType() == destinationType)
 					{
-						totalDistinationTypeItems++;
+						if(!source.isHovered )
+						{
+							
+							if(!neighbors.contains(item) && !hoverItems.contains(item))
+							{
+								this.possibilityMatrix[source.type][destinationType][CONNECTION_NOT_CONNECTED_NO_HOVER]++;
+							}
+							else if(neighbors.contains(item) && !hoverItems.contains(item))
+							{
+								this.possibilityMatrix[source.type][destinationType][CONNECTION_CONNECTED_NO_HOVER]++;
+							}
+							else if(!neighbors.contains(item) && hoverItems.contains(item))
+							{
+								this.possibilityMatrix[source.type][destinationType][CONNECTION_NOT_CONNECTED_DESTINATION_HOVER]++;
+							}
+							else if(neighbors.contains(item) && hoverItems.contains(item))
+							{
+								this.possibilityMatrix[source.type][destinationType][CONNECTION_CONNECTED_DESTINATION_HOVER]++;
+							}
+						}
+						else if(source.isHovered)
+						{
+							if(!neighbors.contains(item))
+							{
+								this.possibilityMatrix[source.type][destinationType][CONNECTION_NOT_CONNECTED_SOURCE_HOVER]++;
+							}
+							else
+							{
+								this.possibilityMatrix[source.type][destinationType][CONNECTION_CONNECTED_SOURCE_HOVER]++;
+							}
+						}
 					}
 				}
 				
-				ArrayList<ViewItem> neighbors = adjacencyList.get(sourceItem);
-				int totalDestinationTypeNeighbors =0;
-				for(ViewItem item: neighbors)
-				{
-					if(item.getType() == destinationType)
-					{
-						totalDestinationTypeNeighbors++;
-					}
-				}
-				int totalNotConnected = totalDistinationTypeItems - totalDestinationTypeNeighbors;
-				//CONNECTION_NOT_CONNECTED_NO_HOVER			
-				this.possibilityMatrix[source.type][destinationType][CONNECTION_CONNECTED_NO_HOVER]+= totalNotConnected;
-				//CONNECTION_NOT_CONNECTED_SOURCE_HOVER
-				this.possibilityMatrix[source.type][destinationType][CONNECTION_NOT_CONNECTED_SOURCE_HOVER]+= totalNotConnected;
-				//CONNECTION_NOT_CONNECTED_DESTINATION_HOVER
-				this.possibilityMatrix[source.type][destinationType][CONNECTION_NOT_CONNECTED_DESTINATION_HOVER]+= totalNotConnected;
-				//CONNECTION_CONNECTED_NO_HOVER
-				this.possibilityMatrix[source.type][destinationType][CONNECTION_CONNECTED_NO_HOVER]+= totalDestinationTypeNeighbors;
-				//CONNECTION_CONNECTED_SOURCE_HOVER
-				this.possibilityMatrix[source.type][destinationType][CONNECTION_CONNECTED_SOURCE_HOVER]+= totalDestinationTypeNeighbors;
-				//CONNECTION_CONNECTED_DESTINATION_HOVER
-				this.possibilityMatrix[source.type][destinationType][CONNECTION_CONNECTED_DESTINATION_HOVER]+= totalDestinationTypeNeighbors;
+				
 			}
 			
 			

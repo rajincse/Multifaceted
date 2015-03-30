@@ -38,20 +38,16 @@ public class TransitionProbabilityViewer extends Viewer implements JavaAwtRender
 	public static final int TOTAL_CONNECTION_TYPE=6;
 	
 	public static final int CONNECTION_NOT_CONNECTED_NO_HOVER =0;
-	public static final int CONNECTION_NOT_CONNECTED_SOURCE_HOVER =1;
-	public static final int CONNECTION_NOT_CONNECTED_DESTINATION_HOVER =2;
-	public static final int CONNECTION_CONNECTED_NO_HOVER =3;
-	public static final int CONNECTION_CONNECTED_SOURCE_HOVER =4;
-	public static final int CONNECTION_CONNECTED_DESTINATION_HOVER =5;
+	public static final int CONNECTION_NOT_CONNECTED_DESTINATION_HOVER =1;
+	public static final int CONNECTION_CONNECTED_NO_HOVER =2;
+	public static final int CONNECTION_CONNECTED_DESTINATION_HOVER =3;
 	
 	
 	
 	public static final String[] TYPE_NAME =new String[]{"INIT", "ACTOR", "MOVIE", "DIRECTOR", "GENRE", "STAR"};
 	public static final String[] CONNECTION_NAME =new String[]{"NOT CONNECTED NO HOVER",
-														   "NOT CONNECTED SOURCE HOVER",
 														   "NOT CONNECTED DESTINATION HOVER",
 														   "CONNECTED NO HOVER ",
-														   "CONNECTED SOURCE HOVER",
 														   "CONNECTED DESTINATION HOVER"};
 	
 	public static final int COLUMNS_PER_ELEMENT =4;
@@ -317,27 +313,28 @@ public class TransitionProbabilityViewer extends Viewer implements JavaAwtRender
 				if(sourceElement.type != EyeTrackerItem.TYPE_MOVIE_STAR_RATING && destinationElement.type != EyeTrackerItem.TYPE_MOVIE_STAR_RATING)
 				{
 					boolean isConnected =isConnected(sourceElement, destinationElement); 
-					int connectionType = CONNECTION_NOT_CONNECTED_NO_HOVER;
-					if(!isConnected && sourceElement.isHovered)
+					boolean isSourceHovered =sourceElement.isHovered;
+					boolean isDestinationHovered = destinationElement.isHovered;
+					
+					if(currentView!= null && currentHover != null)
 					{
-						connectionType = CONNECTION_NOT_CONNECTED_SOURCE_HOVER;
+						isSourceHovered = isSourceHovered || isConnected(currentHover, sourceElement) ;
+						isDestinationHovered = isDestinationHovered || isConnected(currentHover, destinationElement);
 					}
-					else if(!isConnected && destinationElement.isHovered)
+					int connectionType = CONNECTION_NOT_CONNECTED_NO_HOVER;
+					if(!isConnected && !isDestinationHovered)
+					{
+						connectionType = CONNECTION_NOT_CONNECTED_NO_HOVER;
+					}
+					else if(!isConnected && isDestinationHovered)
 					{
 						connectionType = CONNECTION_NOT_CONNECTED_DESTINATION_HOVER;
 					}
-					else if(
-							isConnected && 
-							!(sourceElement.isHovered || destinationElement.isHovered)
-						)
+					else if(isConnected &&! isDestinationHovered)
 					{
 						connectionType = CONNECTION_CONNECTED_NO_HOVER;
 					}
-					else if(isConnected && sourceElement.isHovered)
-					{
-						connectionType = CONNECTION_CONNECTED_SOURCE_HOVER;
-					}
-					else if(isConnected && destinationElement.isHovered)
+					else if(isConnected && isDestinationHovered)
 					{
 						connectionType = CONNECTION_CONNECTED_DESTINATION_HOVER;
 					}
@@ -384,36 +381,21 @@ public class TransitionProbabilityViewer extends Viewer implements JavaAwtRender
 				{
 					if(item.getType() == destinationType)
 					{
-						if(!source.isHovered )
+						if(!neighbors.contains(item) && !hoverItems.contains(item))
 						{
-							
-							if(!neighbors.contains(item) && !hoverItems.contains(item))
-							{
-								this.possibilityMatrix[source.type][destinationType][CONNECTION_NOT_CONNECTED_NO_HOVER]++;
-							}
-							else if(neighbors.contains(item) && !hoverItems.contains(item))
-							{
-								this.possibilityMatrix[source.type][destinationType][CONNECTION_CONNECTED_NO_HOVER]++;
-							}
-							else if(!neighbors.contains(item) && hoverItems.contains(item))
-							{
-								this.possibilityMatrix[source.type][destinationType][CONNECTION_NOT_CONNECTED_DESTINATION_HOVER]++;
-							}
-							else if(neighbors.contains(item) && hoverItems.contains(item))
-							{
-								this.possibilityMatrix[source.type][destinationType][CONNECTION_CONNECTED_DESTINATION_HOVER]++;
-							}
+							this.possibilityMatrix[source.type][destinationType][CONNECTION_NOT_CONNECTED_NO_HOVER]++;
 						}
-						else if(source.isHovered)
+						else if(neighbors.contains(item) && !hoverItems.contains(item))
 						{
-							if(!neighbors.contains(item))
-							{
-								this.possibilityMatrix[source.type][destinationType][CONNECTION_NOT_CONNECTED_SOURCE_HOVER]++;
-							}
-							else
-							{
-								this.possibilityMatrix[source.type][destinationType][CONNECTION_CONNECTED_SOURCE_HOVER]++;
-							}
+							this.possibilityMatrix[source.type][destinationType][CONNECTION_CONNECTED_NO_HOVER]++;
+						}
+						else if(!neighbors.contains(item) && hoverItems.contains(item))
+						{
+							this.possibilityMatrix[source.type][destinationType][CONNECTION_NOT_CONNECTED_DESTINATION_HOVER]++;
+						}
+						else if(neighbors.contains(item) && hoverItems.contains(item))
+						{
+							this.possibilityMatrix[source.type][destinationType][CONNECTION_CONNECTED_DESTINATION_HOVER]++;
 						}
 					}
 				}
@@ -428,6 +410,10 @@ public class TransitionProbabilityViewer extends Viewer implements JavaAwtRender
 	}
 	private ViewItem getViewItem(Element elem, StatElement view)
 	{
+		if(elem.type == EyeTrackerItem.TYPE_MOVIE_STAR_RATING)
+		{
+			return null;
+		}
 		ViewItem item = new ViewItem(Long.parseLong(elem.id), elem.type,elem.name);
 		if(view != null)
 		{

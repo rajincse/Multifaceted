@@ -163,7 +163,7 @@ public class TransitionProbabilityViewer extends Viewer implements JavaAwtRender
 				for(int k=0;k<countMatrix[i][j].length;k++)
 				{
 					if(i != EyeTrackerItem.TYPE_MOVIE_STAR_RATING && j!= EyeTrackerItem.TYPE_MOVIE_STAR_RATING
-							&& countMatrix[i][j][k] > 0 && possibilityMatrix[i][j][k] > 0)
+							&& !(countMatrix[i][j][k] == 0 && possibilityMatrix[i][j][k] == 0))
 					{
 						String msg= TYPE_NAME[i]+"\t"+TYPE_NAME[j]+"\t"+CONNECTION_NAME[k]+"\t"+countMatrix[i][j][k]+"\t"+this.possibilityMatrix[i][j][k];
 						System.out.println(msg);

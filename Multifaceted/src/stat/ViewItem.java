@@ -48,6 +48,14 @@ public class ViewItem implements Comparable<ViewItem>, Serializable{
 		return "{ id:"+this.id+", type:"+this.type+", name:"+ this.name+", relevance:"+this.relevance+"}";
 	}
 	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (int) (id ^ (id >>> 32));
+		result = prime * result + type;
+		return result;
+	}
+	@Override
 	public boolean equals(Object obj) {
 		// TODO Auto-generated method stub
 		if(obj instanceof ViewItem)

@@ -425,6 +425,54 @@ public class TransitionProbabilityViewer extends Viewer implements JavaAwtRender
 		}
 		return item;
 	}
+	private boolean isConnectedToMovie(CompactMovie compactMovie, Element dest)
+	{
+		Movie movie = this.data.getMovie(compactMovie);
+		if(dest.type == EyeTrackerItem.TYPE_ACTOR)
+		{
+			CompactPerson actor = new CompactPerson(Long.parseLong(dest.id), dest.name, "m");
+			if(movie.getActors().contains(actor))
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else if(dest.type == EyeTrackerItem.TYPE_DIRECTOR)
+		{
+			CompactPerson director = new CompactPerson(Long.parseLong(dest.id), dest.name, "m");
+			if(movie.getDirectors().contains(director))
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else if(dest.type == EyeTrackerItem.TYPE_GENRE)
+		{
+			Genre genre = new Genre(Long.parseLong(dest.id), dest.name);
+			if(movie.getGenreList().contains(genre))
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else if(dest.type == EyeTrackerItem.TYPE_MOVIE_STAR_RATING)
+		{
+			return false;
+		}
+		else
+		{
+			return false;
+		}
+	}
 	private boolean isConnected(Element source, Element dest)
 	{
 		if(source.type == dest.type)
@@ -441,64 +489,31 @@ public class TransitionProbabilityViewer extends Viewer implements JavaAwtRender
 		}
 		else if(source.type == EyeTrackerItem.TYPE_MOVIE)
 		{
-			if(currentView == null)
+			CompactMovie compactMovie = new CompactMovie(Long.parseLong(source.id), source.name, 1900);
+			if(currentView != null)
 			{
-				CompactMovie compactMovie = new CompactMovie(Long.parseLong(source.id), source.name, 1900);
-				Movie movie = this.data.getMovie(compactMovie);
-				if(dest.type == EyeTrackerItem.TYPE_ACTOR)
-				{
-					CompactPerson actor = new CompactPerson(Long.parseLong(dest.id), dest.name, "m");
-					if(movie.getActors().contains(actor))
-					{
-						return true;
-					}
-					else
-					{
-						return false;
-					}
-				}
-				else if(dest.type == EyeTrackerItem.TYPE_DIRECTOR)
-				{
-					CompactPerson director = new CompactPerson(Long.parseLong(dest.id), dest.name, "m");
-					if(movie.getDirectors().contains(director))
-					{
-						return true;
-					}
-					else
-					{
-						return false;
-					}
-				}
-				else if(dest.type == EyeTrackerItem.TYPE_GENRE)
-				{
-					Genre genre = new Genre(Long.parseLong(dest.id), dest.name);
-					if(movie.getGenreList().contains(genre))
-					{
-						return true;
-					}
-					else
-					{
-						return false;
-					}
-				}
-				else if(dest.type == EyeTrackerItem.TYPE_MOVIE_STAR_RATING)
-				{
-					return false;
-				}
-				else
-				{
-					return false;
-				}
-			}
-			else
-			{
-				
+
 				ViewItem sourceItem = getViewItem(source, currentView);
 				ViewItem destItem =getViewItem(dest,currentView);
 				
-				return this.currentView.getAdjacencyList().containsKey(sourceItem) 
-						&& this.currentView.getAdjacencyList().get(sourceItem).contains(destItem);
+				if(this.currentView.getAdjacencyList().containsKey(sourceItem))
+				{
+					ArrayList<ViewItem> neighbors =  this.currentView.getAdjacencyList().get(sourceItem);
+					boolean isConnected = neighbors.contains(destItem);
 					
+					return isConnected;
+					
+				}
+				else
+				{
+					return isConnectedToMovie(compactMovie, dest);
+				}
+				
+				
+			}
+			else
+			{
+				return isConnectedToMovie(compactMovie, dest);	
 			}
 			
 		}

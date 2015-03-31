@@ -187,11 +187,11 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 	{	
 		
 		// TODO Auto-generated method stub
-		BufferedImage bim = new BufferedImage(maxRelevance * 200+500,1200, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage bim = new BufferedImage(maxRelevance * 200+450,1000, BufferedImage.TYPE_INT_ARGB);
 		
 		Graphics2D g = bim.createGraphics();
 		
-		g.translate(200, 200);
+		g.translate(150, 50);
 		render(g);
 		
 		if(!filePath.contains(".PNG"))
@@ -1077,7 +1077,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 										double score = subtaskViewMap.get(subTask).getAverage();
 										
 										
-										int radius = 10;
+										int radius = 15;
 										int pointX = originX+  item.getRelevance()* maxRelevanceWidth+
 												radius+
 												(subTask-1)*maxTaskWidth+
@@ -1139,7 +1139,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 			int x = originX+50+maxRelevanceWidth * i;
 			int y = originY+ 100; //- maxYLength/2 + i * 50;
 			
-			drawElement(i,x,y, 10, g);
+			drawElement(i,x,y, 20, g);
 			
 			
 			g.drawString(typeName[i], x+25, y+15);
@@ -1157,12 +1157,12 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
                     BasicStroke.JOIN_MITER,
                     10.0f, new float[]{2f}, 0.0f);
 			g.setStroke(dashed);
-			g.setFont(g.getFont().deriveFont(15f));
+			g.setFont(g.getFont().deriveFont(25f));
 			
 			for(int j=0;j<maxSubtask;j++)
 			{	
 				g.drawLine(originX+i*maxRelevanceWidth+j*maxTaskWidth,originY, originX+i*maxRelevanceWidth+j*maxTaskWidth, originY-maxYLength);
-				g.drawString("t"+(j+1), originX+i*maxRelevanceWidth+j*maxTaskWidth+10, originY+30);
+				g.drawString("t"+(j+1), originX+i*maxRelevanceWidth+j*maxTaskWidth+maxTaskWidth/2-5, originY+30);
 			}
 			g.setStroke(previousStroke);
 			g.setFont(g.getFont().deriveFont(30f));
@@ -1173,10 +1173,10 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		for(int i=0;i<=totalPartitions;i++)
 		{
 			int y = originY -  i * maxYLength/totalPartitions;
-			g.drawLine(originX-30,y, originX+30, y);
+			g.drawLine(originX-15,y, originX+15, y);
 			
 			double scoreValue = i * 1.0 / factor / totalPartitions;
-			g.drawString(String.format("%.2f",scoreValue), originX-100, y);
+			g.drawString(String.format("%.3f",scoreValue), originX-100, y+10);
 		}
 		
 		//Error Bars
@@ -1186,6 +1186,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		{
 			if(average.getRelevance() != StatElement.INFINITY_RELEVANCE)
 			{
+				g.setStroke(new BasicStroke(1.5f));
 				Point p =average.draw(g, originX, originY, maxYLength, maxRelevanceWidth, maxTaskWidth,factor);
 				if(previousPointPerSubtask[average.getSubtask()-1] != null)
 				{
@@ -1204,10 +1205,10 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 	private Stroke getStroke(int subtask)
 	{
 		Stroke[] dashed = { 
-			new BasicStroke(1.5f,BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,10.0f, new float[]{3f}, 0.0f),
+			new BasicStroke(2f,BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,10.0f, new float[]{3f}, 0.0f),
 			new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 10.0f, new float[]{6f}, 0.0f),
 			new BasicStroke(1.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_ROUND, 10.0f, new float[]{12f}, 0.0f),
-			new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10.0f, new float[]{18f}, 0.0f),
+			new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10.0f, new float[]{24f}, 0.0f),
 			
 		};
 		

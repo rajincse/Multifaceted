@@ -22,6 +22,10 @@ public class Util {
 	public static final int RECT_SIDE_BOTTOM_LEFT =7;
 	public static final int RECT_SIDE_LEFT =8;
 	
+	public static Color getBorderColor()
+	{
+		return Color.gray;
+	}
 	public static void drawStar(int x, int y, int rad, Color c, Graphics2D g)
 	{	
 		Color previousColor = g.getColor();		
@@ -33,7 +37,7 @@ public class Util {
 		g.setColor(c);
 		g.fillRect(0, 0, (int)a, (int)a);
 		
-		g.setColor(Color.black);
+		g.setColor(getBorderColor());
 		g.drawRect(0, 0, (int)a, (int)a);
 		
 		g.translate(a/2, a/2);
@@ -44,7 +48,7 @@ public class Util {
 		g.setColor(c);
 		g.fillRect(0, 0, (int)a, (int)a);
 		
-		g.setColor(Color.black);
+		g.setColor(getBorderColor());
 		g.drawRect(0, 0, (int)a, (int)a);
 		
 		g.translate(a/2, a/2);		
@@ -71,7 +75,7 @@ public class Util {
 		g.setColor(c);
 		g.fillPolygon(xPoints, yPoints, xPoints.length);
 		
-		g.setColor(Color.black);
+		g.setColor(getBorderColor());
 		g.drawPolygon(xPoints, yPoints, xPoints.length);
 		
 		
@@ -93,7 +97,7 @@ public class Util {
 		g.setColor(c);
 		g.fillRect(0, 0, (int)a, (int)a);
 		
-		g.setColor(Color.black);
+		g.setColor(getBorderColor());
 		g.drawRect(0, 0, (int)a, (int)a);
 		
 		g.translate(a/2, a/2);
@@ -114,7 +118,7 @@ public class Util {
 		g.setColor(c);
 		g.fillRect(0, 0, (int)a, (int)a);
 		
-		g.setColor(Color.black);
+		g.setColor(getBorderColor());
 		g.drawRect(0, 0, (int)a, (int)a);
 		
 		g.translate(a/2, a/2);

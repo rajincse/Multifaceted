@@ -80,15 +80,15 @@ public class ErrorBarGlyph implements Comparable<ErrorBarGlyph> {
 	{
 		return new ErrorBarGlyph(relevance, subtask);
 	}
-	public Point draw(Graphics2D g, int originX, int originY, int maxYLength, int maxRelevanceWidth, int maxTaskWidth, int factor)
+	public Point draw(Graphics2D g, int originX, int originY, int maxYLength, int maxRelevanceWidth, int maxTaskWidth, double factor)
 	{
 		Color previousColor = g.getColor();
 		int radius =5;
 		
 		int x = originX+ 
 				getRelevance()*maxRelevanceWidth+ 
-				(getSubtask()-1)* maxTaskWidth
-				+ radius+(int)(Math.random()*(maxTaskWidth-2*radius));
+				(getSubtask()-1)* maxTaskWidth+ maxTaskWidth/2;
+//				+ radius+(int)(Math.random()*(maxTaskWidth-2*radius));
 		
 		int y = originY - (int) (getAverage()*factor * maxYLength);
 		

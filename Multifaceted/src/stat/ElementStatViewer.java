@@ -157,7 +157,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 						protected boolean updating(PFileInput newvalue) {
 							// TODO Auto-generated method stub
 							readViewedDirectory(newvalue.path);
-							
+							calculateParameters();
 							requestRender();
 							return super.updating(newvalue);
 						}
@@ -187,7 +187,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 	{	
 		
 		// TODO Auto-generated method stub
-		BufferedImage bim = new BufferedImage(2000,1200, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage bim = new BufferedImage(maxRelevance * 200+500,1200, BufferedImage.TYPE_INT_ARGB);
 		
 		Graphics2D g = bim.createGraphics();
 		
@@ -212,6 +212,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 	
 	private void readViewedDirectory(String path)
 	{
+		init();
 		File rootDirectory = new File(path);
 		String taskString = rootDirectory.getName().substring(rootDirectory.getName().length()-1);
 		currentTask= Integer.parseInt(taskString);
@@ -254,6 +255,11 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 			{
 				System.out.println("Reading subtask from :"+filePath);
 			}
+			
+			if(subtask > maxSubtask)
+			 {
+				 maxSubtask = subtask;
+			 }
 
 			
 			String fileline = bufferedReader.readLine();
@@ -302,7 +308,6 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 								score = new ViewScore(viewingScore);
 								subtaskViewMap.put(subtask, score);
 							}
-							
 						}
 					}
 				}
@@ -959,6 +964,76 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		return false;
 	}
 
+	private int maxSubtask =1;
+	private int maxRelevance =0;
+	private double maxScore =0;
+	private double minScore =1;
+	private void init()
+	{
+		this.nameTaskViewingMap.clear();
+		maxSubtask =1;
+		maxRelevance=0;
+		maxScore =0;
+		minScore =1;
+	}
+	private void calculateParameters()
+	{
+		if(this.nameTaskRelevanceMap != null && this.nameTaskViewingMap != null
+				&& !this.nameTaskRelevanceMap.isEmpty()
+				&& !this.nameTaskViewingMap.isEmpty()
+		)
+		{
+			for(String elementName: this.nameTaskViewingMap.keySet())
+			{
+					
+					if(this.nameTaskRelevanceMap.get(elementName) != null && this.nameTaskRelevanceMap.get(elementName).containsKey(currentTask))
+					{
+						HashMap<Integer, ViewScore> subtaskViewMap = this.nameTaskViewingMap.get(elementName); 
+						
+						for(Integer subTask: subtaskViewMap.keySet())
+						{
+							
+							HashMap<String, ViewItem> itemRelevance =this.nameTaskRelevanceMap.get(elementName).get(currentTask);
+							if(this.subtaskViewNameMap.containsKey(currentTask) && this.subtaskViewNameMap.get(currentTask).containsKey(subTask))
+							{
+								for(String viewName: this.subtaskViewNameMap.get(currentTask).get(subTask))
+								{
+									if(itemRelevance.containsKey(viewName))
+									{
+										ViewItem item = this.nameTaskRelevanceMap.get(elementName).get(currentTask).get(viewName);
+										double score = subtaskViewMap.get(subTask).getAverage();
+										
+										if(item.getRelevance() > maxRelevance && item.getRelevance() != StatElement.INFINITY_RELEVANCE)
+										{
+											maxRelevance = item.getRelevance();
+										}
+										
+										if(score > maxScore)
+										{
+											maxScore = score;
+										}
+										
+										if(score < minScore)
+										{
+											minScore = score;
+										}
+									
+										
+										break;
+									}
+									
+								}
+							}
+							
+						}
+					}
+				}
+			
+		}
+
+		System.out.println("MaxRelevance: "+maxRelevance+", max:"+maxScore+", minScore:"+minScore+", max subtask:"
+		+maxSubtask+", factor:"+String.format("%.2f", 1.0 / maxScore));
+	}
 	@Override
 	public void render(Graphics2D g) {
 		// TODO Auto-generated method stub
@@ -969,14 +1044,10 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		
 		
 		int maxYLength =800;
-		int factor =50;
+		double factor =1.0 / maxScore;
 		int maxRelevanceWidth =200;
-		int maxTaskWidth =50;
+		int maxTaskWidth =(int)( 1.0 * maxRelevanceWidth/ maxSubtask) ;
 		
-		int totalSubtask =4;
-		int maxRelevance =0;
-		double maxScore =0;
-		double minScore =1;
 		
 		ArrayList<ErrorBarGlyph> errorBarGlyphList = new ArrayList<ErrorBarGlyph>();
 		
@@ -1006,7 +1077,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 										double score = subtaskViewMap.get(subTask).getAverage();
 										
 										
-										int radius = 5;
+										int radius = 10;
 										int pointX = originX+  item.getRelevance()* maxRelevanceWidth+
 												radius+
 												(subTask-1)*maxTaskWidth+
@@ -1014,22 +1085,8 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 										int pointY = originY - (int) (score*factor * maxYLength);
 										
 										Color c = Util.getRelevanceChartColor(item.getType());
-										Util.drawCircle(pointX, pointY,radius, c, g);
 										
-										if(item.getRelevance() > maxRelevance && item.getRelevance() != StatElement.INFINITY_RELEVANCE)
-										{
-											maxRelevance = item.getRelevance();
-										}
-										
-										if(score > maxScore)
-										{
-											maxScore = score;
-										}
-										
-										if(score < minScore)
-										{
-											minScore = score;
-										}
+										drawElement(item.getType(),pointX, pointY,radius, g);
 										
 										int index = errorBarGlyphList.indexOf(ErrorBarGlyph.getInstance(item.getRelevance(), subTask));
 										if(index >=0)
@@ -1064,7 +1121,6 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 				}
 			
 		}
-//		System.out.println("MaxRelevance: "+maxRelevance+", max:"+maxScore+", minScore:"+minScore);
 		
 		g.setColor(Color.black);
 		
@@ -1075,15 +1131,17 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		// Draw Legends
 		g.setFont(g.getFont().deriveFont(30f));
 		int startType =EyeTrackerItem.TYPE_ACTOR;
-		int endType = EyeTrackerItem.TYPE_MOVIE_STAR_RATING;
+		int endType = EyeTrackerItem.TYPE_GENRE;
 		String [] typeName = new String[]{"INIT", "Actor", "Movie", "Director", "Genre", "Star"};
+		g.drawString("Legends:", originX+75, originY+115);
 		for(int i=startType;i<= endType;i++)
 		{
-			int x = originX+(maxRelevance+1)*maxRelevanceWidth+50;
-			int y = originY- maxYLength/2 + i * 50;
+			int x = originX+50+maxRelevanceWidth * i;
+			int y = originY+ 100; //- maxYLength/2 + i * 50;
 			
-			Color c = Util.getRelevanceChartColor(i);
-			Util.drawCircle(x, y, 10, c, g);
+			drawElement(i,x,y, 10, g);
+			
+			
 			g.drawString(typeName[i], x+25, y+15);
 		}
 		
@@ -1101,7 +1159,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 			g.setStroke(dashed);
 			g.setFont(g.getFont().deriveFont(15f));
 			
-			for(int j=0;j<totalSubtask;j++)
+			for(int j=0;j<maxSubtask;j++)
 			{	
 				g.drawLine(originX+i*maxRelevanceWidth+j*maxTaskWidth,originY, originX+i*maxRelevanceWidth+j*maxTaskWidth, originY-maxYLength);
 				g.drawString("t"+(j+1), originX+i*maxRelevanceWidth+j*maxTaskWidth+10, originY+30);
@@ -1118,12 +1176,12 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 			g.drawLine(originX-30,y, originX+30, y);
 			
 			double scoreValue = i * 1.0 / factor / totalPartitions;
-			g.drawString(""+scoreValue, originX-100, y);
+			g.drawString(String.format("%.2f",scoreValue), originX-100, y);
 		}
 		
 		//Error Bars
 		Collections.sort(errorBarGlyphList);
-		Point[] previousPointPerSubtask = new Point[totalSubtask];
+		Point[] previousPointPerSubtask = new Point[maxSubtask];
 		for(ErrorBarGlyph average: errorBarGlyphList)
 		{
 			if(average.getRelevance() != StatElement.INFINITY_RELEVANCE)
@@ -1159,6 +1217,27 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		}
 		
 		return new BasicStroke();
+	}
+	
+	private void drawElement(int type,int x, int y, int rad, Graphics2D g)
+	{
+		Color c = Util.getRelevanceChartColor(type);
+		if(type== EyeTrackerItem.TYPE_ACTOR)
+		{
+			Util.drawSquare(x, y, rad, c, g);
+		}
+		else if(type== EyeTrackerItem.TYPE_MOVIE)
+		{
+			Util.drawEquilateralTriangle(x, y, rad, c, g);
+		}
+		else if(type== EyeTrackerItem.TYPE_DIRECTOR)
+		{
+			Util.drawStar(x, y, rad, c, g);
+		}	
+		else if(type== EyeTrackerItem.TYPE_GENRE)
+		{
+			Util.drawTiltedSquare(x, y, rad, c, g);
+		}
 	}
 
 }

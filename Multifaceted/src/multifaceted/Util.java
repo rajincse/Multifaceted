@@ -22,7 +22,106 @@ public class Util {
 	public static final int RECT_SIDE_BOTTOM_LEFT =7;
 	public static final int RECT_SIDE_LEFT =8;
 	
-	
+	public static void drawStar(int x, int y, int rad, Color c, Graphics2D g)
+	{	
+		Color previousColor = g.getColor();		
+		g.translate(x, y);
+		double a = 1.414* rad;
+		
+		g.translate(-a/2, -a/2);
+		
+		g.setColor(c);
+		g.fillRect(0, 0, (int)a, (int)a);
+		
+		g.setColor(Color.black);
+		g.drawRect(0, 0, (int)a, (int)a);
+		
+		g.translate(a/2, a/2);
+		
+		g.rotate(Math.PI/4);
+		g.translate(-a/2, -a/2);
+		
+		g.setColor(c);
+		g.fillRect(0, 0, (int)a, (int)a);
+		
+		g.setColor(Color.black);
+		g.drawRect(0, 0, (int)a, (int)a);
+		
+		g.translate(a/2, a/2);		
+		g.rotate(-Math.PI/4);
+		
+		
+		g.translate(-x, -y);
+		g.setColor(previousColor);
+		
+	}
+	public static void drawEquilateralTriangle(int x, int y, int rad, Color c, Graphics2D g)
+	{
+		Color previousColor = g.getColor();
+		
+		g.translate(x, y);
+		
+		
+		
+		double a = 1.732* rad;
+		int xPoints[] = new int[]{0, (int)(a), (int )(a/2)};
+		int yPoints[] = new int[]{0, 0	,(int )(- 1.5 * rad) };
+		g.translate(-(int )(a/2),(int) (0.5 * rad));
+		
+		g.setColor(c);
+		g.fillPolygon(xPoints, yPoints, xPoints.length);
+		
+		g.setColor(Color.black);
+		g.drawPolygon(xPoints, yPoints, xPoints.length);
+		
+		
+		g.translate((int )(a/2),-(int) (0.5 * rad));
+		
+		g.translate(-x, -y);
+		g.setColor(previousColor);
+	}
+	public static void drawTiltedSquare(int x, int y, int rad, Color c, Graphics2D g)
+	{
+		Color previousColor = g.getColor();
+		
+		g.translate(x, y);
+		g.rotate(Math.PI/4);
+		
+		double a = 1.414* rad;
+		g.translate(-a/2, -a/2);
+		
+		g.setColor(c);
+		g.fillRect(0, 0, (int)a, (int)a);
+		
+		g.setColor(Color.black);
+		g.drawRect(0, 0, (int)a, (int)a);
+		
+		g.translate(a/2, a/2);
+		
+		g.rotate(-Math.PI/4);
+		g.translate(-x, -y);
+		g.setColor(previousColor);
+	}
+	public static void drawSquare(int x, int y, int rad, Color c, Graphics2D g)
+	{
+		Color previousColor = g.getColor();
+		
+		g.translate(x, y);
+		
+		double a = 1.414* rad;
+		g.translate(-a/2, -a/2);
+		
+		g.setColor(c);
+		g.fillRect(0, 0, (int)a, (int)a);
+		
+		g.setColor(Color.black);
+		g.drawRect(0, 0, (int)a, (int)a);
+		
+		g.translate(a/2, a/2);
+		
+		g.translate(-x, -y);
+		g.setColor(previousColor);
+	}
 	public static void drawCircle(int x, int y, Color c, Graphics2D g)
 	{
 		Color previousColor = g.getColor();
@@ -233,19 +332,19 @@ public class Util {
 	{
 		if(type== EyeTrackerItem.TYPE_ACTOR)
 		{
-			return new Color(255,55,0, 200);
+			return new Color(230,97,1, 200);
 		}
 		else if(type== EyeTrackerItem.TYPE_MOVIE)
 		{
-			return  new Color(0,34,255,200);
+			return  new Color(253,184,99,200);
 		}
 		else if(type== EyeTrackerItem.TYPE_DIRECTOR)
 		{
-			return new Color(0,250,29,200);			
+			return new Color(178,171,210,200);			
 		}	
 		else if(type== EyeTrackerItem.TYPE_GENRE)
 		{
-			return  new Color(250,242,0,200);
+			return  new Color(94,60,153,200);
 		}	
 		else if(type== EyeTrackerItem.TYPE_MOVIE_STAR_RATING)
 		{

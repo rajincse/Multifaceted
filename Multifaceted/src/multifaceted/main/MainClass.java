@@ -10,6 +10,7 @@ import imdb.analysis.StripViewerFactory;
 import perspectives.base.Environment;
 import pivotpath.PivotPathViewerFactory;
 import pivotpath.analysis.PivotPathSimulationViewerFactory;
+import realtime.StreamDataViewerFactory;
 import recommend.RecommendViewerFactory;
 import stat.ElementStatViewerFactory;
 import stat.TransitionProbabilityViewerFactory;
@@ -29,6 +30,8 @@ public class MainClass {
 		e.registerViewerFactory(new PivotPathSimulationViewerFactory());
 		e.registerViewerFactory(new EyeInterestAnalyzerViewerFactory());
 		e.registerViewerFactory(new ElementStatViewerFactory());
+		e.registerViewerFactory(new StreamDataViewerFactory());
 //		e.addViewer(new ScarfplotViewer("Scarfplot"));
+		
 	}
 }

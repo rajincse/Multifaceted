@@ -336,20 +336,20 @@ public class Util {
 	{
 		if(type== EyeTrackerItem.TYPE_ACTOR)
 		{
-			return new Color(230,97,1, 200);
+			return new Color(230,43,14);
 		}
 		else if(type== EyeTrackerItem.TYPE_MOVIE)
 		{
-			return  new Color(253,184,99,200);
+			return new Color(54,54,235);
 		}
 		else if(type== EyeTrackerItem.TYPE_DIRECTOR)
 		{
-			return new Color(178,171,210,200);			
+			return new Color(21,214,73);
 		}	
 		else if(type== EyeTrackerItem.TYPE_GENRE)
 		{
-			return  new Color(94,60,153,200);
-		}	
+			return new Color(250,250,15);
+		}
 		else if(type== EyeTrackerItem.TYPE_MOVIE_STAR_RATING)
 		{
 			return  new Color(212,0,250,200);

@@ -22,14 +22,14 @@ public class MainClass {
 		Environment e = new Environment(false);
 		e.registerDataSourceFactory(new IMDBDataFactory());
 		e.registerViewerFactory(new IMDBViewerFactory());
-		e.registerViewerFactory(new StripViewerFactory());
-		e.registerViewerFactory(new HeatMapAnalysisViewerFactory());
-		e.registerViewerFactory(new TransitionProbabilityViewerFactory());
-		e.registerViewerFactory(new RecommendViewerFactory());
+//		e.registerViewerFactory(new StripViewerFactory());
+//		e.registerViewerFactory(new HeatMapAnalysisViewerFactory());
+//		e.registerViewerFactory(new TransitionProbabilityViewerFactory());
+//		e.registerViewerFactory(new RecommendViewerFactory());
 		e.registerViewerFactory(new PivotPathViewerFactory());
-		e.registerViewerFactory(new PivotPathSimulationViewerFactory());
+//		e.registerViewerFactory(new PivotPathSimulationViewerFactory());
 		e.registerViewerFactory(new EyeInterestAnalyzerViewerFactory());
-		e.registerViewerFactory(new ElementStatViewerFactory());
+//		e.registerViewerFactory(new ElementStatViewerFactory());
 		e.registerViewerFactory(new StreamDataViewerFactory());
 //		e.addViewer(new ScarfplotViewer("Scarfplot"));
 		

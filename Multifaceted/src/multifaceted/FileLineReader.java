@@ -20,7 +20,7 @@ public abstract class FileLineReader {
 		
 		while(fileLine != null)
 		{	
-			readLine(fileLine);
+			readLine(fileLine, file);
 			fileLine = bufferedReader.readLine();
 		}
 		
@@ -36,6 +36,6 @@ public abstract class FileLineReader {
 		}
 	}
 	
-	public abstract void readLine(String fileLine);
+	public abstract void readLine(String fileLine, File currentFile);
 	
 }

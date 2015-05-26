@@ -19,13 +19,17 @@ import perspectives.two_d.JavaAwtRenderer;
 
 public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer {
 
-	public static final int CELL_WIDTH =1;
+	public static final int CELL_WIDTH =5;
 	public static final int CELL_HEIGHT =12;
+	public static final int MAX_CELLS =10;
 	public static final int MAX_X =1200;
 	public static final int MAX_Y = 1000;
-	public static final int TIME_RATIO =500;
+	public static final int TIME_STEP =100;
+	public static final int LABEL_WIDTH =200;
+	public static final int POSITION_X_USER_NAME=300;
+	public static final int POSITION_Y_USER_NAME=10;
 	
-	public static final int HEIGHT_PER_SUBJECT =25;
+	public static final int HEIGHT_PER_SUBJECT =120;
 	
 	public static final String PROPERTY_LOAD_SEQUENCE ="Load";
 	
@@ -37,6 +41,9 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		super(name);
 		try
 		{
+			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Sequence_small_2.txt";
+			int initialTime =28;
+			
 			Property<PFileInput> pLoad = new Property<PFileInput>(PROPERTY_LOAD_SEQUENCE, new PFileInput())
 					{
 						@Override
@@ -58,16 +65,27 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 					};
 			addProperty(pLoad);
 			
+			PFileInput loadFile = new PFileInput(path);
+			pLoad.setValue(loadFile);
+			
+			
 			Property<PInteger> pTime = new Property<PInteger>(PROPERTY_TIME, new PInteger(0))
 					{
 						@Override
 						protected boolean updating(PInteger newvalue) {
 						
+							for(TestSubject subject: testSubjectList)
+							{
+								subject.prepareRendering(newvalue.intValue() * EyeTrackDataStreamViewer.TIME_STEP);
+							}
 							requestRender();
 							return super.updating(newvalue);
 						}
 					};
 			addProperty(pTime);
+			PInteger pSetTime = new PInteger(initialTime);
+			pTime.setValue(pSetTime);
+			
 		}
 		catch(Exception ex)
 		{
@@ -86,7 +104,6 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		}
 		TestSubject subject = new TestSubject(subjectName, directory, fileNameList);
 		this.testSubjectList.add(subject);
-		System.out.println(subject);
 	}
 
 	@Override
@@ -138,7 +155,7 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		g.setColor(Color.black);
 		
 		int time = getCurrentTime();
-		g.drawLine(time, 0, time, MAX_Y);
+		g.drawRect((time-1)*CELL_WIDTH, 0, CELL_WIDTH, MAX_Y);
 	}
 	
 	private int getCurrentTime()
@@ -152,7 +169,7 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		{
 			g.translate(100, 0);
 			
-			renderTimeLine(g);
+			
 			int yTranslate =50;
 			g.translate(0, yTranslate);
 			
@@ -161,13 +178,14 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 			for(TestSubject subject: testSubjectList)
 			{
 				
-				subject.render(g, time * TIME_RATIO);
+				subject.render(g);
 				g.translate(0, HEIGHT_PER_SUBJECT);
 				yTranslate+= HEIGHT_PER_SUBJECT;
 				
 			}
 			
 			g.translate(0, -yTranslate);
+			renderTimeLine(g);
 			g.translate(-100, 0);
 		}
 	}

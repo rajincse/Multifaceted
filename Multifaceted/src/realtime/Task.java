@@ -1,16 +1,16 @@
 package realtime;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 
 import multifaceted.FileLineReader;
-import multifaceted.Util;
 
 public class Task {
 	private String filePath;
 	private ArrayList<EyeEvent> eyeEventList = new ArrayList<EyeEvent>();
+	private HashMap<String, DataObject> dataObjectList = new HashMap<String, DataObject>();
 	private long startTime =0;
 	public Task(String filePath) {
 		this.filePath = filePath;
@@ -24,7 +24,7 @@ public class Task {
 			public void readLine(String fileLine, File currentFile) {
 				// TODO Auto-generated method stub
 				String[] split = fileLine.split("\t");
-				if (split[0].equals("Eye")){
+				if (split[0].equals("Eye") && !split[4].trim().equals("5") ){
 	        		
 	        		long t = Long.parseLong(split[1]) ;
 	        		double s = Double.parseDouble(split[5]);
@@ -32,6 +32,17 @@ public class Task {
 	        		
 	        		String objId = split[2];
 	        		DataObject object = new DataObject(objId, split[3], Integer.parseInt(split[4].trim()));
+	        		if(dataObjectList.containsKey(objId))
+	        		{
+	        			object = dataObjectList.get(objId);
+	        		}
+	        		else
+	        		{
+	        			dataObjectList.put(objId, object);
+	        		}
+	        		
+	        		
+	        		
 	        		if(eyeEventList.isEmpty())
 	        		{
 	        			startTime = t;
@@ -42,69 +53,96 @@ public class Task {
 			}
 		}.read(filePath);
 	}
-	public int getDominatingType(ArrayList<EyeEvent> cellEventList)
+	public double[] getHeatmapCells(DataObject qualifiedItem)
 	{
-		if(!cellEventList.isEmpty())
+		return getHeatmapCells(qualifiedItem, getEndTime());
+	}
+	public double[] getHeatmapCells(DataObject qualifiedItem, long endTime)
+	{
+		int totalCells =(int) (endTime/ EyeTrackDataStreamViewer.TIME_STEP)+1;
+		double[] heatmapCells = new double[totalCells];
+		int [] count =new int[totalCells];
+		
+		for(EyeEvent event: eyeEventList)
 		{
-			int types[] = new int[6];
-			for(EyeEvent event:cellEventList)
+			if(event.getTime() > endTime)
 			{
-				types[event.getTarget().getType()]++;
+				break;
 			}
-			
-			int maxTypeScore =-1;
-			int maxType =-1;
-			for(int i=0;i<types.length;i++)
+			if(event.getTarget().equals(qualifiedItem))
 			{
-				if(types[i] > maxTypeScore)
-				{
-					maxTypeScore = types[i];
-					maxType = i;
-				}
+				int index = (int) (event.getTime()/ EyeTrackDataStreamViewer.TIME_STEP);
+				heatmapCells[index]+=event.getScore();
+				count[index]++;
 			}
-			return maxType;
+		}
+		
+		for(int i=0;i<heatmapCells.length;i++)
+		{
+			double dividend = Math.max(count[i],Math.sqrt(EyeTrackDataStreamViewer.TIME_STEP/1000.*60));
+			heatmapCells[i] = heatmapCells[i] / dividend; // find Average
+		}
+		
+		return heatmapCells;
+	}
+	public long getEndTime()
+	{
+		if(!eyeEventList.isEmpty())	
+		{
+		
+			long endTime = eyeEventList.get(eyeEventList.size()-1).getTime();
+			return endTime;
 		}
 		else
 		{
-			return -1;
+			return 0;
 		}
 		
 	}
-	public void render(Graphics2D g)
+	public ArrayList<DataObject> getQualifiedItems(long startTimeMarker)
 	{
-		long lastTime = getEyeEventList().get(getEyeEventList().size()-1).getTime() ;
-		render(g, lastTime);
-	}
-	public void render(Graphics2D g, long lastTime)
-	{
-		int totalCells = (int )(lastTime/ EyeTrackDataStreamViewer.TIME_RATIO);
-		int currentIndex =0;
-		long currentTimeMarker =0;
-		for(int i=0;i<totalCells;i++)
+		ArrayList<DataObject> qualifiedItems = new ArrayList<DataObject>();
+		if(!eyeEventList.isEmpty())
 		{
-			ArrayList<EyeEvent> cellEventList = new ArrayList<EyeEvent>();
-			long tempTimeMarker =currentTimeMarker;
-			while(currentTimeMarker - tempTimeMarker < EyeTrackDataStreamViewer.TIME_RATIO && currentIndex < this.eyeEventList.size())
-			{
-				EyeEvent event = this.eyeEventList.get(currentIndex);
-				
-				currentIndex++;
-				currentTimeMarker= event.getTime();
-				cellEventList.add(event);
-			}
 			
-			int dominatingType = getDominatingType(cellEventList);
-			if(dominatingType >=0)
+			long endTimeMarker = eyeEventList.get(eyeEventList.size()-1).getTime();
+			
+			if(startTimeMarker+EyeTrackDataStreamViewer.TIME_STEP < endTimeMarker)
 			{
-				Color c = Util.getRelevanceChartColor(dominatingType);
-				
-				g.setColor(c);
-				
-				g.drawRect(i, 0, EyeTrackDataStreamViewer.CELL_WIDTH, EyeTrackDataStreamViewer.CELL_HEIGHT);
+				endTimeMarker = startTimeMarker+EyeTrackDataStreamViewer.TIME_STEP;
 			}
+			ArrayList<DataObject> allItems = new ArrayList<DataObject>();
+			for(EyeEvent event: eyeEventList)
+			{
+				if(event.getTime() >= startTimeMarker && event.getTime() <= endTimeMarker)
+				{
+					if(allItems.contains(event.getTarget()))
+					{
+						int index = allItems.indexOf(event.getTarget());
+						DataObject obj = allItems.get(index);
+						double sortingScore = obj.getSortingScore();
+						sortingScore+= event.getScore();
+						obj.setSortingScore(sortingScore);
+					}
+					else
+					{
+						DataObject obj = event.getTarget();
+						double sortingScore = event.getScore();
+						obj.setSortingScore(sortingScore);
+						allItems.add(obj);
+					}
+				}
+			}
+			Collections.sort(allItems);
+			int maxCells = Math.min(allItems.size(), EyeTrackDataStreamViewer.MAX_CELLS);
+			qualifiedItems = new ArrayList<DataObject>(allItems.subList(0, maxCells));
+
 			
 		}
+		
+		return qualifiedItems;
 	}
+	
 	public ArrayList<EyeEvent> getEyeEventList() {
 		return eyeEventList;
 	}
@@ -113,13 +151,7 @@ public class Task {
 		this.eyeEventList = eyeEventList;
 	}
 
-	public long getStartTime() {
-		return startTime;
-	}
 
-	public void setStartTime(long startTime) {
-		this.startTime = startTime;
-	}
 
 	public String getFilePath() {
 		return filePath;
@@ -130,7 +162,7 @@ public class Task {
 
 	@Override
 	public String toString() {
-		return "Task [filePath=" + filePath +" EventSize= "+eyeEventList.size()+"]";
+		return "Task [filePath=" + filePath +" EndTime= "+getEndTime()+"]";
 	}
 
 }

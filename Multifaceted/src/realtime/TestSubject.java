@@ -54,8 +54,8 @@ public class TestSubject {
 		if(currentTaskIndex> INVALID_INDEX)
 		{
 			Task currentTask = taskList.get(currentTaskIndex);
-			long startTimeMarker =  timeMarker - totalTimePreviousTasks;
-			qualifiedItems = currentTask.getQualifiedItems(startTimeMarker) ;
+			long endTimeMarker =  timeMarker - totalTimePreviousTasks;
+			qualifiedItems = currentTask.getQualifiedItems(endTimeMarker) ;
 			System.out.println("name: "+this.name+", Task: "+currentTask+" Qualified:");
 			heatmapCellPerItem= new double[qualifiedItems.size()][currentTaskIndex+1][];
 			for(int objectIndex=0;objectIndex<qualifiedItems.size();objectIndex++)
@@ -66,7 +66,7 @@ public class TestSubject {
 					Task task = taskList.get(taskIndex);
 					heatmapCellPerItem[objectIndex][taskIndex] = task.getHeatmapCells(qualifiedItem);
 				}
-				heatmapCellPerItem[objectIndex][currentTaskIndex] = currentTask.getHeatmapCells(qualifiedItem, startTimeMarker);
+				heatmapCellPerItem[objectIndex][currentTaskIndex] = currentTask.getHeatmapCells(qualifiedItem, endTimeMarker);
 			}
 
 		}
@@ -84,7 +84,7 @@ public class TestSubject {
 			double scoreSum =0;
 			for(DataObject obj: qualifiedItems)
 			{
-				scoreSum+=obj.getSortingScore();
+				scoreSum+=Math.sqrt(obj.getSortingScore());
 			}
 			
 			int x=0;
@@ -93,7 +93,7 @@ public class TestSubject {
 			for(int i=0;i<qualifiedItems.size();i++)
 			{
 				DataObject obj = qualifiedItems.get(i);
-				int allottedHeight =  (int) ( obj.getSortingScore()*qualifiedItems.size()* EyeTrackDataStreamViewer.CELL_HEIGHT / scoreSum);
+				int allottedHeight =  (int) (Math.sqrt( obj.getSortingScore())*qualifiedItems.size()* EyeTrackDataStreamViewer.CELL_HEIGHT / scoreSum);
 				int height = (int)(0.8 * allottedHeight);
 				
 				
@@ -105,8 +105,12 @@ public class TestSubject {
 				{
 					allowedCharacters = Math.min(obj.getLabel().length(), (int)( obj.getLabel().length() * EyeTrackDataStreamViewer.LABEL_WIDTH / stringWidth));
 				}
-				 
-				String label = obj.getLabel().substring(0, allowedCharacters);
+				String label = obj.getLabel();
+				if(allowedCharacters < obj.getLabel().length())
+				{
+					label = label.substring(0, allowedCharacters-3)+"...";
+				}
+				
 				stringWidth = g.getFontMetrics().stringWidth(label);
 				Color c = Util.getRelevanceChartColor(obj.getType());
 				g.setColor(new Color(c.getRed(),c.getGreen(), c.getBlue(), 100));

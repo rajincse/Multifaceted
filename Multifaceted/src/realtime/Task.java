@@ -99,39 +99,50 @@ public class Task {
 		}
 		
 	}
-	public ArrayList<DataObject> getQualifiedItems(long startTimeMarker)
+	
+	private double getCoefficient(long currentTime, long startTime, long endTime, long timeStep)
+	{
+		double coefficient = 1 - 1.0* (endTime - currentTime) / (endTime - startTime);  
+		return coefficient;
+	}
+	public ArrayList<DataObject> getQualifiedItems(long endTimeMarker)
 	{
 		ArrayList<DataObject> qualifiedItems = new ArrayList<DataObject>();
 		if(!eyeEventList.isEmpty())
 		{
-			
-			long endTimeMarker = eyeEventList.get(eyeEventList.size()-1).getTime();
-			
-			if(startTimeMarker+EyeTrackDataStreamViewer.TIME_STEP < endTimeMarker)
+			long startTimeMarker = endTimeMarker -  EyeTrackDataStreamViewer.TIME_WINDOW;
+			if(startTimeMarker< 0)
 			{
-				endTimeMarker = startTimeMarker+EyeTrackDataStreamViewer.TIME_STEP;
+				startTimeMarker =0;
 			}
 			ArrayList<DataObject> allItems = new ArrayList<DataObject>();
+			double totalCoefficient =0;
 			for(EyeEvent event: eyeEventList)
 			{
 				if(event.getTime() >= startTimeMarker && event.getTime() <= endTimeMarker)
 				{
+					double coefficient = getCoefficient(event.getTime(), startTimeMarker, endTimeMarker, EyeTrackDataStreamViewer.TIME_STEP);
+					totalCoefficient+=coefficient;
 					if(allItems.contains(event.getTarget()))
 					{
 						int index = allItems.indexOf(event.getTarget());
 						DataObject obj = allItems.get(index);
 						double sortingScore = obj.getSortingScore();
-						sortingScore+= event.getScore();
+						sortingScore+= event.getScore() * coefficient;
 						obj.setSortingScore(sortingScore);
 					}
 					else
 					{
 						DataObject obj = event.getTarget();
-						double sortingScore = event.getScore();
+						double sortingScore = event.getScore()* coefficient;
 						obj.setSortingScore(sortingScore);
 						allItems.add(obj);
 					}
 				}
+			}
+			for(DataObject obj: allItems)
+			{
+				obj.setSortingScore(obj.getSortingScore()/ totalCoefficient);
 			}
 			Collections.sort(allItems);
 			int maxCells = Math.min(allItems.size(), EyeTrackDataStreamViewer.MAX_CELLS);

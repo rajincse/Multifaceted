@@ -24,7 +24,9 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 	public static final int MAX_CELLS =10;
 	public static final int MAX_X =1200;
 	public static final int MAX_Y = 1000;
-	public static final int TIME_STEP =100;
+	
+	public static final int TIME_STEP =500;
+	public static final int TIME_WINDOW = 20000;
 	public static final int LABEL_WIDTH =200;
 	public static final int POSITION_X_USER_NAME=300;
 	public static final int POSITION_Y_USER_NAME=10;
@@ -155,7 +157,7 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		g.setColor(Color.black);
 		
 		int time = getCurrentTime();
-		g.drawRect((time-1)*CELL_WIDTH, 0, CELL_WIDTH, MAX_Y);
+		g.drawLine(time*CELL_WIDTH, 0, time*CELL_WIDTH, MAX_Y);
 	}
 	
 	private int getCurrentTime()

@@ -5,6 +5,8 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
+import java.util.HashMap;
+
 import multifaceted.ColorScheme;
 import multifaceted.Util;
 
@@ -19,6 +21,7 @@ public class TestSubject {
 	private long startTime =0;
 	private double[][][] heatmapCellPerItem; 
 	private ArrayList<DataObject> qualifiedItems;
+	private HashMap<DataObject, Double> itemLabelHeight;
 	public TestSubject(String name, String directoryPath,
 			ArrayList<String> fileNameList) {
 		this.name = name;
@@ -68,10 +71,26 @@ public class TestSubject {
 				}
 				heatmapCellPerItem[objectIndex][currentTaskIndex] = currentTask.getHeatmapCells(qualifiedItem, endTimeMarker);
 			}
-
+			
+			//Label Height
+			this.itemLabelHeight = new HashMap<DataObject, Double>();
+			double scoreSum =0;
+			for(DataObject obj: qualifiedItems)
+			{
+				scoreSum+=getLabelScore(obj);
+			}
+			
+			for(DataObject obj:qualifiedItems)
+			{
+				double allottedHeight =  getLabelScore(obj)*qualifiedItems.size()* EyeTrackDataStreamViewer.CELL_HEIGHT / scoreSum;
+				itemLabelHeight.put(obj, allottedHeight);
+			}
 		}
 	}
-	
+	public double getLabelScore(DataObject obj)
+	{
+		return Math.pow(obj.getSortingScore(), EyeTrackDataStreamViewer.LABEL_WIDTH_SCORE_EXPONENT);
+	}
 	public void render(Graphics2D g)
 	{
 		g.setColor(Color.BLUE);
@@ -81,19 +100,13 @@ public class TestSubject {
 		
 		if(qualifiedItems!= null && !qualifiedItems.isEmpty())
 		{
-			double scoreSum =0;
-			for(DataObject obj: qualifiedItems)
-			{
-				scoreSum+=Math.sqrt(obj.getSortingScore());
-			}
-			
 			int x=0;
 			int lastY =0;
 			
 			for(int i=0;i<qualifiedItems.size();i++)
 			{
 				DataObject obj = qualifiedItems.get(i);
-				int allottedHeight =  (int) (Math.sqrt( obj.getSortingScore())*qualifiedItems.size()* EyeTrackDataStreamViewer.CELL_HEIGHT / scoreSum);
+				int allottedHeight =   this.itemLabelHeight.get(obj).intValue();
 				int height = (int)(0.8 * allottedHeight);
 				
 				
@@ -173,6 +186,22 @@ public class TestSubject {
 	}
 
 
+
+	public ArrayList<DataObject> getQualifiedItems() {
+		if(qualifiedItems == null)
+		{
+			qualifiedItems = new ArrayList<DataObject>();
+		}
+		return qualifiedItems;
+	}
+
+	public HashMap<DataObject, Double> getItemLabelHeight() {
+		if(itemLabelHeight == null)
+		{
+			itemLabelHeight = new HashMap<DataObject, Double>();
+		}
+		return itemLabelHeight;
+	}
 
 	@Override
 	public String toString() {

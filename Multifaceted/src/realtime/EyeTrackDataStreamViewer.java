@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.imageio.ImageIO;
 
@@ -19,6 +21,7 @@ import perspectives.base.Viewer;
 import perspectives.properties.PFileInput;
 import perspectives.properties.PFileOutput;
 import perspectives.properties.PInteger;
+import perspectives.properties.PSignal;
 import perspectives.two_d.JavaAwtRenderer;
 
 public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer {
@@ -38,14 +41,22 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 	public static final double LABEL_WIDTH_SCORE_EXPONENT =0.4;
 	
 	public static final int HEIGHT_PER_SUBJECT =120;
+
+	private static final long TIME_LAPSE = 200;
 	
 	public static final String PROPERTY_LOAD_SEQUENCE ="Load";	
 	public static final String PROPERTY_TIME ="Time";
 	public static final String PROPERTY_TIME_WINDOW= "Time Window (s)";
 	public static final String PROPERTY_SAVE_IMAGE="Save Image";
 	
+	private static final String PROPERTY_START ="Play";
+	private static final String PROPERTY_STOP ="Pause";
+	
 	
 	private ArrayList<TestSubject> testSubjectList = new ArrayList<TestSubject>();
+
+	private Timer timer =new Timer();
+	
 	public EyeTrackDataStreamViewer(String name) {
 		super(name);
 		try
@@ -69,13 +80,14 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 								}
 							};
 							fileLineReader.read(filePath);
+
+							
+							timeStateChanged(getCurrentTime(), getCurrentTimeWindow());
 							return super.updating(newvalue);
 						}
 					};
 			addProperty(pLoad);
 			
-			PFileInput loadFile = new PFileInput(path);
-			pLoad.setValue(loadFile);
 			
 			
 			Property<PInteger> pTime = new Property<PInteger>(PROPERTY_TIME, new PInteger(initialTime))
@@ -98,7 +110,28 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 							return super.updating(newvalue);
 						}
 					};
-			addProperty(pTimeWindow);		
+			addProperty(pTimeWindow);	
+			Property<PSignal> pStart = new Property<PSignal>(PROPERTY_START,new PSignal())
+					{
+						@Override
+						protected boolean updating(PSignal newvalue) {
+							// TODO Auto-generated method stub
+							startTimer();
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pStart);
+			
+			Property<PSignal> pStop = new Property<PSignal>(PROPERTY_STOP,new PSignal())
+					{
+						@Override
+						protected boolean updating(PSignal newvalue) {
+							// TODO Auto-generated method stub
+							stopTimer();
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pStop);
 			
 			Property<PFileOutput> pSaveImage = new Property<PFileOutput>(PROPERTY_SAVE_IMAGE, new PFileOutput())
 					{
@@ -113,7 +146,8 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 					};
 			addProperty(pSaveImage);
 			
-			timeStateChanged(getCurrentTime(), getCurrentTimeWindow());
+			PFileInput loadFile = new PFileInput(path);
+			pLoad.setValue(loadFile);
 			
 		}
 		catch(Exception ex)
@@ -121,6 +155,37 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 			ex.printStackTrace();
 		}
 	}
+	
+	private void startTimer()
+	{
+		this.timer = new Timer();
+		this.timer.schedule(new TimerTask() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				int currentTime = getCurrentTime();
+				
+				if(testSubjectList != null && !testSubjectList.isEmpty() && currentTime <1000)
+				{
+					currentTime++;
+					PInteger pTime = new PInteger(currentTime);
+					getProperty(PROPERTY_TIME).setValue(pTime);
+				}
+				else
+				{
+					stopTimer();
+				}
+			}
+		}
+		, 0, TIME_LAPSE);
+	}
+	
+	private void stopTimer()
+	{
+		this.timer.cancel();
+	}
+	
 	private void timeStateChanged(int timeMarker, int timeWindow)
 	{
 		for(TestSubject subject: testSubjectList)

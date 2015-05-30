@@ -59,7 +59,6 @@ public class TestSubject {
 			Task currentTask = taskList.get(currentTaskIndex);
 			long endTimeMarker =  timeMarker - totalTimePreviousTasks;
 			qualifiedItems = currentTask.getQualifiedItems(endTimeMarker, timeWindow) ;
-			System.out.println("name: "+this.name+", Task: "+currentTask+" Qualified:");
 			heatmapCellPerItem= new double[qualifiedItems.size()][currentTaskIndex+1][];
 			for(int objectIndex=0;objectIndex<qualifiedItems.size();objectIndex++)
 			{

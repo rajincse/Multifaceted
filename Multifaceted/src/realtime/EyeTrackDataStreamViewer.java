@@ -1,7 +1,9 @@
 package realtime;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Stroke;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +32,6 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 	public static final int TRANSLATE_Y =40;
 	
 	public static final int TIME_STEP =500;
-	public static final int TIME_WINDOW = 20000;
 	public static final int LABEL_WIDTH =200;
 	public static final int POSITION_X_USER_NAME=300;
 	public static final int POSITION_Y_USER_NAME=10;
@@ -40,6 +41,7 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 	
 	public static final String PROPERTY_LOAD_SEQUENCE ="Load";	
 	public static final String PROPERTY_TIME ="Time";
+	public static final String PROPERTY_TIME_WINDOW= "Time Window (s)";
 	public static final String PROPERTY_SAVE_IMAGE="Save Image";
 	
 	
@@ -50,7 +52,7 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		{
 			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Sequence_small_2.txt";
 			int initialTime =100;
-			
+			int intialTimeWindow =20;
 			Property<PFileInput> pLoad = new Property<PFileInput>(PROPERTY_LOAD_SEQUENCE, new PFileInput())
 					{
 						@Override
@@ -76,20 +78,28 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 			pLoad.setValue(loadFile);
 			
 			
-			Property<PInteger> pTime = new Property<PInteger>(PROPERTY_TIME, new PInteger(0))
+			Property<PInteger> pTime = new Property<PInteger>(PROPERTY_TIME, new PInteger(initialTime))
 					{
 						@Override
 						protected boolean updating(PInteger newvalue) {
 						
-							for(TestSubject subject: testSubjectList)
-							{
-								subject.prepareRendering(newvalue.intValue() * EyeTrackDataStreamViewer.TIME_STEP);
-							}
-							requestRender();
+							timeStateChanged(newvalue.intValue(), getCurrentTimeWindow());
 							return super.updating(newvalue);
 						}
 					};
 			addProperty(pTime);
+			
+			Property<PInteger> pTimeWindow = new Property<PInteger>(PROPERTY_TIME_WINDOW, new PInteger(intialTimeWindow))
+					{
+						@Override
+						protected boolean updating(PInteger newvalue) {
+							// TODO Auto-generated method stub
+							timeStateChanged(getCurrentTime(), newvalue.intValue());
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pTimeWindow);		
+			
 			Property<PFileOutput> pSaveImage = new Property<PFileOutput>(PROPERTY_SAVE_IMAGE, new PFileOutput())
 					{
 						@Override
@@ -103,9 +113,7 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 					};
 			addProperty(pSaveImage);
 			
-			
-			PInteger pSetTime = new PInteger(initialTime);
-			pTime.setValue(pSetTime);
+			timeStateChanged(getCurrentTime(), getCurrentTimeWindow());
 			
 		}
 		catch(Exception ex)
@@ -113,7 +121,14 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 			ex.printStackTrace();
 		}
 	}
-	
+	private void timeStateChanged(int timeMarker, int timeWindow)
+	{
+		for(TestSubject subject: testSubjectList)
+		{
+			subject.prepareRendering(timeMarker * EyeTrackDataStreamViewer.TIME_STEP, timeWindow*1000);
+		}
+		requestRender();
+	}
 	private void saveView(String filePath)
 	{	
 		
@@ -238,7 +253,10 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		int time = getCurrentTime();
 		g.drawLine(time*CELL_WIDTH, 0, time*CELL_WIDTH, MAX_Y);
 	}
-	
+	private int getCurrentTimeWindow()
+	{
+		return ((PInteger)getProperty(PROPERTY_TIME_WINDOW).getValue()).intValue();
+	}
 	private int getCurrentTime()
 	{
 		return ((PInteger)getProperty(PROPERTY_TIME).getValue()).intValue();
@@ -253,8 +271,13 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 			
 			int yTranslate =TRANSLATE_Y;
 			g.translate(0, yTranslate);
+			
+			float strokeWidth =4.0f;
+			Stroke previousStroke = g.getStroke();
+			g.setStroke(new BasicStroke(strokeWidth));
 			g.setColor(Color.black);
 			g.drawLine(-LABEL_WIDTH, 0, MAX_X, 0);
+			g.setStroke(previousStroke);
 			
 			
 			
@@ -263,8 +286,10 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 				
 				subject.render(g);
 				g.translate(0, HEIGHT_PER_SUBJECT);
-				g.setColor(Color.black);
+				g.setStroke(new BasicStroke(strokeWidth));
+				g.setColor(Color.black);				
 				g.drawLine(-LABEL_WIDTH, 0, MAX_X, 0);
+				g.setStroke(previousStroke);
 				yTranslate+= HEIGHT_PER_SUBJECT;
 				
 			}

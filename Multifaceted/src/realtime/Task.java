@@ -105,12 +105,12 @@ public class Task {
 		double coefficient = 1 - 1.0* (endTime - currentTime) / (endTime - startTime);  
 		return coefficient;
 	}
-	public ArrayList<DataObject> getQualifiedItems(long endTimeMarker)
+	public ArrayList<DataObject> getQualifiedItems(long endTimeMarker, int timeWindow)
 	{
 		ArrayList<DataObject> qualifiedItems = new ArrayList<DataObject>();
 		if(!eyeEventList.isEmpty())
 		{
-			long startTimeMarker = endTimeMarker -  EyeTrackDataStreamViewer.TIME_WINDOW;
+			long startTimeMarker = endTimeMarker -  timeWindow;
 			if(startTimeMarker< 0)
 			{
 				startTimeMarker =0;

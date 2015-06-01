@@ -132,8 +132,11 @@ public class TestSubject {
 				g.drawString(label, x-stringWidth-5, lastY+height);
 				
 				for(int taskIndex=0;taskIndex<heatmapCellPerItem[i].length;taskIndex++)
-				{
-					for(int timeIndex=0;timeIndex<heatmapCellPerItem[i][taskIndex].length;timeIndex++)
+				{	
+					for(int timeIndex=0;
+								heatmapCellPerItem[i][taskIndex] != null 
+								&& timeIndex<heatmapCellPerItem[i][taskIndex].length;
+							timeIndex++)
 					{
 						Color[] colorScheme = ColorScheme.DEFAULT;
 						double score = heatmapCellPerItem[i][taskIndex][timeIndex];
@@ -200,6 +203,10 @@ public class TestSubject {
 			itemLabelHeight = new HashMap<DataObject, Double>();
 		}
 		return itemLabelHeight;
+	}
+
+	public ArrayList<Task> getTaskList() {
+		return taskList;
 	}
 
 	@Override

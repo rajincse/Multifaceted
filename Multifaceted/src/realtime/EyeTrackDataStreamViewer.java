@@ -57,6 +57,8 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 
 	private Timer timer =new Timer();
 	
+	private long maxTime =0;
+	
 	public EyeTrackDataStreamViewer(String name) {
 		super(name);
 		try
@@ -80,7 +82,30 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 								}
 							};
 							fileLineReader.read(filePath);
-
+							maxTime =0;
+							
+							for( TestSubject subject: testSubjectList)
+							{
+								if(subject.getTaskList()!= null && !subject.getTaskList().isEmpty())
+								{
+									long subjectMaxTime = 0;
+									for(Task task : subject.getTaskList())
+									{
+										if(task.getEyeEventList() != null && !task.getEyeEventList().isEmpty())
+										{
+											subjectMaxTime+= task.getEyeEventList().get(task.getEyeEventList().size()-1).getTime();
+										}
+									}
+									
+									if(subjectMaxTime > maxTime)
+									{
+										maxTime = subjectMaxTime;
+									}
+								}
+								
+							}
+							
+							System.out.println("maxTime:"+maxTime);
 							
 							timeStateChanged(getCurrentTime(), getCurrentTimeWindow());
 							return super.updating(newvalue);
@@ -165,8 +190,8 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 			public void run() {
 				// TODO Auto-generated method stub
 				int currentTime = getCurrentTime();
-				
-				if(testSubjectList != null && !testSubjectList.isEmpty() && currentTime <1000)
+				int maxSubjectTime =(int) Math.ceil(1.0* maxTime/TIME_STEP);
+				if(testSubjectList != null && !testSubjectList.isEmpty() && currentTime <maxSubjectTime)
 				{
 					currentTime++;
 					PInteger pTime = new PInteger(currentTime);

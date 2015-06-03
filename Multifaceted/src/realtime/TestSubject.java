@@ -22,6 +22,9 @@ public class TestSubject {
 	private double[][][] heatmapCellPerItem; 
 	private ArrayList<DataObject> qualifiedItems;
 	private HashMap<DataObject, Double> itemLabelHeight;
+	
+	private boolean isLocked = false;
+	
 	public TestSubject(String name, String directoryPath,
 			ArrayList<String> fileNameList) {
 		this.name = name;
@@ -40,6 +43,9 @@ public class TestSubject {
 	
 	public void prepareRendering(int timeMarker, int timeWindow, int timeStep)
 	{
+		synchronized (this) {
+			isLocked = true;
+		}
 		long totalTimePreviousTasks =0;
 		int currentTaskIndex =INVALID_INDEX;
 		for(int i=0;i<taskList.size();i++)
@@ -85,6 +91,10 @@ public class TestSubject {
 				itemLabelHeight.put(obj, allottedHeight);
 			}
 		}
+		
+		synchronized (this) {
+			isLocked = false;
+		}
 	}
 	public double getLabelScore(DataObject obj)
 	{
@@ -92,12 +102,17 @@ public class TestSubject {
 	}
 	public void render(Graphics2D g, int currentTime)
 	{
+		if(isLocked)
+		{
+			return;
+		}
+		
 		g.setColor(Color.BLUE);
 		Font font = new Font("Helvetica", Font.ITALIC, 20);
 		g.setFont(font);
 		g.drawString(this.name, -EyeTrackDataStreamViewer.POSITION_X_USER_NAME, EyeTrackDataStreamViewer.POSITION_Y_USER_NAME);
 		
-		if(qualifiedItems!= null && !qualifiedItems.isEmpty())
+		if(qualifiedItems!= null && !qualifiedItems.isEmpty() )
 		{
 			int x=0;
 			int lastY =0;
@@ -105,6 +120,11 @@ public class TestSubject {
 			for(int i=0;i<qualifiedItems.size();i++)
 			{
 				DataObject obj = qualifiedItems.get(i);
+				if(!this.itemLabelHeight.containsKey(obj))
+				{
+//					System.out.println("Null:"+this.name+", "+currentTime+", "+itemLabelHeight+"#"+qualifiedItems+"#"+obj);
+					continue;
+				}
 				int allottedHeight =   this.itemLabelHeight.get(obj).intValue();
 				int height = (int)(0.8 * allottedHeight);
 				
@@ -136,9 +156,10 @@ public class TestSubject {
 				g.drawString(label, x-stringWidth-5, lastY+height);
 				
 				g.drawString(label, rightX, lastY+height);
-				
+				int cellIndex =0;
 				for(int taskIndex=0;taskIndex<heatmapCellPerItem[i].length;taskIndex++)
 				{	
+					
 					for(int timeIndex=0;
 								heatmapCellPerItem[i][taskIndex] != null 
 								&& timeIndex<heatmapCellPerItem[i][taskIndex].length;
@@ -146,12 +167,13 @@ public class TestSubject {
 					{
 						Color[] colorScheme = ColorScheme.DEFAULT;
 						double score = heatmapCellPerItem[i][taskIndex][timeIndex];
-						int cellIndex = taskIndex* heatmapCellPerItem[i].length+timeIndex;
+						
 						Color heatmapColor = perspectives.util.Util.getColorFromRange(colorScheme, score);
 						g.setColor(heatmapColor);
 						g.fillRect(cellIndex*EyeTrackDataStreamViewer.CELL_WIDTH, lastY,EyeTrackDataStreamViewer.CELL_WIDTH, allottedHeight);
+						cellIndex++;
 					}
-						
+					
 				}
 				
 				lastY+=allottedHeight;

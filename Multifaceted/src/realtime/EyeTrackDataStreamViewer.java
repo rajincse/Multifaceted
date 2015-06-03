@@ -68,9 +68,9 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		try
 		{
 			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Part_2.txt";
-			int initialTime =100;
+			int initialTime =97;
 			int intialTimeWindow =20;
-			int initialTimeStep =500;
+			int initialTimeStep =1000;
 			Property<PFileInput> pLoad = new Property<PFileInput>(PROPERTY_LOAD_SEQUENCE, new PFileInput())
 					{
 						@Override
@@ -344,12 +344,15 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 				int heightIterator =0;
 				for(DataObject obj : qualifiedItem)
 				{
-					int height = itemLabelHeight.get(obj).intValue();
-					heightIterator+= height;
-					if(yInSubject < heightIterator)
+					if(itemLabelHeight.containsKey(obj))
 					{
-						this.setToolTipText(subject.getName()+":"+obj.getLabel()+"("+Util.getTypeName(obj.getType())+")");
-						break;
+						int height = itemLabelHeight.get(obj).intValue();
+						heightIterator+= height;
+						if(yInSubject < heightIterator)
+						{
+							this.setToolTipText(subject.getName()+":"+obj.getLabel()+"("+Util.getTypeName(obj.getType())+")");
+							break;
+						}
 					}
 				}
 			}

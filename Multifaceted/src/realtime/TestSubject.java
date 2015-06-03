@@ -38,7 +38,7 @@ public class TestSubject {
 		}
 	}
 	
-	public void prepareRendering(int timeMarker, int timeWindow)
+	public void prepareRendering(int timeMarker, int timeWindow, int timeStep)
 	{
 		long totalTimePreviousTasks =0;
 		int currentTaskIndex =INVALID_INDEX;
@@ -58,7 +58,7 @@ public class TestSubject {
 		{
 			Task currentTask = taskList.get(currentTaskIndex);
 			long endTimeMarker =  timeMarker - totalTimePreviousTasks;
-			qualifiedItems = currentTask.getQualifiedItems(endTimeMarker, timeWindow) ;
+			qualifiedItems = currentTask.getQualifiedItems(endTimeMarker, timeWindow, timeStep) ;
 			heatmapCellPerItem= new double[qualifiedItems.size()][currentTaskIndex+1][];
 			for(int objectIndex=0;objectIndex<qualifiedItems.size();objectIndex++)
 			{
@@ -66,9 +66,9 @@ public class TestSubject {
 				for(int taskIndex =0;taskIndex<currentTaskIndex;taskIndex++)
 				{
 					Task task = taskList.get(taskIndex);
-					heatmapCellPerItem[objectIndex][taskIndex] = task.getHeatmapCells(qualifiedItem);
+					heatmapCellPerItem[objectIndex][taskIndex] = task.getHeatmapCells(qualifiedItem, timeStep);
 				}
-				heatmapCellPerItem[objectIndex][currentTaskIndex] = currentTask.getHeatmapCells(qualifiedItem, endTimeMarker);
+				heatmapCellPerItem[objectIndex][currentTaskIndex] = currentTask.getHeatmapCells(qualifiedItem, endTimeMarker, timeStep);
 			}
 			
 			//Label Height
@@ -90,7 +90,7 @@ public class TestSubject {
 	{
 		return Math.pow(obj.getSortingScore(), EyeTrackDataStreamViewer.LABEL_WIDTH_SCORE_EXPONENT);
 	}
-	public void render(Graphics2D g)
+	public void render(Graphics2D g, int currentTime)
 	{
 		g.setColor(Color.BLUE);
 		Font font = new Font("Helvetica", Font.ITALIC, 20);
@@ -128,8 +128,14 @@ public class TestSubject {
 				g.setColor(new Color(c.getRed(),c.getGreen(), c.getBlue(), 100));
 				
 				g.fillRect(x-stringWidth-5, lastY, stringWidth+5, allottedHeight);
+				
+				int rightX =(currentTime+1) * EyeTrackDataStreamViewer.CELL_WIDTH; 
+				g.fillRect( rightX, lastY, stringWidth+10, allottedHeight);
+				
 				g.setColor(Color.black);
 				g.drawString(label, x-stringWidth-5, lastY+height);
+				
+				g.drawString(label, rightX, lastY+height);
 				
 				for(int taskIndex=0;taskIndex<heatmapCellPerItem[i].length;taskIndex++)
 				{	

@@ -359,7 +359,33 @@ public class Util {
 			return Color.black;
 		}
 	}
-	
+	public static String getTypeName(int type)
+	{
+		if(type== EyeTrackerItem.TYPE_ACTOR)
+		{
+			return  "Actor";
+		}
+		else if(type== EyeTrackerItem.TYPE_MOVIE)
+		{
+			return  "Movie";
+		}
+		else if(type== EyeTrackerItem.TYPE_DIRECTOR)
+		{
+			return  "Director";
+		}	
+		else if(type== EyeTrackerItem.TYPE_GENRE)
+		{
+			return  "Genre";
+		}	
+		else if(type== EyeTrackerItem.TYPE_MOVIE_STAR_RATING)
+		{
+			return  "Rating";
+		}	
+		else
+		{
+			return "";
+		}
+	}
 	public static Color getColor(int type)
 	{
 		if(type== EyeTrackerItem.TYPE_ACTOR)

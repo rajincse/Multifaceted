@@ -15,12 +15,13 @@ import java.util.TimerTask;
 import javax.imageio.ImageIO;
 
 import multifaceted.FileLineReader;
-
+import multifaceted.Util;
 import perspectives.base.Property;
 import perspectives.base.Viewer;
 import perspectives.properties.PFileInput;
 import perspectives.properties.PFileOutput;
 import perspectives.properties.PInteger;
+import perspectives.properties.PList;
 import perspectives.properties.PSignal;
 import perspectives.two_d.JavaAwtRenderer;
 
@@ -34,7 +35,6 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 	public static final int TRANSLATE_X =100;
 	public static final int TRANSLATE_Y =40;
 	
-	public static final int TIME_STEP =500;
 	public static final int LABEL_WIDTH =200;
 	public static final int POSITION_X_USER_NAME=300;
 	public static final int POSITION_Y_USER_NAME=10;
@@ -42,13 +42,17 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 	
 	public static final int HEIGHT_PER_SUBJECT =120;
 
-	private static final long TIME_LAPSE = 200;
+	public static final long TIME_LAPSE = 200;
+	
+	public static final String TEXT_ALL_SUBJECT ="All"; 
 	
 	public static final String PROPERTY_LOAD_SEQUENCE ="Load";	
 	public static final String PROPERTY_TIME ="Time";
 	public static final String PROPERTY_TIME_WINDOW= "Time Window (s)";
-	public static final String PROPERTY_SAVE_IMAGE="Save Image";
+	public static final String PROPERTY_TIME_STEP= "Time Step (ms)";
 	
+	public static final String PROPERTY_SAVE_IMAGE="Save Image";
+	public static final String PROPERTY_SUBJECT_LIST = "Subject List";
 	private static final String PROPERTY_START ="Play";
 	private static final String PROPERTY_STOP ="Pause";
 	
@@ -63,9 +67,10 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		super(name);
 		try
 		{
-			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Sequence_small_2.txt";
+			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Part_2.txt";
 			int initialTime =100;
 			int intialTimeWindow =20;
+			int initialTimeStep =500;
 			Property<PFileInput> pLoad = new Property<PFileInput>(PROPERTY_LOAD_SEQUENCE, new PFileInput())
 					{
 						@Override
@@ -83,9 +88,12 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 							};
 							fileLineReader.read(filePath);
 							maxTime =0;
-							
-							for( TestSubject subject: testSubjectList)
+							String[] listItems = new String[testSubjectList.size()+1];
+							listItems[testSubjectList.size()] =TEXT_ALL_SUBJECT;
+							for( int i=0;i<testSubjectList.size();i++)
 							{
+								TestSubject subject = testSubjectList.get(i);
+								listItems[i] = subject.getName();
 								if(subject.getTaskList()!= null && !subject.getTaskList().isEmpty())
 								{
 									long subjectMaxTime = 0;
@@ -105,9 +113,18 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 								
 							}
 							
+							PList pList = new PList(listItems);
+							
+							pList.selectedIndeces =new int[]{ listItems.length-1};
+							getProperty(PROPERTY_SUBJECT_LIST).setValue(pList);
+							
+							
 							System.out.println("maxTime:"+maxTime);
 							
-							timeStateChanged(getCurrentTime(), getCurrentTimeWindow());
+							timeStateChanged(getCurrentTime(), getCurrentTimeWindow(), getCurrentTimeStep());
+							
+							
+							
 							return super.updating(newvalue);
 						}
 					};
@@ -120,7 +137,7 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 						@Override
 						protected boolean updating(PInteger newvalue) {
 						
-							timeStateChanged(newvalue.intValue(), getCurrentTimeWindow());
+							timeStateChanged(newvalue.intValue(), getCurrentTimeWindow(), getCurrentTimeStep());
 							return super.updating(newvalue);
 						}
 					};
@@ -131,11 +148,23 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 						@Override
 						protected boolean updating(PInteger newvalue) {
 							// TODO Auto-generated method stub
-							timeStateChanged(getCurrentTime(), newvalue.intValue());
+							timeStateChanged(getCurrentTime(), newvalue.intValue(), getCurrentTimeStep());
 							return super.updating(newvalue);
 						}
 					};
 			addProperty(pTimeWindow);	
+			
+			Property<PInteger> pTimeStep = new Property<PInteger>(PROPERTY_TIME_STEP, new PInteger(initialTimeStep))
+					{
+						@Override
+						protected boolean updating(PInteger newvalue) {
+							// TODO Auto-generated method stub
+							timeStateChanged(getCurrentTime(), getCurrentTimeWindow(), newvalue.intValue());
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pTimeStep);	
+			
 			Property<PSignal> pStart = new Property<PSignal>(PROPERTY_START,new PSignal())
 					{
 						@Override
@@ -157,7 +186,16 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 						}
 					};
 			addProperty(pStop);
-			
+			Property<PList> pSubjectList = new Property<PList>(PROPERTY_SUBJECT_LIST,new PList(new String[]{TEXT_ALL_SUBJECT}))
+					{
+						@Override
+						protected boolean updating(PList newvalue) {
+							// TODO Auto-generated method stub
+							requestRender();
+							return super.updating(newvalue);
+						}
+					};
+			addProperty(pSubjectList);
 			Property<PFileOutput> pSaveImage = new Property<PFileOutput>(PROPERTY_SAVE_IMAGE, new PFileOutput())
 					{
 						@Override
@@ -190,7 +228,7 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 			public void run() {
 				// TODO Auto-generated method stub
 				int currentTime = getCurrentTime();
-				int maxSubjectTime =(int) Math.ceil(1.0* maxTime/TIME_STEP);
+				int maxSubjectTime =(int) Math.ceil(1.0* maxTime/getCurrentTimeStep());
 				if(testSubjectList != null && !testSubjectList.isEmpty() && currentTime <maxSubjectTime)
 				{
 					currentTime++;
@@ -211,11 +249,12 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		this.timer.cancel();
 	}
 	
-	private void timeStateChanged(int timeMarker, int timeWindow)
+	private void timeStateChanged(int timeMarker, int timeWindow, int timeStep)
 	{
+		
 		for(TestSubject subject: testSubjectList)
 		{
-			subject.prepareRendering(timeMarker * EyeTrackDataStreamViewer.TIME_STEP, timeWindow*1000);
+			subject.prepareRendering(timeMarker *timeStep, timeWindow*1000, timeStep);
 		}
 		requestRender();
 	}
@@ -309,7 +348,7 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 					heightIterator+= height;
 					if(yInSubject < heightIterator)
 					{
-						this.setToolTipText(obj.getLabel());
+						this.setToolTipText(subject.getName()+":"+obj.getLabel()+"("+Util.getTypeName(obj.getType())+")");
 						break;
 					}
 				}
@@ -341,21 +380,50 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		g.setColor(Color.black);
 		
 		int time = getCurrentTime();
-		g.drawLine(time*CELL_WIDTH, 0, time*CELL_WIDTH, MAX_Y);
+		g.drawLine((time+1)*CELL_WIDTH, 0, time*CELL_WIDTH, MAX_Y);
+		double timeInSeconds =1.0*time*getCurrentTimeStep()/1000.0; 
+		g.setFont(g.getFont().deriveFont(10.0f));
+		g.drawString(String.format("%.2f",timeInSeconds)+" s", time*CELL_WIDTH, 0);
 	}
 	private int getCurrentTimeWindow()
 	{
 		return ((PInteger)getProperty(PROPERTY_TIME_WINDOW).getValue()).intValue();
 	}
+	
+	private int getCurrentTimeStep()
+	{
+		return ((PInteger)getProperty(PROPERTY_TIME_STEP).getValue()).intValue();
+	}
 	private int getCurrentTime()
 	{
 		return ((PInteger)getProperty(PROPERTY_TIME).getValue()).intValue();
 	}
+	private int[] getCurrentSelectedIndices()
+	{
+		return ((PList)getProperty(PROPERTY_SUBJECT_LIST).getValue()).selectedIndeces;
+	}
 	@Override
 	public void render(Graphics2D g) {
 		// TODO Auto-generated method stub
+		
+		
 		if(!testSubjectList.isEmpty())
 		{
+			// Check All index present or not
+			int[] selectedIndices = getCurrentSelectedIndices();
+			boolean containsAll = false;
+			for(int index:selectedIndices)
+			{
+				if(index == testSubjectList.size()) // 'All' item resides at the end
+				{
+					containsAll = true;
+					break;
+				}
+			}
+			
+			int currentTime = getCurrentTime();
+			
+			//rendering
 			g.translate(TRANSLATE_X, 0);
 			
 			
@@ -366,21 +434,43 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 			Stroke previousStroke = g.getStroke();
 			g.setStroke(new BasicStroke(strokeWidth));
 			g.setColor(Color.black);
-			g.drawLine(-LABEL_WIDTH, 0, MAX_X, 0);
+			int maxX =(int)( maxTime* CELL_WIDTH / getCurrentTimeStep());
+			g.drawLine(-LABEL_WIDTH, 0, maxX, 0);
 			g.setStroke(previousStroke);
 			
 			
-			
-			for(TestSubject subject: testSubjectList)
+			if(containsAll)
 			{
-				
-				subject.render(g);
-				g.translate(0, HEIGHT_PER_SUBJECT);
-				g.setStroke(new BasicStroke(strokeWidth));
-				g.setColor(Color.black);				
-				g.drawLine(-LABEL_WIDTH, 0, MAX_X, 0);
-				g.setStroke(previousStroke);
-				yTranslate+= HEIGHT_PER_SUBJECT;
+				for(TestSubject subject: testSubjectList)
+				{
+					
+					subject.render(g, currentTime);
+					g.translate(0, HEIGHT_PER_SUBJECT);
+					g.setStroke(new BasicStroke(strokeWidth));
+					g.setColor(Color.black);				
+					g.drawLine(-LABEL_WIDTH, 0, maxX, 0);
+					g.setStroke(previousStroke);
+					yTranslate+= HEIGHT_PER_SUBJECT;
+					
+				}
+			}
+			else
+			{
+				for(int selectedIndex:selectedIndices)
+				{
+					if(selectedIndex >= 0 && selectedIndex < testSubjectList.size())
+					{
+						TestSubject subject = testSubjectList.get(selectedIndex);
+						subject.render(g, currentTime);
+						g.translate(0, HEIGHT_PER_SUBJECT);
+						g.setStroke(new BasicStroke(strokeWidth));
+						g.setColor(Color.black);				
+						g.drawLine(-LABEL_WIDTH, 0, maxX, 0);
+						g.setStroke(previousStroke);
+						yTranslate+= HEIGHT_PER_SUBJECT;
+					}
+					
+				}
 				
 			}
 			

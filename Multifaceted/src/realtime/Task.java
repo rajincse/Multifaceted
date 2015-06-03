@@ -53,13 +53,13 @@ public class Task {
 			}
 		}.read(filePath);
 	}
-	public double[] getHeatmapCells(DataObject qualifiedItem)
+	public double[] getHeatmapCells(DataObject qualifiedItem, int timeStep)
 	{
-		return getHeatmapCells(qualifiedItem, getEndTime());
+		return getHeatmapCells(qualifiedItem, getEndTime(), timeStep);
 	}
-	public double[] getHeatmapCells(DataObject qualifiedItem, long endTime)
+	public double[] getHeatmapCells(DataObject qualifiedItem, long endTime, int timeStep)
 	{
-		int totalCells =(int) (endTime/ EyeTrackDataStreamViewer.TIME_STEP)+1;
+		int totalCells =(int) (endTime/ timeStep)+1;
 		double[] heatmapCells = new double[totalCells];
 		int [] count =new int[totalCells];
 		
@@ -71,7 +71,7 @@ public class Task {
 			}
 			if(event.getTarget().equals(qualifiedItem))
 			{
-				int index = (int) (event.getTime()/ EyeTrackDataStreamViewer.TIME_STEP);
+				int index = (int) (event.getTime()/ timeStep);
 				heatmapCells[index]+=event.getScore();
 				count[index]++;
 			}
@@ -79,7 +79,7 @@ public class Task {
 		
 		for(int i=0;i<heatmapCells.length;i++)
 		{
-			double dividend = Math.max(count[i],Math.sqrt(EyeTrackDataStreamViewer.TIME_STEP/1000.*60));
+			double dividend = Math.max(count[i],Math.sqrt(timeStep/1000.*60));
 			heatmapCells[i] = heatmapCells[i] / dividend; // find Average
 		}
 		
@@ -105,7 +105,7 @@ public class Task {
 		double coefficient = 1 - 1.0* (endTime - currentTime) / (endTime - startTime);  
 		return coefficient;
 	}
-	public ArrayList<DataObject> getQualifiedItems(long endTimeMarker, int timeWindow)
+	public ArrayList<DataObject> getQualifiedItems(long endTimeMarker, int timeWindow, int timeStep)
 	{
 		ArrayList<DataObject> qualifiedItems = new ArrayList<DataObject>();
 		if(!eyeEventList.isEmpty())
@@ -121,7 +121,7 @@ public class Task {
 			{
 				if(event.getTime() >= startTimeMarker && event.getTime() <= endTimeMarker)
 				{
-					double coefficient = getCoefficient(event.getTime(), startTimeMarker, endTimeMarker, EyeTrackDataStreamViewer.TIME_STEP);
+					double coefficient = getCoefficient(event.getTime(), startTimeMarker, endTimeMarker, timeStep);
 					totalCoefficient+=coefficient;
 					if(allItems.contains(event.getTarget()))
 					{

@@ -24,6 +24,7 @@ import perspectives.properties.PInteger;
 import perspectives.properties.PList;
 import perspectives.properties.PSignal;
 import perspectives.two_d.JavaAwtRenderer;
+import perspectives.two_d.ViewerContainer2D;
 
 public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer {
 
@@ -43,6 +44,7 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 	public static final int HEIGHT_PER_SUBJECT =120;
 
 	public static final long TIME_LAPSE = 200;
+	public static final double ZOOM_THRESHOLD =0.6;
 	
 	public static final String TEXT_ALL_SUBJECT ="All"; 
 	
@@ -323,15 +325,54 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 	}
 
 	@Override
-	public boolean mousedragged(int arg0, int arg1, int arg2, int arg3) {
+	public boolean mousedragged(int currentx, int currenty, int oldx, int oldy) {
 		// TODO Auto-generated method stub
-		return false;
+		if(timeSliderHovered)
+		{
+			int time = (currentx - TRANSLATE_X) / CELL_WIDTH;
+			PInteger pTime = new PInteger(time);
+			getProperty(PROPERTY_TIME).setValue(pTime);
+			return true;
+		}
+		
+		else
+		{
+			ViewerContainer2D container = (ViewerContainer2D)this.getContainer();
+			double zoom = container.getZoom();
+			if(container.rightButtonDown && zoom < ZOOM_THRESHOLD)
+			{
+				container.setZoom(ZOOM_THRESHOLD);
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+			
+		}
+		
 	}
 
+	public static final int TIME_SLIDER_WIDTH =20;
+	private boolean timeSliderHovered = false;
+	
 	@Override
 	public boolean mousemoved(int x, int y) {
-		// TODO Auto-generated method stub
 		
+		//time dragging
+		int time = getCurrentTime();
+		int timeStartX = (time+1) * CELL_WIDTH+ TRANSLATE_X - TIME_SLIDER_WIDTH/2;
+		int timeEndX = timeStartX+TIME_SLIDER_WIDTH;
+		if(x >= timeStartX && x <= timeEndX)
+		{
+			timeSliderHovered = true;
+		}
+		else
+		{
+			timeSliderHovered = false;
+		}
+		
+		// hover text
 		int index = (y-TRANSLATE_Y)/ HEIGHT_PER_SUBJECT;
 		if( y >= TRANSLATE_Y && index >=0 && index <this.testSubjectList.size())
 		{
@@ -383,10 +424,15 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		g.setColor(Color.black);
 		
 		int time = getCurrentTime();
-		g.drawLine((time+1)*CELL_WIDTH, 0, time*CELL_WIDTH, MAX_Y);
+		g.drawLine((time+1)*CELL_WIDTH, 0, (time+1)*CELL_WIDTH, MAX_Y);
+		if(timeSliderHovered)
+		{
+			g.drawLine((time+1)*CELL_WIDTH- TIME_SLIDER_WIDTH/2, 10, (time+1)*CELL_WIDTH+ TIME_SLIDER_WIDTH/2, 10);
+		}
 		double timeInSeconds =1.0*time*getCurrentTimeStep()/1000.0; 
 		g.setFont(g.getFont().deriveFont(10.0f));
-		g.drawString(String.format("%.2f",timeInSeconds)+" s", time*CELL_WIDTH, 0);
+		g.drawString(String.format("%.2f",timeInSeconds)+" s", (time+1)*CELL_WIDTH, 0);
+		g.drawString("0 s", 0, 0);
 	}
 	private int getCurrentTimeWindow()
 	{

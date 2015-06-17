@@ -60,6 +60,10 @@ public class Task {
 	public double[] getHeatmapCells(DataObject qualifiedItem, long endTime, int timeStep)
 	{
 		int totalCells =(int) (endTime/ timeStep)+1;
+		if(totalCells ==0)
+		{
+			return null;
+		}
 		double[] heatmapCells = new double[totalCells];
 		int [] count =new int[totalCells];
 		

@@ -43,7 +43,7 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 	
 	public static final int HEIGHT_PER_SUBJECT =120;
 
-	public static final long TIME_LAPSE = 200;
+	public static final long TIME_LAPSE = 1000;
 	public static final double ZOOM_THRESHOLD =0.6;
 	
 	public static final String TEXT_ALL_SUBJECT ="All"; 
@@ -69,8 +69,10 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		super(name);
 		try
 		{
+//			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Part_1.txt";
 			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Part_2.txt";
-			int initialTime =97;
+//			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Practice.txt";
+			int initialTime =0;
 			int intialTimeWindow =20;
 			int initialTimeStep =1000;
 			Property<PFileInput> pLoad = new Property<PFileInput>(PROPERTY_LOAD_SEQUENCE, new PFileInput())
@@ -361,7 +363,7 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		
 		//time dragging
 		int time = getCurrentTime();
-		int timeStartX = (time+1) * CELL_WIDTH+ TRANSLATE_X - TIME_SLIDER_WIDTH/2;
+		int timeStartX = time* CELL_WIDTH+ TRANSLATE_X - TIME_SLIDER_WIDTH/2;
 		int timeEndX = timeStartX+TIME_SLIDER_WIDTH;
 		if(x >= timeStartX && x <= timeEndX)
 		{
@@ -374,9 +376,24 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		
 		// hover text
 		int index = (y-TRANSLATE_Y)/ HEIGHT_PER_SUBJECT;
-		if( y >= TRANSLATE_Y && index >=0 && index <this.testSubjectList.size())
+		if( y >= TRANSLATE_Y && index >=0 && !this.testSubjectList.isEmpty() &&  index <this.testSubjectList.size())
 		{
+			int[] selectedIndices = getCurrentSelectedIndices();
+			boolean containsAll = false;
+			for(int i:selectedIndices)
+			{
+				if(i == testSubjectList.size()) // 'All' item resides at the end
+				{
+					containsAll = true;
+					break;
+				}
+			}
 			TestSubject subject =this.testSubjectList.get(index);
+			if(!containsAll && selectedIndices[index] < this.testSubjectList.size())
+			{
+				subject =this.testSubjectList.get(selectedIndices[index]);
+			}
+			
 			HashMap<DataObject, Double> itemLabelHeight = subject.getItemLabelHeight();
 			ArrayList<DataObject> qualifiedItem = subject.getQualifiedItems();
 			if(!itemLabelHeight.isEmpty() && !qualifiedItem.isEmpty())
@@ -424,14 +441,14 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		g.setColor(Color.black);
 		
 		int time = getCurrentTime();
-		g.drawLine((time+1)*CELL_WIDTH, 0, (time+1)*CELL_WIDTH, MAX_Y);
+		g.drawLine((time)*CELL_WIDTH, 0, (time)*CELL_WIDTH, MAX_Y);
 		if(timeSliderHovered)
 		{
-			g.drawLine((time+1)*CELL_WIDTH- TIME_SLIDER_WIDTH/2, 10, (time+1)*CELL_WIDTH+ TIME_SLIDER_WIDTH/2, 10);
+			g.drawLine((time)*CELL_WIDTH- TIME_SLIDER_WIDTH/2, 10, (time)*CELL_WIDTH+ TIME_SLIDER_WIDTH/2, 10);
 		}
 		double timeInSeconds =1.0*time*getCurrentTimeStep()/1000.0; 
 		g.setFont(g.getFont().deriveFont(10.0f));
-		g.drawString(String.format("%.2f",timeInSeconds)+" s", (time+1)*CELL_WIDTH, 0);
+		g.drawString(String.format("%.2f",timeInSeconds)+" s", (time)*CELL_WIDTH, 0);
 		g.drawString("0 s", 0, 0);
 	}
 	private int getCurrentTimeWindow()

@@ -159,19 +159,18 @@ public class TestSubject {
 				int cellIndex =0;
 				for(int taskIndex=0;taskIndex<heatmapCellPerItem[i].length;taskIndex++)
 				{	
-					
-					for(int timeIndex=0;
-								heatmapCellPerItem[i][taskIndex] != null 
-								&& timeIndex<heatmapCellPerItem[i][taskIndex].length;
-							timeIndex++)
+					if(heatmapCellPerItem[i][taskIndex] != null)
 					{
-						Color[] colorScheme = ColorScheme.DEFAULT;
-						double score = heatmapCellPerItem[i][taskIndex][timeIndex];
-						
-						Color heatmapColor = perspectives.util.Util.getColorFromRange(colorScheme, score);
-						g.setColor(heatmapColor);
-						g.fillRect(cellIndex*EyeTrackDataStreamViewer.CELL_WIDTH, lastY,EyeTrackDataStreamViewer.CELL_WIDTH, allottedHeight);
-						cellIndex++;
+						for(int timeIndex=0; timeIndex<heatmapCellPerItem[i][taskIndex].length;timeIndex++)
+						{
+							Color[] colorScheme = ColorScheme.DEFAULT;
+							double score = heatmapCellPerItem[i][taskIndex][timeIndex];
+							
+							Color heatmapColor = perspectives.util.Util.getColorFromRange(colorScheme, score);
+							g.setColor(heatmapColor);
+							g.fillRect(cellIndex*EyeTrackDataStreamViewer.CELL_WIDTH, lastY,EyeTrackDataStreamViewer.CELL_WIDTH, allottedHeight);
+							cellIndex++;
+						}
 					}
 					
 				}

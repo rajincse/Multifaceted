@@ -36,6 +36,7 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 	public static final int MAX_Y = 1000;
 	public static final int TRANSLATE_X =100;
 	public static final int TRANSLATE_Y =40;
+	public static final int TIME_GUIDELINE_UNIT =5000;
 	
 	public static final int LABEL_WIDTH =200;
 	public static final int POSITION_X_USER_NAME=300;
@@ -442,16 +443,40 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		g.setColor(Color.black);
 		
 		int time = getCurrentTime();
+		int timeStep = getCurrentTimeStep();
 		int sliderPosition = Math.min(time, MAX_CELL_COLUMNS);
 		g.drawLine((sliderPosition)*CELL_WIDTH, 0, (sliderPosition)*CELL_WIDTH, MAX_Y);
 		if(timeSliderHovered)
 		{
 			g.drawLine((sliderPosition)*CELL_WIDTH- TIME_SLIDER_WIDTH/2, 10, (sliderPosition)*CELL_WIDTH+ TIME_SLIDER_WIDTH/2, 10);
 		}
-		double timeInSeconds =1.0*time*getCurrentTimeStep()/1000.0; 
+		double timeInSeconds =1.0*time*timeStep/1000.0; 
 		g.setFont(g.getFont().deriveFont(10.0f));
 		g.drawString(String.format("%.2f",timeInSeconds)+" s", (sliderPosition)*CELL_WIDTH, 0);
-		g.drawString("0 s", 0, 0);
+//		g.drawString("0 s", 0, 0);
+		
+		
+		if(timeStep < TIME_GUIDELINE_UNIT)
+		{
+			
+			long starTime = (long)Math.max(0, (1.0 *time- EyeTrackDataStreamViewer.MAX_CELL_COLUMNS) * timeStep);
+			long endTime = time * timeStep;
+			
+			long markIterator =(long) Math.ceil(1.0 * starTime /  TIME_GUIDELINE_UNIT) * TIME_GUIDELINE_UNIT;
+			while(markIterator < endTime)
+			{
+				if(markIterator > starTime)
+				{
+					int position =(int)( 1.0 *(markIterator - starTime)*CELL_WIDTH / timeStep);
+					g.drawLine(position, 10, position, MAX_Y);
+					g.drawString(String.format("%.0f",1.0*markIterator/1000)+"s", position-3, 10);
+					
+				}
+				markIterator += TIME_GUIDELINE_UNIT;
+			}
+			
+			
+		}
 	}
 	private int getCurrentTimeWindow()
 	{

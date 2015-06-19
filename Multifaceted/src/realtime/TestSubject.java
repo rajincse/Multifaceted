@@ -46,13 +46,27 @@ public class TestSubject {
 		synchronized (this) {
 			isLocked = true;
 		}
+		
+		long startTimeMarker = (long)Math.max(0, (1.0 *timeMarker/timeStep - EyeTrackDataStreamViewer.MAX_CELL_COLUMNS) * timeStep);
+		long[] startTimePerTask = new long[taskList.size()];
+		
 		long totalTimePreviousTasks =0;
 		int currentTaskIndex =INVALID_INDEX;
 		for(int i=0;i<taskList.size();i++)
 		{
 			Task task = taskList.get(i);
+			long taskStart = totalTimePreviousTasks;
+			long taskEnd =totalTimePreviousTasks+ task.getEndTime();
+			if(startTimeMarker> taskEnd)
+			{
+				startTimePerTask[i] = INVALID_INDEX;
+			}
+			else if(startTimeMarker>= taskStart && startTimeMarker< taskEnd)
+			{
+				startTimePerTask[i] = startTimeMarker -taskStart;
+			}
 			
-			if(totalTimePreviousTasks+ task.getEndTime() >= timeMarker)
+			if( taskEnd>= timeMarker)
 			{
 				currentTaskIndex =i;
 				break;
@@ -72,9 +86,19 @@ public class TestSubject {
 				for(int taskIndex =0;taskIndex<currentTaskIndex;taskIndex++)
 				{
 					Task task = taskList.get(taskIndex);
-					heatmapCellPerItem[objectIndex][taskIndex] = task.getHeatmapCells(qualifiedItem, timeStep);
+					long startTime = startTimePerTask[taskIndex];
+					if(startTime == INVALID_INDEX)
+					{
+						heatmapCellPerItem[objectIndex][taskIndex] = null;
+					}
+					else
+					{
+						heatmapCellPerItem[objectIndex][taskIndex] = task.getHeatmapCells(qualifiedItem,startTime, task.getEndTime(), timeStep);
+					}
+					
 				}
-				heatmapCellPerItem[objectIndex][currentTaskIndex] = currentTask.getHeatmapCells(qualifiedItem, endTimeMarker, timeStep);
+				long startTime = startTimePerTask[currentTaskIndex];
+				heatmapCellPerItem[objectIndex][currentTaskIndex] = currentTask.getHeatmapCells(qualifiedItem, startTime, endTimeMarker, timeStep);
 			}
 			
 			//Label Height
@@ -149,7 +173,7 @@ public class TestSubject {
 				
 				g.fillRect(x-stringWidth-5, lastY, stringWidth+5, allottedHeight);
 				
-				int rightX =(currentTime+1) * EyeTrackDataStreamViewer.CELL_WIDTH; 
+				int rightX =(Math.min(currentTime, EyeTrackDataStreamViewer.MAX_CELL_COLUMNS)+1) * EyeTrackDataStreamViewer.CELL_WIDTH; 
 				g.fillRect( rightX, lastY, stringWidth+10, allottedHeight);
 				
 				g.setColor(Color.black);

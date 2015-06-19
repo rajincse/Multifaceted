@@ -31,6 +31,7 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 	public static final int CELL_WIDTH =5;
 	public static final int CELL_HEIGHT =12;
 	public static final int MAX_CELLS =10;
+	public static final int MAX_CELL_COLUMNS = 100;
 	public static final int MAX_X =1200;
 	public static final int MAX_Y = 1000;
 	public static final int TRANSLATE_X =100;
@@ -73,7 +74,7 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Part_2.txt";
 //			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Practice.txt";
 			int initialTime =0;
-			int intialTimeWindow =20;
+			int intialTimeWindow =90;
 			int initialTimeStep =1000;
 			Property<PFileInput> pLoad = new Property<PFileInput>(PROPERTY_LOAD_SEQUENCE, new PFileInput())
 					{
@@ -441,14 +442,15 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		g.setColor(Color.black);
 		
 		int time = getCurrentTime();
-		g.drawLine((time)*CELL_WIDTH, 0, (time)*CELL_WIDTH, MAX_Y);
+		int sliderPosition = Math.min(time, MAX_CELL_COLUMNS);
+		g.drawLine((sliderPosition)*CELL_WIDTH, 0, (sliderPosition)*CELL_WIDTH, MAX_Y);
 		if(timeSliderHovered)
 		{
-			g.drawLine((time)*CELL_WIDTH- TIME_SLIDER_WIDTH/2, 10, (time)*CELL_WIDTH+ TIME_SLIDER_WIDTH/2, 10);
+			g.drawLine((sliderPosition)*CELL_WIDTH- TIME_SLIDER_WIDTH/2, 10, (sliderPosition)*CELL_WIDTH+ TIME_SLIDER_WIDTH/2, 10);
 		}
 		double timeInSeconds =1.0*time*getCurrentTimeStep()/1000.0; 
 		g.setFont(g.getFont().deriveFont(10.0f));
-		g.drawString(String.format("%.2f",timeInSeconds)+" s", (time)*CELL_WIDTH, 0);
+		g.drawString(String.format("%.2f",timeInSeconds)+" s", (sliderPosition)*CELL_WIDTH, 0);
 		g.drawString("0 s", 0, 0);
 	}
 	private int getCurrentTimeWindow()
@@ -500,7 +502,8 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 			Stroke previousStroke = g.getStroke();
 			g.setStroke(new BasicStroke(strokeWidth));
 			g.setColor(Color.black);
-			int maxX =(int)( maxTime* CELL_WIDTH / getCurrentTimeStep());
+//			int maxX =(int)( maxTime* CELL_WIDTH / getCurrentTimeStep());
+			int maxX =MAX_CELL_COLUMNS* CELL_WIDTH ;
 			g.drawLine(-LABEL_WIDTH, 0, maxX, 0);
 			g.setStroke(previousStroke);
 			

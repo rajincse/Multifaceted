@@ -55,11 +55,15 @@ public class Task {
 	}
 	public double[] getHeatmapCells(DataObject qualifiedItem, int timeStep)
 	{
-		return getHeatmapCells(qualifiedItem, getEndTime(), timeStep);
+		return getHeatmapCells(qualifiedItem,0, getEndTime(), timeStep);
 	}
 	public double[] getHeatmapCells(DataObject qualifiedItem, long endTime, int timeStep)
 	{
-		int totalCells =(int) (endTime/ timeStep)+1;
+		return getHeatmapCells(qualifiedItem,0, endTime, timeStep);
+	}
+	public double[] getHeatmapCells(DataObject qualifiedItem,long startTime, long endTime, int timeStep)
+	{
+		int totalCells =(int) ((endTime-startTime)/ timeStep)+1;
 		if(totalCells ==0)
 		{
 			return null;
@@ -73,9 +77,13 @@ public class Task {
 			{
 				break;
 			}
+			else if(event.getTime() < startTime)
+			{
+				continue;
+			}
 			if(event.getTarget().equals(qualifiedItem))
 			{
-				int index = (int) (event.getTime()/ timeStep);
+				int index = (int) ((event.getTime()-startTime)/ timeStep);
 				heatmapCells[index]+=event.getScore();
 				count[index]++;
 			}

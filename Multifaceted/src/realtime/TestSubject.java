@@ -66,8 +66,9 @@ public class TestSubject {
 				startTimePerTask[i] = startTimeMarker -taskStart;
 			}
 			
+			
 			if( taskEnd>= timeMarker)
-			{
+			{	
 				currentTaskIndex =i;
 				break;
 			}
@@ -100,6 +101,47 @@ public class TestSubject {
 				long startTime = startTimePerTask[currentTaskIndex];
 				heatmapCellPerItem[objectIndex][currentTaskIndex] = currentTask.getHeatmapCells(qualifiedItem, startTime, endTimeMarker, timeStep);
 			}
+			
+			
+			//Label Height
+			this.itemLabelHeight = new HashMap<DataObject, Double>();
+			double scoreSum =0;
+			for(DataObject obj: qualifiedItems)
+			{
+				scoreSum+=getLabelScore(obj);
+			}
+			
+			for(DataObject obj:qualifiedItems)
+			{
+				double allottedHeight =  getLabelScore(obj)*qualifiedItems.size()* EyeTrackDataStreamViewer.CELL_HEIGHT / scoreSum;
+				itemLabelHeight.put(obj, allottedHeight);
+			}
+		}
+		else if(totalTimePreviousTasks< timeMarker)
+		{
+			Task currentTask = taskList.get(taskList.size()-1);
+			long endTimeMarker =  currentTask.getEndTime();
+			qualifiedItems = currentTask.getQualifiedItems(endTimeMarker, timeWindow, timeStep) ;
+			heatmapCellPerItem= new double[qualifiedItems.size()][taskList.size()][];
+			for(int objectIndex=0;objectIndex<qualifiedItems.size();objectIndex++)
+			{
+				DataObject qualifiedItem = qualifiedItems.get(objectIndex);
+				for(int taskIndex =0;taskIndex<taskList.size();taskIndex++)
+				{
+					Task task = taskList.get(taskIndex);
+					long startTime = startTimePerTask[taskIndex];
+					if(startTime == INVALID_INDEX)
+					{
+						heatmapCellPerItem[objectIndex][taskIndex] = null;
+					}
+					else
+					{
+						heatmapCellPerItem[objectIndex][taskIndex] = task.getHeatmapCells(qualifiedItem,startTime, task.getEndTime(), timeStep);
+					}
+					
+				}
+			}
+			
 			
 			//Label Height
 			this.itemLabelHeight = new HashMap<DataObject, Double>();

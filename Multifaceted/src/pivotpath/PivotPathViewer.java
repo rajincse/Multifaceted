@@ -9,10 +9,11 @@ import imdb.entity.Person;
 import imdb.entity.SearchItem;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -92,6 +93,12 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	private static final int MAX_SIMULATION =10;
 	private static final int SIMULATION_SPEED =20;
 	private static final int TIME_LAPSE =10;
+	
+	public static final int FULL_VIEW_X = 50;
+	public static final int FULL_VIEW_Y = 200;
+	public static final int FULL_VIEW_WIDTH = 1150;
+	public static final int FULL_VIEW_HEIGHT = 850;
+	public static final double FULL_VIEW_SCALE = 2.0;
 	
 
 	public static final int IMAGE_SAVE_OFFSET_X =100;
@@ -907,7 +914,11 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 			pivotPaths.renderDebug(g);
 		}
 		
-		
+//		Full View border
+//		g.translate(-FULL_VIEW_X, -FULL_VIEW_Y);
+//		g.setColor(Color.red);
+//		g.drawRect(0, 0, FULL_VIEW_WIDTH, FULL_VIEW_HEIGHT);
+//		g.translate(FULL_VIEW_X, FULL_VIEW_Y);
 	}
 	
 	private void drawEyeGaze(Graphics2D g)
@@ -959,8 +970,19 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		
 	}
 
-	public void keyReleased(String arg0, String arg1) {
+	public void keyReleased(String key, String modifiers) {
 		// TODO Auto-generated method stub
+		if(key.equals("F6"))
+		{
+			String zoomText = String.format("%.2f", getZoom());
+			String imageFile = new SimpleDateFormat("yyyyMMdd_HHmmss_S").format(new Date())
+									+currentItem.getDisplayText()
+										.replace(" ", "_")
+										.replaceAll("[^a-zA-Z0-9\\.\\-]", "_")
+									+"_"+zoomText+ "_FULL.PNG";
+			saveFullView(IMAGE_RESULT_DIR+imageFile);
+			System.out.println("Saved:"+IMAGE_RESULT_DIR+imageFile);
+		}
 		
 	}
 	
@@ -1317,6 +1339,41 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 		}, 0);
 	
 	}
+	
+	private void saveFullView(String filePath)
+	{
+		BufferedImage bim = new BufferedImage((int)(FULL_VIEW_WIDTH* FULL_VIEW_SCALE),(int)(FULL_VIEW_HEIGHT* FULL_VIEW_SCALE), BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = bim.createGraphics();
+
+	    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+	    RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+
+	    g.setRenderingHint(RenderingHints.KEY_RENDERING,
+	    RenderingHints.VALUE_RENDER_QUALITY);
+
+	    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+	    RenderingHints.VALUE_ANTIALIAS_ON);
+	    
+	    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+	    	    RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+	    
+		AffineTransform transform = new AffineTransform();
+		
+		
+		transform.scale(FULL_VIEW_SCALE, FULL_VIEW_SCALE);
+		transform.translate(FULL_VIEW_X, FULL_VIEW_Y);
+		g.setTransform(transform);
+		render(g);
+		
+		g.dispose();
+		try {
+			ImageIO.write(bim, "PNG", new File(filePath ));
+		} catch (IOException e) {
+			
+			e.printStackTrace();
+		}
+	}
+	
 	private BufferedImage getViewPortImage()
 	{
 		return this.getContainer().getImage();

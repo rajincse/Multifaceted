@@ -4,6 +4,8 @@ import imdb.IMDBDataSource;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Stroke;
@@ -44,6 +46,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 	public static final String PROPERTY_LOAD_SUBTASK_VIEW_NAME = "Load Subtask View Name";
 	public static final String PROPERTY_LOAD_VIEWED_DATA = "Load Viewed Data";
 	public static final String PROPERTY_SAVE_VIEW = "Save View";
+	public static final String PROPERTY_GENERATE_LEGEND_DIAGRAM = "Generate Legends";
 	
 	
 	private ArrayList<StatElement> elementNames = new ArrayList<StatElement>();
@@ -176,6 +179,16 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 							}
 					};
 			addProperty(pSaveView);
+			
+			Property<PFileOutput> pLegends = new Property<PFileOutput>(PROPERTY_GENERATE_LEGEND_DIAGRAM, new PFileOutput())
+					{
+							@Override
+							protected boolean updating(PFileOutput newvalue) {
+								generateLegendDiagram(newvalue.path);
+								return super.updating(newvalue);
+							}
+					};
+			addProperty(pLegends);
 		}
 		catch(Exception ex)
 		{
@@ -183,15 +196,21 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		}
 	}
 	
+	int saveViewTranslateX = 300;
+	int saveViewTranslateY = 75;
+	private Dimension getImageDimension()
+	{
+		return new Dimension(maxRelevance * 200+550,1050);
+	}
 	private void saveView(String filePath)
 	{	
 		
 		// TODO Auto-generated method stub
-		BufferedImage bim = new BufferedImage(maxRelevance * 200+450,1000, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage bim = new BufferedImage(getImageDimension().width,getImageDimension().height, BufferedImage.TYPE_INT_ARGB);
 		
 		Graphics2D g = bim.createGraphics();
 		
-		g.translate(150, 50);
+		g.translate(saveViewTranslateX, saveViewTranslateY);
 		render(g);
 		
 		if(!filePath.contains(".PNG"))
@@ -208,6 +227,68 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		}
 			
 	
+	}
+	
+	private void generateLegendDiagram(String filePath)
+	{
+		// TODO Auto-generated method stub
+				BufferedImage bim = new BufferedImage(975,65, BufferedImage.TYPE_INT_ARGB);
+				
+				Graphics2D g = bim.createGraphics();
+				
+				renderLegendLabels(g);
+				
+				g.dispose();
+				
+				if(!filePath.contains(".PNG"))
+				{
+					filePath+=".PNG";
+				}
+				
+				try {
+					ImageIO.write(bim, "PNG", new File(filePath));
+				
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	}
+	
+	private void renderLegendLabels(Graphics2D g)
+	{
+		String [] typeName = new String[]{"INIT", "Actor", "Movie", "Director", "Genre", "Star"};
+		
+
+		int startType =EyeTrackerItem.TYPE_ACTOR;
+		int endType = EyeTrackerItem.TYPE_GENRE;
+		
+		Color previousColor = g.getColor();
+		Font previousFont = g.getFont();
+		g.translate(25, +35);
+		g.setColor(Color.black);
+		g.setFont(g.getFont().deriveFont(60f));
+//		g.drawString("Legends:", 0, 15);
+		for(int i=startType;i<= endType;i++)
+		{
+			int legendWidth =250;
+			int x = legendWidth * (i-1);
+			int y = 0; //- maxYLength/2 + i * 50;
+			
+			drawElement(i,x,y, 20, g);
+			
+			
+			g.drawString(typeName[i], x+25, y+15);
+		}
+		g.translate(-25, -35);
+		g.setColor(previousColor);
+		g.setFont(previousFont);
+//		Color previousColorR = g.getColor();
+//		g.setColor(Color.red);
+//		
+//		g.drawRect(0, 0,975, 65);
+//		
+//		g.setColor(previousColorR);
+		
 	}
 	
 	private void readViewedDirectory(String path)
@@ -1123,49 +1204,54 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		}
 		
 		g.setColor(Color.black);
-		
+		Stroke regularStroke = g.getStroke();
+		Stroke wideStroke = new BasicStroke(6.0f);
+		g.setStroke(wideStroke);
 		//Draw Axis
 		g.drawLine(originX,originY, originX, originY-maxYLength);
 		g.drawLine(originX,originY, originX+(maxRelevance +1)* maxRelevanceWidth, originY);
-		
+		g.setStroke(regularStroke);
 		// Draw Legends
-		g.setFont(g.getFont().deriveFont(30f));
-		int startType =EyeTrackerItem.TYPE_ACTOR;
-		int endType = EyeTrackerItem.TYPE_GENRE;
-		String [] typeName = new String[]{"INIT", "Actor", "Movie", "Director", "Genre", "Star"};
-		g.drawString("Legends:", originX+75, originY+115);
-		for(int i=startType;i<= endType;i++)
-		{
-			int x = originX+50+maxRelevanceWidth * i;
-			int y = originY+ 100; //- maxYLength/2 + i * 50;
-			
-			drawElement(i,x,y, 20, g);
-			
-			
-			g.drawString(typeName[i], x+25, y+15);
-		}
+		g.setFont(g.getFont().deriveFont(60f));
+		int legendsY = originY+3*g.getFontMetrics().getHeight()-15;
+		int legendsX =originX-200;
+		g.translate(legendsX, legendsY);
+		renderLegendLabels(g);
+		g.translate(-legendsX, -legendsY);
 		
+		int relevanceY = originY+2*g.getFontMetrics().getHeight();
+		String relevanceLabel ="Relevance:"; 
+		
+		g.drawString(relevanceLabel, originX- g.getFontMetrics().stringWidth(relevanceLabel), relevanceY);
+		
+		int subtaskY = originY+1*g.getFontMetrics().getHeight();
+		String subtaskLabel = "Task:";
+		g.drawString(subtaskLabel,  originX-g.getFontMetrics().stringWidth(subtaskLabel), subtaskY);
 		//Draw Relevance Partitions
 		for(int i=0;i<=maxRelevance;i++)
 		{
+			Stroke previousStroke = g.getStroke();
+			
+			g.setStroke(wideStroke);
 			g.drawLine(originX+(i+1)*maxRelevanceWidth,originY, originX+(i+1)*maxRelevanceWidth, originY-maxYLength);
 			
-			g.drawString("Relevace:"+i, originX+i*maxRelevanceWidth+20, originY+70);
-			Stroke previousStroke = g.getStroke();
+			//Printing relevance
+			g.drawString(String.format("%.2f", 1.0 / ( 1+i)), originX+i*maxRelevanceWidth+35, relevanceY);
+			
 			Stroke dashed =  new BasicStroke(1.0f,
                     BasicStroke.CAP_BUTT,
                     BasicStroke.JOIN_MITER,
                     10.0f, new float[]{2f}, 0.0f);
 			g.setStroke(dashed);
-			g.setFont(g.getFont().deriveFont(25f));
+			g.setFont(g.getFont().deriveFont(40f));
 			
 			for(int j=0;j<maxSubtask;j++)
 			{	
 				g.drawLine(originX+i*maxRelevanceWidth+j*maxTaskWidth,originY, originX+i*maxRelevanceWidth+j*maxTaskWidth, originY-maxYLength);
-				g.drawString("t"+(j+1), originX+i*maxRelevanceWidth+j*maxTaskWidth+maxTaskWidth/2-5, originY+30);
+				g.drawString(""+currentTask+(char)('a'+j), originX+i*maxRelevanceWidth+j*maxTaskWidth+maxTaskWidth/2-20, subtaskY);
 			}
 			g.setStroke(previousStroke);
-			g.setFont(g.getFont().deriveFont(30f));
+			g.setFont(g.getFont().deriveFont(60f));
 		}
 		
 		
@@ -1176,7 +1262,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 			g.drawLine(originX-15,y, originX+15, y);
 			
 			double scoreValue = i * 1.0 / factor / totalPartitions;
-			g.drawString(String.format("%.3f",scoreValue), originX-100, y+10);
+			g.drawString(String.format("%.3f",scoreValue), originX-200, y+10);
 		}
 		
 		//Error Bars
@@ -1200,6 +1286,12 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 			}
 			
 		}
+		
+		//Save View border
+//		g.translate(-saveViewTranslateX,-saveViewTranslateY);
+//		g.setColor(Color.red);
+//		g.drawRect(0, 0, getImageDimension().width,getImageDimension().height);
+//		g.translate(saveViewTranslateX,saveViewTranslateY);
 	}
 	
 	private Stroke getStroke(int subtask)

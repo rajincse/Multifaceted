@@ -200,7 +200,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 	int saveViewTranslateY = 75;
 	private Dimension getImageDimension()
 	{
-		return new Dimension(maxRelevance * 200+550,1050);
+		return new Dimension(2350,1050);
 	}
 	private void saveView(String filePath)
 	{	
@@ -1126,7 +1126,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 		
 		int maxYLength =800;
 		double factor =1.0 / maxScore;
-		int maxRelevanceWidth =200;
+		int maxRelevanceWidth =2000/(maxRelevance+1);
 		int maxTaskWidth =(int)( 1.0 * maxRelevanceWidth/ maxSubtask) ;
 		
 		
@@ -1236,7 +1236,7 @@ public class ElementStatViewer extends Viewer implements JavaAwtRenderer {
 			g.drawLine(originX+(i+1)*maxRelevanceWidth,originY, originX+(i+1)*maxRelevanceWidth, originY-maxYLength);
 			
 			//Printing relevance
-			g.drawString(String.format("%.2f", 1.0 / ( 1+i)), originX+i*maxRelevanceWidth+35, relevanceY);
+			g.drawString(String.format("%.2f", 1.0 / ( 1+i)),(int)( originX+(i+0.25)*maxRelevanceWidth+35), relevanceY);
 			
 			Stroke dashed =  new BasicStroke(1.0f,
                     BasicStroke.CAP_BUTT,

@@ -72,8 +72,10 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		try
 		{
 //			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Part_1.txt";
-			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Part_2.txt";
+//			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Part_2.txt";
 //			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Practice.txt";
+			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Protocol_2_anonymous.txt";
+//			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Protocol_2_Practice.txt";
 			int initialTime =0;
 			int intialTimeWindow =90;
 			int initialTimeStep =1000;
@@ -269,16 +271,15 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		
 		// TODO Auto-generated method stub
 		
-		int time = getCurrentTime();
-		
-		int width = time* CELL_WIDTH+POSITION_X_USER_NAME;
 				
-		BufferedImage bim = new BufferedImage(width+50,MAX_Y+50, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage bim = new BufferedImage((int)(SAVE_VIEW_WIDTH* SAVE_VIEW_ZOOM),(int)(SAVE_VIEW_HEIGHT*SAVE_VIEW_ZOOM), BufferedImage.TYPE_INT_ARGB);
 		
 		Graphics2D g = bim.createGraphics();
 		
-		g.translate(POSITION_X_USER_NAME, 0);
+		g.scale(SAVE_VIEW_ZOOM, SAVE_VIEW_ZOOM);
+		g.translate(SAVE_VIEW_X,SAVE_VIEW_Y);
 		render(g);
+		g.dispose();
 		
 		if(!filePath.contains(".PNG"))
 		{
@@ -495,6 +496,27 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 	{
 		return ((PList)getProperty(PROPERTY_SUBJECT_LIST).getValue()).selectedIndeces;
 	}
+	public static final int SAVE_VIEW_X=205;
+	public static final int SAVE_VIEW_Y=10;
+	public static final int SAVE_VIEW_WIDTH=1010;
+	public static final int SAVE_VIEW_HEIGHT=530;
+	public static final double SAVE_VIEW_ZOOM =2.0;
+	
+	private void showBoundingBox(Graphics2D g)
+	{
+		Color previousColor = g.getColor();
+		g.setColor(Color.red);
+		
+		g.translate(-SAVE_VIEW_X, -SAVE_VIEW_Y);
+		
+		g.drawRect(0, 0, SAVE_VIEW_WIDTH, SAVE_VIEW_HEIGHT);
+		
+		g.translate(SAVE_VIEW_X, SAVE_VIEW_Y);
+		
+		
+		g.setColor(previousColor);
+	}
+	
 	@Override
 	public void render(Graphics2D g) {
 		// TODO Auto-generated method stub
@@ -571,6 +593,8 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 			g.translate(0, -yTranslate);
 			renderTimeLine(g);
 			g.translate(-TRANSLATE_X, 0);
+			
+//			showBoundingBox(g);
 		}
 	}
 

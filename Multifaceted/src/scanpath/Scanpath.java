@@ -3,6 +3,7 @@ package scanpath;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -75,7 +76,13 @@ public class Scanpath {
 		this.filepath = filepath;
 	}
 	private DataObject[] scanpathPoints;
+	private ArrayList<DataObject> renderingObjectList = new ArrayList<DataObject>();
 	private double maxScore=Double.MIN_VALUE;
+	
+	public int getRowCount()
+	{
+		return this.renderingObjectList.size();
+	}
 	public void prepareRender()
 	{
 		int totalCells =(int)(eyeEventList.get(eyeEventList.size()-1).getTime()/ ScanpathViewer.TIME_STEP)+1;
@@ -105,6 +112,11 @@ public class Scanpath {
 			{
 				DataObject bestDataObject = getBestDataObject(dataObjectCollection);
 				scanpathPoints[lastIndex] = bestDataObject;
+				if(bestDataObject != null && !this.renderingObjectList.contains(bestDataObject))
+				{
+					this.renderingObjectList.add(bestDataObject);
+				}
+				
 				if(bestDataObject != null && bestDataObject.getSortingScore() > maxScore)
 				{
 					maxScore = bestDataObject.getSortingScore();
@@ -129,55 +141,68 @@ public class Scanpath {
 			return null;
 		}
 	}
+	public static final int WIDTH_TITLE = 200;
+	public static final int WIDTH_ANCHOR = 50;
 	
-	
-	public void render(Graphics2D g)
+	public void render(Graphics2D g, Color objectColor, Color horizontalLineColor, Color transitionLineColor, double heightRatio)
 	{
-		renderTimeline(g);
-		g.setColor(Color.black);
+		String fileName = new File(this.filepath).getName();
+		Util.drawTextBox(g, Color.black, "Sayeed Safayet Alam", new Rectangle(0,0,10,8));
+		Util.drawTextBox(g,Color.black, fileName, new Rectangle(0,renderingObjectList.size()*ScanpathViewer.TIME_CELL_HEIGHT/2,WIDTH_TITLE,ScanpathViewer.TIME_CELL_HEIGHT*2));
+		
+		g.translate(WIDTH_TITLE, 0);
+		
+		// Rendering Anchors
+		g.setColor(horizontalLineColor);
+		for(int i=0;i<renderingObjectList.size();i++)
+		{
+			String name = renderingObjectList.get(i).getLabel();
+			int lineY = i* ScanpathViewer.TIME_CELL_HEIGHT;			
+			g.drawLine(WIDTH_ANCHOR,lineY, WIDTH_ANCHOR+scanpathPoints.length*ScanpathViewer.TIME_CELL_WIDTH, lineY);
+			
+			int textY = i* ScanpathViewer.TIME_CELL_HEIGHT-ScanpathViewer.TIME_CELL_HEIGHT/2;
+			Util.drawTextBox(g, Color.black, name, new Rectangle(0,textY,WIDTH_ANCHOR,ScanpathViewer.TIME_CELL_HEIGHT));
+		}
+		
+		//Rendering objects and transitions
+		g.translate(WIDTH_ANCHOR, 0);
 		Point lastPoint = null;
-		int cellCenter = ScanpathViewer.TIME_CELL_WIDTH/2+1;
 		for(int i=0;i <scanpathPoints.length;i++)
 		{
-			if(scanpathPoints[i] != null)
+			DataObject object = scanpathPoints[i];
+			if(object != null)
 			{
-				
-				int x = i*ScanpathViewer.TIME_CELL_WIDTH+ cellCenter;
-				int y = (scanpathPoints[i].getType()-1)* ScanpathViewer.TIME_LINE_GAP;
+				int index = renderingObjectList.indexOf(object);
+				int x = i*ScanpathViewer.TIME_CELL_WIDTH;
+				int y = index* ScanpathViewer.TIME_CELL_HEIGHT;
 				if(lastPoint != null)
 				{
-					g.drawLine(lastPoint.x, lastPoint.y, x, y);
-					
+					g.setColor(transitionLineColor);
+					g.drawLine(lastPoint.x+ScanpathViewer.TIME_CELL_WIDTH/2, lastPoint.y, x+ScanpathViewer.TIME_CELL_WIDTH/2, y);
 				}
 				lastPoint = new Point(x,y);
-				int radius = (int)(scanpathPoints[i].getSortingScore()*cellCenter/ maxScore)+1;
-				Util.drawCircle(x, y, radius, Color.black, g);
+				g.setColor(objectColor);
+				int cellHeight =(int) (ScanpathViewer.TIME_CELL_HEIGHT* heightRatio);
+				g.fillRect(x, y-cellHeight/2, ScanpathViewer.TIME_CELL_WIDTH,cellHeight);
 			}
 			else if(lastPoint != null)
 			{
-				int x = i*ScanpathViewer.TIME_CELL_WIDTH+ cellCenter;
+				int x = i*ScanpathViewer.TIME_CELL_WIDTH+  ScanpathViewer.TIME_CELL_WIDTH/2;
 				int y = lastPoint.y;
-				g.drawLine(lastPoint.x, lastPoint.y, x, y);
+				g.setColor(transitionLineColor);
+				g.drawLine(lastPoint.x+ScanpathViewer.TIME_CELL_WIDTH/2, lastPoint.y, x+ScanpathViewer.TIME_CELL_WIDTH/2, y);
 				lastPoint = new Point(x,y);
 			}
 		}
+		
+		g.translate(-WIDTH_ANCHOR, 0);
+		
+		
+		
+		g.translate(-WIDTH_TITLE, 0);
 	}
 	
-	private void renderTimeline(Graphics2D g)
-	{
-		int y=0;
-		for(int type=EyeTrackerItem.TYPE_ACTOR;type<EyeTrackerItem.TYPE_MOVIE_STAR_RATING;type++)
-		{
-			
-			Color c = Util.getRelevanceChartColor(type);
-			g.setColor(c);
-			
-			g.drawLine(0, 0, scanpathPoints.length*ScanpathViewer.TIME_CELL_WIDTH, 0);
-			g.translate(0, ScanpathViewer.TIME_LINE_GAP);
-			y+= ScanpathViewer.TIME_LINE_GAP;
-		}
-		g.translate(0, -y);
-		
-	}
+	
+	
 	
 }

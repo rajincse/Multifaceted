@@ -1,10 +1,15 @@
 package scanpath;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.util.ArrayList;
+
+import javax.imageio.ImageIO;
 
 import multifaceted.FileLineReader;
 import perspectives.base.Property;
@@ -12,6 +17,7 @@ import perspectives.base.Viewer;
 import perspectives.properties.PColor;
 import perspectives.properties.PDouble;
 import perspectives.properties.PFileInput;
+import perspectives.properties.PFileOutput;
 import perspectives.properties.POptions;
 import perspectives.two_d.JavaAwtRenderer;
 
@@ -23,7 +29,9 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 	public static final String PROPERTY_COLOR_OBJECT ="Object Color";
 	public static final String PROPERTY_COLOR_LINE_HORIZONTAL ="Horizontal Line Color";
 	public static final String PROPERTY_COLOR_LINE_TRANSITION ="Transition Line Color";
-	public static final String PROPERTY_RATIO_HEIGHT = "Height Ratio";
+	public static final String PROPERTY_RATIO_HEIGHT = "Height Ratio";	
+	public static final String PROPERTY_SAVE_IMAGE="Save Image";
+	
 	
 	public static final String[] TYPE_NAME_DIAGRAM= new String[]{"User-> DOI", "DOI -> User"};
 	public static final int TYPE_USER_DOI =0;
@@ -31,7 +39,7 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 	
 	public static final int TIME_STEP = 500;
 	
-	public static final int SCANPATH_DIAGRAM_GAP =100;
+	public static final int SCANPATH_DIAGRAM_GAP =10;
 	
 	public static final int TIME_CELL_WIDTH =10;
 	public static final int TIME_CELL_HEIGHT =5;
@@ -41,6 +49,8 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 	
 	
 	private ArrayList<Scanpath> scanpathList = new ArrayList<Scanpath>();
+	private MultiScanpath multiscanpath = null;
+	
 	public ScanpathViewer(String name) {
 		super(name);
 		String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\ScanPath\\";
@@ -52,13 +62,14 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 					protected boolean updating(PFileInput newvalue) {
 						
 						readSequenceDirectory(newvalue.path);						
-						
+						multiscanpath = new MultiScanpath(newvalue.path);
 						return super.updating(newvalue);
 					}
 				};
 		addProperty(pLoad);
 		
 		POptions diagramNameOptions = new POptions(TYPE_NAME_DIAGRAM);
+		diagramNameOptions.selectedIndex = TYPE_DOI_USER;
 		Property<POptions> pDiagramType = new Property<POptions>(PROPERTY_DIAGRAM_TYPE, diagramNameOptions)
 				{
 						@Override
@@ -114,8 +125,26 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 				};
 		addProperty(pHeightRatio);
 		
+		Property<PFileOutput> pSaveImage = new Property<PFileOutput>(PROPERTY_SAVE_IMAGE, new PFileOutput())
+				{
+					@Override
+					protected boolean updating(PFileOutput newvalue) {
+						// TODO Auto-generated method stub
+						
+						saveView(newvalue.path);
+						
+						return super.updating(newvalue);
+					}
+				};
+		addProperty(pSaveImage);
+		
 		PFileInput loadFile = new PFileInput(path);
 		pLoad.setValue(loadFile);
+	}
+	
+	private int getSelectedIndexPOptions(String propertyName)
+	{
+		return ((POptions)this.getProperty(propertyName).getValue()).selectedIndex; 
 	}
 	private Color getColor(String propertyName)
 	{
@@ -196,15 +225,20 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 	@Override
 	public void render(Graphics2D g) {
 		// TODO Auto-generated method stub
-		if(this.scanpathList != null && !this.scanpathList.isEmpty())
+		
+		int diagramType = getSelectedIndexPOptions(PROPERTY_DIAGRAM_TYPE);
+		Color objectColor = getColor(PROPERTY_COLOR_OBJECT);
+		Color horizontalColor = getColor(PROPERTY_COLOR_LINE_HORIZONTAL);
+		Color transitionColor = getColor(PROPERTY_COLOR_LINE_TRANSITION);
+		double heightRatio = getDouble(PROPERTY_RATIO_HEIGHT);
+		
+		g.translate(INIT_TRANSLATE_X, INIT_TRANSLATE_Y);
+		
+		
+		if(diagramType == TYPE_USER_DOI && this.scanpathList != null && !this.scanpathList.isEmpty())
 		{
 			
-			Color objectColor = getColor(PROPERTY_COLOR_OBJECT);
-			Color horizontalColor = getColor(PROPERTY_COLOR_LINE_HORIZONTAL);
-			Color transitionColor = getColor(PROPERTY_COLOR_LINE_TRANSITION);
-			double heightRatio = getDouble(PROPERTY_RATIO_HEIGHT);
 			
-			g.translate(INIT_TRANSLATE_X, INIT_TRANSLATE_Y);
 			
 			int totalYTranslate=0;
 			for(Scanpath scanpath: scanpathList)
@@ -215,8 +249,53 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 				totalYTranslate+= yTranslate;
 			}
 			g.translate(0, -totalYTranslate);
+		}
+		else if(diagramType == TYPE_DOI_USER)
+		{
+			this.multiscanpath.render(g, objectColor, horizontalColor, transitionColor, heightRatio);
+		}
+		g.translate(-INIT_TRANSLATE_X, -INIT_TRANSLATE_Y);
+		
+	}
+	public static double SAVE_VIEW_ZOOM =3;
+	private void saveView(String filePath)
+	{	
+		
+		// TODO Auto-generated method stub
+		int diagramType = getSelectedIndexPOptions(PROPERTY_DIAGRAM_TYPE);
+		Dimension dimension =null;
+		if(diagramType == TYPE_USER_DOI)
+		{
+			dimension = Scanpath.getImageDimension(scanpathList);
+		}
+		else if(diagramType == TYPE_DOI_USER)
+		{
+			dimension = this.multiscanpath.getImageDimension();
+		}
+		
+		if(dimension != null)
+		{
+			BufferedImage bim = new BufferedImage((int)((dimension.width+INIT_TRANSLATE_X)* SAVE_VIEW_ZOOM),(int)((dimension.height+INIT_TRANSLATE_Y)*SAVE_VIEW_ZOOM), BufferedImage.TYPE_INT_ARGB);
 			
-			g.translate(-INIT_TRANSLATE_X, -INIT_TRANSLATE_Y);
+			Graphics2D g = bim.createGraphics();
+			
+			g.scale(SAVE_VIEW_ZOOM, SAVE_VIEW_ZOOM);
+			render(g);
+			g.dispose();
+			
+			if(!filePath.contains(".PNG"))
+			{
+				filePath+=".PNG";
+			}
+			
+			try {
+				ImageIO.write(bim, "PNG", new File(filePath));
+			
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			System.out.println("Image Saved:"+filePath);
 		}
 	}
 

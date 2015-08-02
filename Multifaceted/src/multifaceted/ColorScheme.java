@@ -3,7 +3,8 @@ package multifaceted;
 import java.awt.Color;
 
 public class ColorScheme {
-
+	public static Color[] ALTERNATE_COLOR_BLUE ={new Color(168,221,181), new Color(67,162,202)};
+	public static Color[] LINE_COLOR ={Color.black, Color.red, Color.GREEN, Color.blue}; 
 	public static Color[] DEFAULT ={Color.white,Color.green,Color.yellow,Color.red};
 	public static Color[] LINEAR_GRAY = {
 			new Color(0, 0, 0), 

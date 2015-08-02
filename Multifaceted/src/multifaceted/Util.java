@@ -491,8 +491,8 @@ public class Util {
 		
 		
 		g.drawString(label, rect.x, rect.y+fontMetrics.getAscent());
-		g.setColor(Color.black);
-		g.drawRect(rect.x, rect.y, rect.width, rect.height);
+//		g.setColor(Color.black);
+//		g.drawRect(rect.x, rect.y, rect.width, rect.height);
 		
 		g.setColor(previousColor);
 	}

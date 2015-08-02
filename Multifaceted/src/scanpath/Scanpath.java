@@ -1,6 +1,7 @@
 package scanpath;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -14,6 +15,7 @@ import eyetrack.EyeTrackerItem;
 import realtime.DataObject;
 import realtime.EyeEvent;
 
+import multifaceted.ColorScheme;
 import multifaceted.FileLineReader;
 import multifaceted.Util;
 
@@ -141,27 +143,34 @@ public class Scanpath {
 			return null;
 		}
 	}
-	public static final int WIDTH_TITLE = 200;
+	public static final int WIDTH_TITLE = 100;
 	public static final int WIDTH_ANCHOR = 50;
 	
 	public void render(Graphics2D g, Color objectColor, Color horizontalLineColor, Color transitionLineColor, double heightRatio)
 	{
 		String fileName = new File(this.filepath).getName();
-		Util.drawTextBox(g, Color.black, "Sayeed Safayet Alam", new Rectangle(0,0,10,8));
-		Util.drawTextBox(g,Color.black, fileName, new Rectangle(0,renderingObjectList.size()*ScanpathViewer.TIME_CELL_HEIGHT/2,WIDTH_TITLE,ScanpathViewer.TIME_CELL_HEIGHT*2));
+		int extensionIndex = fileName.toUpperCase().lastIndexOf(".TXT");
+		fileName = fileName.substring(0, extensionIndex);
+		Util.drawTextBox(g,Color.black, fileName, new Rectangle(0,renderingObjectList.size()*ScanpathViewer.TIME_CELL_HEIGHT/2,WIDTH_TITLE,renderingObjectList.size()*ScanpathViewer.TIME_CELL_HEIGHT/8));
 		
 		g.translate(WIDTH_TITLE, 0);
 		
 		// Rendering Anchors
-		g.setColor(horizontalLineColor);
+		
 		for(int i=0;i<renderingObjectList.size();i++)
 		{
 			String name = renderingObjectList.get(i).getLabel();
-			int lineY = i* ScanpathViewer.TIME_CELL_HEIGHT;			
+			int lineY = i* ScanpathViewer.TIME_CELL_HEIGHT;
+			g.setColor(horizontalLineColor);
 			g.drawLine(WIDTH_ANCHOR,lineY, WIDTH_ANCHOR+scanpathPoints.length*ScanpathViewer.TIME_CELL_WIDTH, lineY);
 			
 			int textY = i* ScanpathViewer.TIME_CELL_HEIGHT-ScanpathViewer.TIME_CELL_HEIGHT/2;
-			Util.drawTextBox(g, Color.black, name, new Rectangle(0,textY,WIDTH_ANCHOR,ScanpathViewer.TIME_CELL_HEIGHT));
+			Rectangle rect = new Rectangle(0,textY,WIDTH_ANCHOR,ScanpathViewer.TIME_CELL_HEIGHT);
+			Color textBackColor = ColorScheme.ALTERNATE_COLOR_BLUE[i%2];
+			g.setColor(textBackColor);
+			g.fillRect(rect.x, rect.y, rect.width, rect.height);
+			
+			Util.drawTextBox(g, Color.black, name, rect);
 		}
 		
 		//Rendering objects and transitions
@@ -202,7 +211,34 @@ public class Scanpath {
 		g.translate(-WIDTH_TITLE, 0);
 	}
 	
+	public Dimension getImageDimension()
+	{
+		int width =WIDTH_ANCHOR+WIDTH_TITLE+scanpathPoints.length*ScanpathViewer.TIME_CELL_WIDTH;
+		int height = renderingObjectList.size()*ScanpathViewer.TIME_CELL_HEIGHT;
+		
+		Dimension imageDimension = new Dimension(width, height);
+		
+		return imageDimension;
+	}
 	
+	public static Dimension getImageDimension(ArrayList<Scanpath> scanpathList)
+	{
+		int width =0;
+		int height = 0;
+		for(Scanpath scanpath:scanpathList)
+		{
+			Dimension dimension = scanpath.getImageDimension();
+			if(dimension.width > width)
+			{
+				width = dimension.width;
+			}
+			height+= dimension.getHeight()+ScanpathViewer.SCANPATH_DIAGRAM_GAP;
+		}
+		
+		Dimension imageDimension = new Dimension(width, height);
+		
+		return imageDimension;
+	}
 	
 	
 }

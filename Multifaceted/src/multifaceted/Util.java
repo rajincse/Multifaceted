@@ -449,4 +449,51 @@ public class Util {
 		return value * ( 1- lowerBound)+ lowerBound;
 				
 	}
+	
+	/**
+	 * Draws text in the defined rectangle. 
+	 * @param g
+	 * @param textColor Color of the text
+	 * @param message Text to be drawn. 
+	 * 	The top left corner of the text to be the top left of the rectangle. 
+	 * 	The size of the font would be the 75% of the rectangle height. 
+	 *  If the width of the text goes beyond rectangle width then it would be shortened and ellipsis would be added.  
+	 * @param rect The defined rectangle. 
+	 */
+	public static void drawTextBox(Graphics2D g, Color textColor, String message, Rectangle rect)
+	{
+		Color previousColor = g.getColor();
+		g.setColor(textColor);
+		java.awt.Font font = g.getFont().deriveFont(rect.height*0.75f);
+		g.setFont(font);
+		
+		
+		java.awt.FontMetrics fontMetrics = g.getFontMetrics();
+		
+		int stringWidth = fontMetrics.stringWidth(message);
+		int allowedCharacters = message.length();
+		if(stringWidth > 0)
+		{
+			allowedCharacters = Math.min(message.length(), (int)( message.length() * rect.width / stringWidth));
+		}
+		
+		if(allowedCharacters < message.length() && allowedCharacters <=3)
+		{
+			new Exception("The width is too short").printStackTrace();
+			return;
+		}
+		
+		String label = message;
+		if(allowedCharacters < message.length() && allowedCharacters >3)
+		{
+			label = label.substring(0, allowedCharacters-3)+"...";
+		}
+		
+		
+		g.drawString(label, rect.x, rect.y+fontMetrics.getAscent());
+		g.setColor(Color.black);
+		g.drawRect(rect.x, rect.y, rect.width, rect.height);
+		
+		g.setColor(previousColor);
+	}
 }

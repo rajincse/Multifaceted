@@ -10,8 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
-import eyetrack.EyeTrackerItem;
-
 import realtime.DataObject;
 import realtime.EyeEvent;
 
@@ -26,6 +24,8 @@ public class Scanpath {
 	private ArrayList<EyeEvent> eyeEventList = new ArrayList<EyeEvent>();
 	private HashMap<String, DataObject> dataObjectList = new HashMap<String, DataObject>();
 	private long startTime =0;
+	
+	private boolean isSelected=false;
 	public Scanpath(String filepath)
 	{
 		this.filepath = filepath;
@@ -70,6 +70,14 @@ public class Scanpath {
 		
 	}
 	
+	public boolean isSelected() {
+		return isSelected;
+	}
+
+	public void setSelected(boolean isSelected) {
+		this.isSelected = isSelected;
+	}
+
 	public String getFilepath() {
 		return filepath;
 	}
@@ -209,6 +217,13 @@ public class Scanpath {
 		
 		
 		g.translate(-WIDTH_TITLE, 0);
+		
+		if(isSelected)
+		{
+			g.setColor(Color.red);
+			Dimension d = getImageDimension();
+			g.drawRect(0, 0, d.width, d.height);
+		}
 	}
 	
 	public Dimension getImageDimension()

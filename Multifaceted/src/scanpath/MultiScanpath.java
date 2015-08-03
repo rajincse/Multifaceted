@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ import realtime.DataObject;
 import realtime.EyeEvent;
 
 public class MultiScanpath {
-	public static final int INVALID =-1;
+	
 	
 	private String directoryPath;
 	
@@ -27,7 +28,9 @@ public class MultiScanpath {
 	private ArrayList<HashMap<String, DataObject>> dataObjectList = new ArrayList<HashMap<String, DataObject>>();
 	private long startTime =0;
 	private DataObject[][] scanpathPointArray;
-	private ArrayList<DataObject> renderingObjectList = new ArrayList<DataObject>();
+	private ArrayList<MultiScanpathDiagram> diagramList = new ArrayList<MultiScanpathDiagram>();
+//	private ArrayList<DataObject> renderingObjectList = new ArrayList<DataObject>();
+//	private ArrayList<Boolean> isSelectedList = new ArrayList<Boolean>();
 	
 	public MultiScanpath(String directoryPath) {
 		this.directoryPath = directoryPath;		
@@ -145,9 +148,9 @@ public class MultiScanpath {
 			{
 				DataObject bestDataObject = getBestDataObject(dataObjectCollection);
 				scanpathPoints[lastIndex] = bestDataObject;
-				if(bestDataObject != null && !this.renderingObjectList.contains(bestDataObject))
+				if(bestDataObject != null && !this.diagramList.contains(new MultiScanpathDiagram(bestDataObject, false)))
 				{
-					this.renderingObjectList.add(bestDataObject);
+					this.diagramList.add(new MultiScanpathDiagram(bestDataObject, false));
 				}
 				
 				
@@ -186,7 +189,7 @@ public class MultiScanpath {
 		}
 		else
 		{
-			return INVALID;
+			return ScanpathViewer.INVALID;
 		}
 			
 	}
@@ -204,15 +207,24 @@ public class MultiScanpath {
 	
 	public void render(Graphics2D g, Color objectColor, Color horizontalLineColor, Color transitionLineColor, double heightRatio)
 	{
-		if(this.renderingObjectList != null && !this.renderingObjectList.isEmpty())
+		if(this.diagramList != null && !this.diagramList.isEmpty())
 		{
 			int heightPerObject = this.userList.size()*ScanpathViewer.TIME_CELL_HEIGHT+ScanpathViewer.SCANPATH_DIAGRAM_GAP;
-			for(int objectIndex=0;objectIndex<renderingObjectList.size();objectIndex++)
+			for(int objectIndex=0;objectIndex<diagramList.size();objectIndex++)
 			{
-				DataObject dataObject = renderingObjectList.get(objectIndex);
+				MultiScanpathDiagram diagram =diagramList.get(objectIndex); 
+				DataObject dataObject = diagram.dataObject;
 				int titleX = 0;
 				int titleY = heightPerObject*objectIndex;
-				Util.drawTextBox(g, Color.black, dataObject.getLabel(), new Rectangle(titleX, titleY, WIDTH_TITLE, heightPerObject/2));
+				Util.drawTextBox(g, Color.black, dataObject.getLabel(), new Rectangle(titleX, titleY, WIDTH_TITLE, this.userList.size()*ScanpathViewer.TIME_CELL_HEIGHT/2));
+				
+				Dimension imageDimension = getImageDimension();
+				if(diagram.isSelected)
+				{
+					
+					g.setColor(Color.red);
+					g.drawRect(titleX, titleY, imageDimension.width, userList.size()*ScanpathViewer.TIME_CELL_HEIGHT);
+				}
 				
 				g.translate(WIDTH_TITLE, heightPerObject*objectIndex);
 				
@@ -221,7 +233,7 @@ public class MultiScanpath {
 					String name = userList.get(userIndex);
 					int lineY = userIndex* ScanpathViewer.TIME_CELL_HEIGHT;
 					g.setColor(horizontalLineColor);
-					g.drawLine(WIDTH_ANCHOR,lineY, WIDTH_ANCHOR+scanpathPointArray[userIndex].length*ScanpathViewer.TIME_CELL_WIDTH, lineY);
+					g.drawLine(WIDTH_ANCHOR,lineY, imageDimension.width- WIDTH_TITLE , lineY);
 					
 					int textY = userIndex* ScanpathViewer.TIME_CELL_HEIGHT-ScanpathViewer.TIME_CELL_HEIGHT/2;
 					Rectangle rect = new Rectangle(0,textY,WIDTH_ANCHOR,ScanpathViewer.TIME_CELL_HEIGHT);
@@ -244,7 +256,7 @@ public class MultiScanpath {
 					DataObject object = scanpathPointArray[userIndex][time];
 					if(object != null)
 					{
-						int index = renderingObjectList.indexOf(object);
+						int index = diagramList.indexOf(new MultiScanpathDiagram(object, false));
 						
 						int x = time*ScanpathViewer.TIME_CELL_WIDTH+WIDTH_TITLE+WIDTH_ANCHOR;
 						int y = index* heightPerObject+userIndex*ScanpathViewer.TIME_CELL_HEIGHT;
@@ -286,7 +298,7 @@ public class MultiScanpath {
 			}
 		}
 		int width = WIDTH_TITLE+WIDTH_ANCHOR+maxColumnCount*ScanpathViewer.TIME_CELL_WIDTH;
-		int height = renderingObjectList.size()*(ScanpathViewer.SCANPATH_DIAGRAM_GAP+userList.size()*ScanpathViewer.TIME_CELL_HEIGHT);
+		int height = diagramList.size()*(ScanpathViewer.SCANPATH_DIAGRAM_GAP+userList.size()*ScanpathViewer.TIME_CELL_HEIGHT);
 		
 		Dimension imageDimension = new Dimension(width, height);
 		
@@ -294,4 +306,106 @@ public class MultiScanpath {
 	}
 	
 	
+	public boolean mousedragged(int currentx, int currenty, int oldx, int oldy) {
+		int selectedDiagramIndex = getSelectedDiagramIndex();
+		if(selectedDiagramIndex != ScanpathViewer.INVALID)
+		{
+			Point point = new Point(currentx,currenty);
+			AffineTransform transform = new AffineTransform();
+			transform.translate(-ScanpathViewer.INIT_TRANSLATE_X, -ScanpathViewer.INIT_TRANSLATE_Y);
+			Point transformedPoint = new Point();
+			transform.transform(point, transformedPoint);
+			int scanpathY =0;
+			int diagramWidth = getImageDimension().width;
+			int diagramHeight = userList.size() * ScanpathViewer.TIME_CELL_HEIGHT;
+			int destinationIndex =selectedDiagramIndex;
+			
+			
+			for(int i=0;i<diagramList.size();i++)
+			{
+				scanpathY += diagramHeight;
+				
+				if(transformedPoint.y >= scanpathY-diagramHeight && transformedPoint.y <= scanpathY)
+				{
+					destinationIndex = i;
+					
+					break;
+				}
+				else
+				{
+					scanpathY+= ScanpathViewer.SCANPATH_DIAGRAM_GAP;
+				}
+			}
+			if(destinationIndex <0 )
+			{
+				destinationIndex = 0;
+				
+			}
+			else if(destinationIndex > scanpathY)
+			{
+				destinationIndex = diagramList.size()-1;
+			}
+			if(selectedDiagramIndex != destinationIndex)
+			{
+				MultiScanpathDiagram diagram = diagramList.remove(selectedDiagramIndex);
+				diagramList.add(destinationIndex, diagram);
+			}
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	
+	}
+	public boolean mousepressed(int x, int y, int button) {
+		// TODO Auto-generated method stub
+		unselectAllDiagrams();
+		Point point = new Point(x,y);
+		AffineTransform transform = new AffineTransform();
+		transform.translate(-ScanpathViewer.INIT_TRANSLATE_X, -ScanpathViewer.INIT_TRANSLATE_Y);
+		Point transformedPoint = new Point();
+		transform.transform(point, transformedPoint);
+		int scanpathY =0;
+		int diagramWidth = getImageDimension().width;
+		int diagramHeight = userList.size() * ScanpathViewer.TIME_CELL_HEIGHT;
+		for(MultiScanpathDiagram diagram: diagramList)
+		{
+			scanpathY += diagramHeight;
+			
+			if(transformedPoint.y >= scanpathY-diagramHeight && transformedPoint.y <= scanpathY)
+			{
+				if(transformedPoint.x >= 0 && transformedPoint.x <= diagramWidth)
+				{
+					diagram.isSelected = true;
+				}
+				
+				break;
+			}
+			else
+			{
+				scanpathY+= ScanpathViewer.SCANPATH_DIAGRAM_GAP;
+			}
+		}
+		return false;
+	}
+	private int getSelectedDiagramIndex()
+	{
+		
+		for(int i=0;i<diagramList.size();i++)
+		{
+			if(diagramList.get(i).isSelected)
+			{
+				return i;
+			}
+		}
+		return ScanpathViewer.INVALID;
+	}
+	private void unselectAllDiagrams()
+	{	
+		for(MultiScanpathDiagram diagram: diagramList)
+		{
+			diagram.isSelected = false;
+		}	
+	}
 }

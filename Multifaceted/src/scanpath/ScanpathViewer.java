@@ -3,6 +3,8 @@ package scanpath;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileFilter;
@@ -47,6 +49,7 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 	public static final int INIT_TRANSLATE_X =50;
 	public static final int INIT_TRANSLATE_Y =100;
 	
+	public static final int INVALID =-1;
 	
 	private ArrayList<Scanpath> scanpathList = new ArrayList<Scanpath>();
 	private MultiScanpath multiscanpath = null;
@@ -199,8 +202,59 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 	}
 
 	@Override
-	public boolean mousedragged(int arg0, int arg1, int arg2, int arg3) {
+	public boolean mousedragged(int currentx, int currenty, int oldx, int oldy) {
 		// TODO Auto-generated method stub
+		int diagramType = getSelectedIndexPOptions(PROPERTY_DIAGRAM_TYPE);
+		if(diagramType == TYPE_USER_DOI)
+		{
+			int selectedDiagramIndex = getSelectedDiagramIndex();
+			if(selectedDiagramIndex != INVALID)
+			{
+				Point point = new Point(currentx,currenty);
+				AffineTransform transform = new AffineTransform();
+				transform.translate(-INIT_TRANSLATE_X, -INIT_TRANSLATE_Y);
+				Point transformedPoint = new Point();
+				transform.transform(point, transformedPoint);
+				int scanpathY =0;
+				int destinationIndex =selectedDiagramIndex;
+				for(int i=0;i<scanpathList.size();i++)
+				{
+					Dimension d= scanpathList.get(i).getImageDimension();
+					scanpathY += d.height;
+					
+					if(transformedPoint.y >= scanpathY-d.height && transformedPoint.y <= scanpathY)
+					{
+						destinationIndex = i;
+						
+						break;
+					}
+					else
+					{
+						scanpathY+= SCANPATH_DIAGRAM_GAP;
+					}
+				}
+				if(destinationIndex <0 )
+				{
+					destinationIndex = 0;
+					
+				}
+				else if(destinationIndex > scanpathY)
+				{
+					destinationIndex = scanpathList.size()-1;
+				}
+				if(selectedDiagramIndex != destinationIndex)
+				{
+					Scanpath scanpath = scanpathList.remove(selectedDiagramIndex);
+					scanpathList.add(destinationIndex, scanpath);
+				}
+				return true;
+			}
+			
+		}
+		else if(diagramType == TYPE_DOI_USER)
+		{
+			return this.multiscanpath.mousedragged(currentx, currenty, oldx, oldy);
+		}
 		return false;
 	}
 
@@ -211,9 +265,68 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 	}
 
 	@Override
-	public boolean mousepressed(int arg0, int arg1, int arg2) {
+	public boolean mousepressed(int x, int y, int button) {
 		// TODO Auto-generated method stub
+		int diagramType = getSelectedIndexPOptions(PROPERTY_DIAGRAM_TYPE);
+		unselectAllDiagrams(diagramType);
+		if(diagramType == TYPE_USER_DOI)
+		{
+			Point point = new Point(x,y);
+			AffineTransform transform = new AffineTransform();
+			transform.translate(-INIT_TRANSLATE_X, -INIT_TRANSLATE_Y);
+			Point transformedPoint = new Point();
+			transform.transform(point, transformedPoint);
+			int scanpathY =0;
+			for(Scanpath scanpath: scanpathList)
+			{
+				Dimension d= scanpath.getImageDimension();
+				scanpathY += d.height;
+				
+				if(transformedPoint.y >= scanpathY-d.height && transformedPoint.y <= scanpathY)
+				{
+					if(transformedPoint.x >= 0 && transformedPoint.x <= d.width)
+					{
+						scanpath.setSelected(true);
+					}
+					
+					break;
+				}
+				else
+				{
+					scanpathY+= SCANPATH_DIAGRAM_GAP;
+				}
+			}
+		}
+		else if(diagramType == TYPE_DOI_USER)
+		{
+			return this.multiscanpath.mousepressed(x, y, button);
+		}
 		return false;
+	}
+	private int getSelectedDiagramIndex()
+	{
+		
+		for(int i=0;i<scanpathList.size();i++)
+		{
+			if(scanpathList.get(i).isSelected())
+			{
+				return i;
+			}
+		}
+		return INVALID;
+	}
+	private void unselectAllDiagrams(int diagramType)
+	{
+		
+		if(diagramType == TYPE_USER_DOI)
+		{
+			
+			for(Scanpath scanpath: scanpathList)
+			{
+				scanpath.setSelected(false);
+			}
+			
+		}
 	}
 
 	@Override

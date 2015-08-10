@@ -425,7 +425,7 @@ public class MultiScanpath {
 						{
 							g.setColor(transitionLineColor);
 //							g.setColor(ColorScheme.LINE_COLOR[userIndex]);
-							g.drawLine(lastPoint.x+ScanpathViewer.TIME_CELL_WIDTH/2, lastPoint.y, x+ScanpathViewer.TIME_CELL_WIDTH/2, y);
+							g.drawLine(lastPoint.x+ScanpathViewer.TIME_CELL_WIDTH, lastPoint.y, x, y);
 						}
 						lastPoint = new Point(x,y);
 						g.setColor(objectColor);

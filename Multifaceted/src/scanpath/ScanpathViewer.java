@@ -13,7 +13,6 @@ import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 
-import multifaceted.FileLineReader;
 import perspectives.base.Property;
 import perspectives.base.Viewer;
 import perspectives.properties.PColor;
@@ -48,7 +47,7 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 	
 	public static final int INIT_TRANSLATE_X =50;
 	public static final int INIT_TRANSLATE_Y =100;
-	
+	public static final int INFINITY =10000;
 	public static final int INVALID =-1;
 	
 	private ArrayList<Scanpath> scanpathList = new ArrayList<Scanpath>();
@@ -59,13 +58,14 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 		String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\ScanPath\\";
 		PFileInput dirInput = new PFileInput();
 		dirInput.onlyDirectories = true;
-		Property<PFileInput> pLoad = new Property<PFileInput>(PROPERTY_LOAD_FILE, new PFileInput())
+		Property<PFileInput> pLoad = new Property<PFileInput>(PROPERTY_LOAD_FILE,dirInput)
 				{
 					@Override
 					protected boolean updating(PFileInput newvalue) {
 						
 						readSequenceDirectory(newvalue.path);						
 						multiscanpath = new MultiScanpath(newvalue.path);
+						requestRender();
 						return super.updating(newvalue);
 					}
 				};
@@ -363,7 +363,7 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 			}
 			g.translate(0, -totalYTranslate);
 		}
-		else if(diagramType == TYPE_DOI_USER)
+		else if(diagramType == TYPE_DOI_USER && multiscanpath != null)
 		{
 			this.multiscanpath.render(g, objectColor, horizontalColor, transitionColor, heightRatio);
 		}

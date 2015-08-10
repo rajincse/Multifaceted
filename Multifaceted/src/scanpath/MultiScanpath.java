@@ -12,6 +12,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
+import perspectives.properties.PString;
+import perspectives.tree.Tree;
+import perspectives.tree.TreeNode;
+import perspectives.util.DistancedPoints;
+import perspectives.util.HierarchicalClustering;
+
 import multifaceted.ColorScheme;
 import multifaceted.FileLineReader;
 import multifaceted.Util;
@@ -29,12 +35,11 @@ public class MultiScanpath {
 	private long startTime =0;
 	private DataObject[][] scanpathPointArray;
 	private ArrayList<MultiScanpathDiagram> diagramList = new ArrayList<MultiScanpathDiagram>();
-//	private ArrayList<DataObject> renderingObjectList = new ArrayList<DataObject>();
-//	private ArrayList<Boolean> isSelectedList = new ArrayList<Boolean>();
 	
 	public MultiScanpath(String directoryPath) {
 		this.directoryPath = directoryPath;		
 		process();
+		computeDistance();
 	}
 	
 	private void process()
@@ -116,6 +121,161 @@ public class MultiScanpath {
 			index++;
 		}
 	}
+	// Clustering Start
+	
+	DistancedPoints clusteringPoints = new DistancedPoints() {
+		
+		@Override
+		public void normalize() {
+			// TODO Auto-generated method stub
+			
+		}
+		
+		@Override
+		public int getPointIndex(String id) {
+			// TODO Auto-generated method stub
+			for(int i=0;i<diagramList.size();i++)
+			{
+				DataObject object =diagramList.get(i).dataObject; 
+				String objectId = object.getId()+"-"+object.getType();
+				if(objectId.equalsIgnoreCase(id))
+				{
+					return i;
+				}
+			}
+			return ScanpathViewer.INVALID;
+		}
+		
+		@Override
+		public String getPointId(int index) {
+			// TODO Auto-generated method stub
+			DataObject object =diagramList.get(index).dataObject; 
+			return object.getId()+"-"+object.getType();
+		}
+		
+		@Override
+		public float getDistance(int index1, int index2) {
+			// TODO Auto-generated method stub
+			return distance[index1][index2];
+		}
+		
+		@Override
+		public int getCount() {
+			// TODO Auto-generated method stub
+			return diagramList.size();
+		}
+	};
+	private int transition[][];
+	private float distance[][];
+	
+	public void computeDistance()
+	{
+		transition = new int [diagramList.size()][diagramList.size()];
+		
+		
+		for(int userIndex=0;userIndex<scanpathPointArray.length;userIndex++)
+		{
+			int sourceIndex =ScanpathViewer.INVALID;
+			for(int time=0;time<scanpathPointArray[userIndex].length;time++)
+			{
+				DataObject object = scanpathPointArray[userIndex][time];
+				int destinationIndex = this.diagramList.indexOf(new MultiScanpathDiagram(object, false));
+				
+				if(sourceIndex != destinationIndex && 
+					sourceIndex > ScanpathViewer.INVALID && 
+					destinationIndex > ScanpathViewer.INVALID)
+				{
+					transition[sourceIndex][destinationIndex]++;
+					transition[destinationIndex][sourceIndex]++;
+				}
+				
+				sourceIndex = destinationIndex;
+			}
+		}
+		distance = new float [diagramList.size()][diagramList.size()];
+		for(int i=0;i<transition.length;i++)
+		{
+			for(int j=0;j<transition[i].length;j++)
+			{
+				if(transition[i][j]> 0)
+				{
+					distance[i][j] = 1.0f / transition[i][j];
+				}
+				else
+				{
+					distance[i][j] = ScanpathViewer.INFINITY;
+				}
+			}
+		}
+
+		
+		Tree t = HierarchicalClustering.compute(this.clusteringPoints);
+		traverseClusterNode(t.getRoot());
+		System.out.println(diagramList.size()+", "+clusteredSequence.size()+", "+clusteringPoints.getCount());
+		diagramList = clusteredSequence;
+		
+
+		
+	}
+	private ArrayList<MultiScanpathDiagram> clusteredSequence= new ArrayList<MultiScanpathDiagram>(); 
+	
+	private void traverseClusterNode(TreeNode node)
+	{
+//		System.out.println("<Node>");
+		
+		if(node.isLeaf())
+		{
+			PString pId =(PString) node.getProperty("Id").getValue();
+			int index = clusteringPoints.getPointIndex(pId.stringValue());
+			if(index > ScanpathViewer.INVALID)
+			{
+				MultiScanpathDiagram diagram = diagramList.get(index);
+//				System.out.println("<Id>"+diagram.dataObject.getLabel()+"</Id>");
+				clusteredSequence.add(0,diagram);
+			}
+			else
+			{
+//				System.out.println("Invalid Id:"+pId.stringValue());
+			}
+			
+			
+		}
+		else
+		{
+			
+			if(node.getProperty("Id") != null)
+			{
+				PString pId =(PString) node.getProperty("Id").getValue();
+				
+				int index = clusteringPoints.getPointIndex(pId.stringValue());
+				if(index > ScanpathViewer.INVALID)
+				{
+					MultiScanpathDiagram diagram = diagramList.get(index);
+//					System.out.println("<Id>#"+diagram.dataObject.getLabel()+"</Id>");
+					clusteredSequence.add(0,diagram);
+				}
+				else
+				{
+//					System.out.println("Invalid Id:"+pId.stringValue());
+				}
+			}
+			else
+			{
+//				System.out.println("<Id>Intermediate</Id>");
+			}
+			
+//			System.out.println("<Children>");
+			for(TreeNode child: node.getChildren())
+			{
+				traverseClusterNode(child);
+			}
+//			System.out.println("</Children>");
+			
+		}
+//		System.out.println("</Node>");
+	}
+	// Clustering End
+	
 	public DataObject[] getScanpathpoint(int userIndex)
 	{
 		ArrayList<EyeEvent> eyeEvents = eyeEventList.get(userIndex);

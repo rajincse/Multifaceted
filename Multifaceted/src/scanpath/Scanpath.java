@@ -10,6 +10,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
+import perspectives.properties.PString;
+import perspectives.tree.Tree;
+import perspectives.tree.TreeNode;
+import perspectives.util.DistancedPoints;
+import perspectives.util.HierarchicalClustering;
+
 import realtime.DataObject;
 import realtime.EyeEvent;
 
@@ -67,8 +73,163 @@ public class Scanpath {
 		};
 		fileLineReader.read(this.filepath);
 		prepareRender();
+		computeDistance();
 		
 	}
+	
+	// Clustering Start
+	
+		DistancedPoints clusteringPoints = new DistancedPoints() {
+			
+			@Override
+			public void normalize() {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public int getPointIndex(String id) {
+				// TODO Auto-generated method stub
+				for(int i=0;i<renderingObjectList.size();i++)
+				{
+					DataObject object =renderingObjectList.get(i); 
+					String objectId = object.getId()+"-"+object.getType();
+					if(objectId.equalsIgnoreCase(id))
+					{
+						return i;
+					}
+				}
+				return ScanpathViewer.INVALID;
+			}
+			
+			@Override
+			public String getPointId(int index) {
+				// TODO Auto-generated method stub
+				DataObject object =renderingObjectList.get(index); 
+				return object.getId()+"-"+object.getType();
+			}
+			
+			@Override
+			public float getDistance(int index1, int index2) {
+				// TODO Auto-generated method stub
+				return distance[index1][index2];
+			}
+			
+			@Override
+			public int getCount() {
+				// TODO Auto-generated method stub
+				return renderingObjectList.size();
+			}
+		};
+		private int transition[][];
+		private float distance[][];
+		
+		public void computeDistance()
+		{
+			transition = new int [renderingObjectList.size()][renderingObjectList.size()];
+			
+			
+			
+			int sourceIndex =ScanpathViewer.INVALID;
+			for(int time=0;time<scanpathPoints.length;time++)
+			{
+				DataObject object = scanpathPoints[time];
+				int destinationIndex = this.renderingObjectList.indexOf(object);
+				
+				if(sourceIndex != destinationIndex && 
+					sourceIndex > ScanpathViewer.INVALID && 
+					destinationIndex > ScanpathViewer.INVALID)
+				{
+					transition[sourceIndex][destinationIndex]++;
+					transition[destinationIndex][sourceIndex]++;
+				}
+				
+				sourceIndex = destinationIndex;
+			}
+			
+			distance = new float [renderingObjectList.size()][renderingObjectList.size()];
+			for(int i=0;i<transition.length;i++)
+			{
+				for(int j=0;j<transition[i].length;j++)
+				{
+					if(transition[i][j]> 0)
+					{
+						distance[i][j] = 1.0f / transition[i][j];
+					}
+					else
+					{
+						distance[i][j] = ScanpathViewer.INFINITY;
+					}
+				}
+			}
+
+			
+			Tree t = HierarchicalClustering.compute(this.clusteringPoints);
+			traverseClusterNode(t.getRoot());
+			System.out.println(renderingObjectList.size()+", "+clusteredSequence.size()+", "+clusteringPoints.getCount());
+			renderingObjectList = clusteredSequence;
+			
+
+			
+		}
+		private ArrayList<DataObject> clusteredSequence= new ArrayList<DataObject>(); 
+		
+		private void traverseClusterNode(TreeNode node)
+		{
+//			System.out.println("<Node>");
+			
+			if(node.isLeaf())
+			{
+				PString pId =(PString) node.getProperty("Id").getValue();
+				int index = clusteringPoints.getPointIndex(pId.stringValue());
+				if(index > ScanpathViewer.INVALID)
+				{
+					DataObject object = renderingObjectList.get(index);
+//					System.out.println("<Id>"+diagram.dataObject.getLabel()+"</Id>");
+					clusteredSequence.add(0,object);
+				}
+				else
+				{
+//					System.out.println("Invalid Id:"+pId.stringValue());
+				}
+				
+				
+			}
+			else
+			{
+				
+				if(node.getProperty("Id") != null)
+				{
+					PString pId =(PString) node.getProperty("Id").getValue();
+					
+					int index = clusteringPoints.getPointIndex(pId.stringValue());
+					if(index > ScanpathViewer.INVALID)
+					{
+						DataObject object = renderingObjectList.get(index);
+//						System.out.println("<Id>"+diagram.dataObject.getLabel()+"</Id>");
+						clusteredSequence.add(0,object);
+					}
+					else
+					{
+//						System.out.println("Invalid Id:"+pId.stringValue());
+					}
+				}
+				else
+				{
+//					System.out.println("<Id>Intermediate</Id>");
+				}
+				
+//				System.out.println("<Children>");
+				for(TreeNode child: node.getChildren())
+				{
+					traverseClusterNode(child);
+				}
+//				System.out.println("</Children>");
+				
+			}
+//			System.out.println("</Node>");
+		}
+		// Clustering End
 	
 	public boolean isSelected() {
 		return isSelected;

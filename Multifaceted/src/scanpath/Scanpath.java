@@ -32,6 +32,7 @@ public class Scanpath {
 	private long startTime =0;
 	
 	private boolean isSelected=false;
+	private DataObject selectedObject =null;
 	public Scanpath(String filepath)
 	{
 		this.filepath = filepath;
@@ -166,7 +167,7 @@ public class Scanpath {
 			
 			Tree t = HierarchicalClustering.compute(this.clusteringPoints);
 			traverseClusterNode(t.getRoot());
-			System.out.println(renderingObjectList.size()+", "+clusteredSequence.size()+", "+clusteringPoints.getCount());
+//			System.out.println(renderingObjectList.size()+", "+clusteredSequence.size()+", "+clusteringPoints.getCount());
 			renderingObjectList = clusteredSequence;
 			
 
@@ -317,6 +318,14 @@ public class Scanpath {
 	
 	public void render(Graphics2D g, Color objectColor, Color horizontalLineColor, Color transitionLineColor, double heightRatio)
 	{
+		if(isSelected)
+		{
+			Dimension d = getImageDimension();
+			
+			g.setColor(ScanpathViewer.COLOR_BACKGROUND_SELECTION);
+			g.fillRect(0, 0, d.width, d.height);
+		}
+		
 		String fileName = new File(this.filepath).getName();
 		int extensionIndex = fileName.toUpperCase().lastIndexOf(".TXT");
 		fileName = fileName.substring(0, extensionIndex);
@@ -328,7 +337,8 @@ public class Scanpath {
 		
 		for(int i=0;i<renderingObjectList.size();i++)
 		{
-			String name = renderingObjectList.get(i).getLabel();
+			DataObject object = renderingObjectList.get(i); 
+			String name = object.getLabel();
 			int lineY = i* ScanpathViewer.TIME_CELL_HEIGHT;
 			g.setColor(horizontalLineColor);
 			g.drawLine(WIDTH_ANCHOR,lineY, WIDTH_ANCHOR+scanpathPoints.length*ScanpathViewer.TIME_CELL_WIDTH, lineY);
@@ -338,6 +348,11 @@ public class Scanpath {
 			Color textBackColor = ColorScheme.ALTERNATE_COLOR_BLUE[i%2];
 			g.setColor(textBackColor);
 			g.fillRect(rect.x, rect.y, rect.width, rect.height);
+			if(object.equals(selectedObject))
+			{
+				g.setColor(ScanpathViewer.COLOR_SELECTION);
+				g.drawRect(rect.x, rect.y, rect.width, rect.height);
+			}
 			
 			Util.drawTextBox(g, Color.black, name, rect);
 		}
@@ -360,15 +375,20 @@ public class Scanpath {
 				}
 				lastPoint = new Point(x,y);
 				g.setColor(objectColor);
+				if(object.equals(selectedObject))
+				{
+					g.setColor(ScanpathViewer.COLOR_SELECTION);
+				}
+				
 				int cellHeight =(int) (ScanpathViewer.TIME_CELL_HEIGHT* heightRatio);
 				g.fillRect(x, y-cellHeight/2, ScanpathViewer.TIME_CELL_WIDTH,cellHeight);
 			}
 			else if(lastPoint != null)
 			{
-				int x = i*ScanpathViewer.TIME_CELL_WIDTH+  ScanpathViewer.TIME_CELL_WIDTH/2;
+				int x = i*ScanpathViewer.TIME_CELL_WIDTH;
 				int y = lastPoint.y;
 				g.setColor(transitionLineColor);
-				g.drawLine(lastPoint.x+ScanpathViewer.TIME_CELL_WIDTH/2, lastPoint.y, x+ScanpathViewer.TIME_CELL_WIDTH/2, y);
+				g.drawLine(lastPoint.x, lastPoint.y, x+ScanpathViewer.TIME_CELL_WIDTH, y);
 				lastPoint = new Point(x,y);
 			}
 		}
@@ -379,12 +399,7 @@ public class Scanpath {
 		
 		g.translate(-WIDTH_TITLE, 0);
 		
-		if(isSelected)
-		{
-			g.setColor(Color.red);
-			Dimension d = getImageDimension();
-			g.drawRect(0, 0, d.width, d.height);
-		}
+		
 	}
 	
 	public Dimension getImageDimension()
@@ -416,5 +431,27 @@ public class Scanpath {
 		return imageDimension;
 	}
 	
-	
+	public DataObject getSelectedObject() {
+		return selectedObject;
+	}
+
+	public void setSelectedObject(DataObject selectedObject) {
+		this.selectedObject = selectedObject;
+	}
+
+	public DataObject getSelectedObject(int x, int y)
+	{
+		Dimension imageDimension = getImageDimension();
+		if(x >= WIDTH_TITLE && x <= imageDimension.width && y >= 0 && y<= imageDimension.height)
+		{
+			
+			int objectIndex = y / ScanpathViewer.TIME_CELL_HEIGHT;
+			if(objectIndex >= 0 && objectIndex < renderingObjectList.size())
+			{
+				selectedObject = renderingObjectList.get(objectIndex);
+				return selectedObject;
+			}
+		}
+		return selectedObject;
+	}
 }

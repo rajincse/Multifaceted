@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -21,6 +22,7 @@ import perspectives.properties.PFileInput;
 import perspectives.properties.PFileOutput;
 import perspectives.properties.POptions;
 import perspectives.two_d.JavaAwtRenderer;
+import realtime.DataObject;
 
 public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 
@@ -47,6 +49,10 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 	
 	public static final int INIT_TRANSLATE_X =50;
 	public static final int INIT_TRANSLATE_Y =100;
+	
+	public static final Color COLOR_BACKGROUND_SELECTION = new Color(166, 170,171, 120);
+	public static final Color COLOR_SELECTION = Color.red;
+	
 	public static final int INFINITY =10000;
 	public static final int INVALID =-1;
 	
@@ -72,7 +78,7 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 		addProperty(pLoad);
 		
 		POptions diagramNameOptions = new POptions(TYPE_NAME_DIAGRAM);
-		diagramNameOptions.selectedIndex = TYPE_DOI_USER;
+		diagramNameOptions.selectedIndex = TYPE_USER_DOI;
 		Property<POptions> pDiagramType = new Property<POptions>(PROPERTY_DIAGRAM_TYPE, diagramNameOptions)
 				{
 						@Override
@@ -269,38 +275,55 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 		// TODO Auto-generated method stub
 		int diagramType = getSelectedIndexPOptions(PROPERTY_DIAGRAM_TYPE);
 		unselectAllDiagrams(diagramType);
-		if(diagramType == TYPE_USER_DOI)
+		if(button == MouseEvent.BUTTON1)
 		{
-			Point point = new Point(x,y);
-			AffineTransform transform = new AffineTransform();
-			transform.translate(-INIT_TRANSLATE_X, -INIT_TRANSLATE_Y);
-			Point transformedPoint = new Point();
-			transform.transform(point, transformedPoint);
-			int scanpathY =0;
-			for(Scanpath scanpath: scanpathList)
+			
+			if(diagramType == TYPE_USER_DOI)
 			{
-				Dimension d= scanpath.getImageDimension();
-				scanpathY += d.height;
-				
-				if(transformedPoint.y >= scanpathY-d.height && transformedPoint.y <= scanpathY)
+				Point point = new Point(x,y);
+				AffineTransform transform = new AffineTransform();
+				transform.translate(-INIT_TRANSLATE_X, -INIT_TRANSLATE_Y);
+				Point transformedPoint = new Point();
+				transform.transform(point, transformedPoint);
+				int scanpathY =0;
+				DataObject selectedObject = null;
+				for(Scanpath scanpath: scanpathList)
 				{
-					if(transformedPoint.x >= 0 && transformedPoint.x <= d.width)
-					{
-						scanpath.setSelected(true);
-					}
+					Dimension d= scanpath.getImageDimension();
+					scanpathY += d.height;
 					
-					break;
+					if(transformedPoint.y >= scanpathY-d.height && transformedPoint.y <= scanpathY)
+					{
+						if(transformedPoint.x >= 0 && transformedPoint.x <= d.width)
+						{
+							int mouseX =transformedPoint.x ;
+							int mouseY = transformedPoint.y - scanpathY+d.height;
+							scanpath.setSelected(true);
+							selectedObject = scanpath.getSelectedObject(mouseX, mouseY);							
+						}
+						
+						break;
+					}
+					else
+					{
+						scanpathY+= SCANPATH_DIAGRAM_GAP;
+					}
 				}
-				else
+				
+				if(selectedObject != null)
 				{
-					scanpathY+= SCANPATH_DIAGRAM_GAP;
+					for(Scanpath scanpath: scanpathList)
+					{
+						scanpath.setSelectedObject(selectedObject);
+					}
 				}
 			}
+			else if(diagramType == TYPE_DOI_USER)
+			{
+				return this.multiscanpath.mousepressed(x, y, button);
+			}
 		}
-		else if(diagramType == TYPE_DOI_USER)
-		{
-			return this.multiscanpath.mousepressed(x, y, button);
-		}
+		
 		return false;
 	}
 	private int getSelectedDiagramIndex()
@@ -324,8 +347,13 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 			for(Scanpath scanpath: scanpathList)
 			{
 				scanpath.setSelected(false);
+				scanpath.setSelectedObject(null);
 			}
 			
+		}
+		else if(diagramType == TYPE_DOI_USER)
+		{
+			this.multiscanpath.unselectAllDiagrams();
 		}
 	}
 

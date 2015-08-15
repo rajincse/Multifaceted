@@ -185,6 +185,7 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 			
 			this.scanpathList.add(scanpath);
 		}
+		Scanpath.makeUniformObjectList(scanpathList);
 		
 	}
 
@@ -210,57 +211,61 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 	@Override
 	public boolean mousedragged(int currentx, int currenty, int oldx, int oldy) {
 		// TODO Auto-generated method stub
-		int diagramType = getSelectedIndexPOptions(PROPERTY_DIAGRAM_TYPE);
-		if(diagramType == TYPE_USER_DOI)
+		if(mouseButton == MouseEvent.BUTTON1)
 		{
-			int selectedDiagramIndex = getSelectedDiagramIndex();
-			if(selectedDiagramIndex != INVALID)
+			int diagramType = getSelectedIndexPOptions(PROPERTY_DIAGRAM_TYPE);
+			if(diagramType == TYPE_USER_DOI)
 			{
-				Point point = new Point(currentx,currenty);
-				AffineTransform transform = new AffineTransform();
-				transform.translate(-INIT_TRANSLATE_X, -INIT_TRANSLATE_Y);
-				Point transformedPoint = new Point();
-				transform.transform(point, transformedPoint);
-				int scanpathY =0;
-				int destinationIndex =selectedDiagramIndex;
-				for(int i=0;i<scanpathList.size();i++)
+				int selectedDiagramIndex = getSelectedDiagramIndex();
+				if(selectedDiagramIndex != INVALID)
 				{
-					Dimension d= scanpathList.get(i).getImageDimension();
-					scanpathY += d.height;
-					
-					if(transformedPoint.y >= scanpathY-d.height && transformedPoint.y <= scanpathY)
+					Point point = new Point(currentx,currenty);
+					AffineTransform transform = new AffineTransform();
+					transform.translate(-INIT_TRANSLATE_X, -INIT_TRANSLATE_Y);
+					Point transformedPoint = new Point();
+					transform.transform(point, transformedPoint);
+					int scanpathY =0;
+					int destinationIndex =selectedDiagramIndex;
+					for(int i=0;i<scanpathList.size();i++)
 					{
-						destinationIndex = i;
+						Dimension d= scanpathList.get(i).getImageDimension();
+						scanpathY += d.height;
 						
-						break;
+						if(transformedPoint.y >= scanpathY-d.height && transformedPoint.y <= scanpathY)
+						{
+							destinationIndex = i;
+							
+							break;
+						}
+						else
+						{
+							scanpathY+= SCANPATH_DIAGRAM_GAP;
+						}
 					}
-					else
+					if(destinationIndex <0 )
 					{
-						scanpathY+= SCANPATH_DIAGRAM_GAP;
+						destinationIndex = 0;
+						
 					}
+					else if(destinationIndex > scanpathY)
+					{
+						destinationIndex = scanpathList.size()-1;
+					}
+					if(selectedDiagramIndex != destinationIndex)
+					{
+						Scanpath scanpath = scanpathList.remove(selectedDiagramIndex);
+						scanpathList.add(destinationIndex, scanpath);
+					}
+					return true;
 				}
-				if(destinationIndex <0 )
-				{
-					destinationIndex = 0;
-					
-				}
-				else if(destinationIndex > scanpathY)
-				{
-					destinationIndex = scanpathList.size()-1;
-				}
-				if(selectedDiagramIndex != destinationIndex)
-				{
-					Scanpath scanpath = scanpathList.remove(selectedDiagramIndex);
-					scanpathList.add(destinationIndex, scanpath);
-				}
-				return true;
+				
 			}
-			
+			else if(diagramType == TYPE_DOI_USER)
+			{
+				return this.multiscanpath.mousedragged(currentx, currenty, oldx, oldy);
+			}
 		}
-		else if(diagramType == TYPE_DOI_USER)
-		{
-			return this.multiscanpath.mousedragged(currentx, currenty, oldx, oldy);
-		}
+		
 		return false;
 	}
 
@@ -270,13 +275,15 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 		return false;
 	}
 
+	private int mouseButton = 0;
 	@Override
 	public boolean mousepressed(int x, int y, int button) {
 		// TODO Auto-generated method stub
-		int diagramType = getSelectedIndexPOptions(PROPERTY_DIAGRAM_TYPE);
-		unselectAllDiagrams(diagramType);
+		
 		if(button == MouseEvent.BUTTON1)
 		{
+			int diagramType = getSelectedIndexPOptions(PROPERTY_DIAGRAM_TYPE);
+			unselectAllDiagrams(diagramType);
 			
 			if(diagramType == TYPE_USER_DOI)
 			{
@@ -323,7 +330,7 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 				return this.multiscanpath.mousepressed(x, y, button);
 			}
 		}
-		
+		mouseButton = button;
 		return false;
 	}
 	private int getSelectedDiagramIndex()

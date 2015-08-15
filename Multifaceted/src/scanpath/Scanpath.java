@@ -454,4 +454,33 @@ public class Scanpath {
 		}
 		return selectedObject;
 	}
+
+	public ArrayList<DataObject> getRenderingObjectList() {
+		return renderingObjectList;
+	}
+
+	public void setRenderingObjectList(ArrayList<DataObject> renderingObjectList) {
+		this.renderingObjectList = renderingObjectList;
+	}
+	
+	public static void makeUniformObjectList(ArrayList<Scanpath> scanpathList)
+	{
+		ArrayList<DataObject> biggestObjectList = new ArrayList<DataObject>();
+		for(Scanpath scan: scanpathList)
+		{
+			
+			for(DataObject dataObject: scan.getRenderingObjectList())
+			{
+				if(!biggestObjectList.contains(dataObject))
+				{
+					biggestObjectList.add(dataObject);
+				}
+			}
+		}
+		
+		for(Scanpath scan: scanpathList)
+		{
+			scan.setRenderingObjectList(biggestObjectList);
+		}
+	}
 }

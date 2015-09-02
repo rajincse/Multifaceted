@@ -16,6 +16,7 @@ import javax.imageio.ImageIO;
 
 import perspectives.base.Property;
 import perspectives.base.Viewer;
+import perspectives.properties.PBoolean;
 import perspectives.properties.PColor;
 import perspectives.properties.PDouble;
 import perspectives.properties.PFileInput;
@@ -32,7 +33,10 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 	public static final String PROPERTY_COLOR_OBJECT ="Object Color";
 	public static final String PROPERTY_COLOR_LINE_HORIZONTAL ="Horizontal Line Color";
 	public static final String PROPERTY_COLOR_LINE_TRANSITION ="Transition Line Color";
-	public static final String PROPERTY_RATIO_HEIGHT = "Height Ratio";	
+	public static final String PROPERTY_COLOR_TIMELINE ="TimeLine Color";
+	public static final String PROPERTY_RATIO_HEIGHT = "Height Ratio";
+	public static final String PROPERTY_SORTING_ENABLED = "Sorting Enabled";
+	public static final String PROPERTY_LOCK_SELECTION = "Lock Selection";
 	public static final String PROPERTY_SAVE_IMAGE="Save Image";
 	
 	
@@ -52,6 +56,11 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 	
 	public static final Color COLOR_BACKGROUND_SELECTION = new Color(166, 170,171, 120);
 	public static final Color COLOR_SELECTION = Color.red;
+	
+	public static final Color COLOR_INITIAL_OBJECT = new Color(0,0,255,100);
+	public static final Color COLOR_INITIAL_LINE_HORIZONTAL = new Color(0,0,0,75);
+	public static final Color COLOR_INITIAL_LINE_TRANSITION = new Color(0,0,0,100);
+	public static final Color COLOR_INITIAL_TIMELINE = new Color(0,0,0,75);
 	
 	public static final int INFINITY =10000;
 	public static final int INVALID =-1;
@@ -90,7 +99,7 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 				};
 		addProperty(pDiagramType);
 		
-		Property<PColor> pColorObject = new Property<PColor>(PROPERTY_COLOR_OBJECT, new PColor(Color.blue))
+		Property<PColor> pColorObject = new Property<PColor>(PROPERTY_COLOR_OBJECT, new PColor(COLOR_INITIAL_OBJECT))
 				{
 					@Override
 					protected boolean updating(PColor newvalue) {
@@ -101,7 +110,7 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 				};
 		addProperty(pColorObject);
 		
-		Property<PColor> pColorLineHorizontal = new Property<PColor>(PROPERTY_COLOR_LINE_HORIZONTAL, new PColor(Color.black))
+		Property<PColor> pColorLineHorizontal = new Property<PColor>(PROPERTY_COLOR_LINE_HORIZONTAL, new PColor(COLOR_INITIAL_LINE_HORIZONTAL))
 				{
 					@Override
 					protected boolean updating(PColor newvalue) {
@@ -112,7 +121,7 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 				};
 		addProperty(pColorLineHorizontal);
 		
-		Property<PColor> pColorLineTransition = new Property<PColor>(PROPERTY_COLOR_LINE_TRANSITION, new PColor(Color.black))
+		Property<PColor> pColorLineTransition = new Property<PColor>(PROPERTY_COLOR_LINE_TRANSITION, new PColor(COLOR_INITIAL_LINE_TRANSITION))
 				{
 					@Override
 					protected boolean updating(PColor newvalue) {
@@ -122,6 +131,17 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 					}
 				};
 		addProperty(pColorLineTransition);
+		
+		Property<PColor> pColorTimeLine = new Property<PColor>(PROPERTY_COLOR_TIMELINE, new PColor(COLOR_INITIAL_TIMELINE))
+				{
+			@Override
+			protected boolean updating(PColor newvalue) {
+				// TODO Auto-generated method stub
+				requestRender();
+				return super.updating(newvalue);
+			}
+		};
+		addProperty(pColorTimeLine);
 		
 		Property<PDouble> pHeightRatio = new Property<PDouble>(PROPERTY_RATIO_HEIGHT, new PDouble(1.0))
 				{
@@ -133,6 +153,12 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 					}
 				};
 		addProperty(pHeightRatio);
+		
+		Property<PBoolean> pSortingEnabled = new Property<PBoolean>(PROPERTY_SORTING_ENABLED, new PBoolean(false));
+		addProperty(pSortingEnabled);
+		
+		Property<PBoolean> pLockSelection = new Property<PBoolean>(PROPERTY_LOCK_SELECTION, new PBoolean(false));
+		addProperty(pLockSelection);
 		
 		Property<PFileOutput> pSaveImage = new Property<PFileOutput>(PROPERTY_SAVE_IMAGE, new PFileOutput())
 				{
@@ -164,6 +190,12 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 	{
 		return ((PDouble)this.getProperty(propertyName).getValue()).doubleValue();
 	}
+	
+	private boolean getBoolean(String propertyName)
+	{
+		return ((PBoolean)this.getProperty(propertyName).getValue()).boolValue();
+	}
+	
 	private void readSequenceDirectory(String path)
 	{
 		
@@ -211,7 +243,9 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 	@Override
 	public boolean mousedragged(int currentx, int currenty, int oldx, int oldy) {
 		// TODO Auto-generated method stub
-		if(mouseButton == MouseEvent.BUTTON1)
+		boolean sortingEnabled = getBoolean(PROPERTY_SORTING_ENABLED);
+		boolean lockSelection = getBoolean(PROPERTY_LOCK_SELECTION);
+		if(mouseButton == MouseEvent.BUTTON1 && sortingEnabled && !lockSelection)
 		{
 			int diagramType = getSelectedIndexPOptions(PROPERTY_DIAGRAM_TYPE);
 			if(diagramType == TYPE_USER_DOI)
@@ -279,8 +313,8 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 	@Override
 	public boolean mousepressed(int x, int y, int button) {
 		// TODO Auto-generated method stub
-		
-		if(button == MouseEvent.BUTTON1)
+		boolean lockSelection = getBoolean(PROPERTY_LOCK_SELECTION);
+		if(button == MouseEvent.BUTTON1 && !lockSelection)
 		{
 			int diagramType = getSelectedIndexPOptions(PROPERTY_DIAGRAM_TYPE);
 			unselectAllDiagrams(diagramType);
@@ -373,7 +407,7 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 	@Override
 	public void render(Graphics2D g) {
 		// TODO Auto-generated method stub
-		
+		renderTimeLine(g);
 		int diagramType = getSelectedIndexPOptions(PROPERTY_DIAGRAM_TYPE);
 		Color objectColor = getColor(PROPERTY_COLOR_OBJECT);
 		Color horizontalColor = getColor(PROPERTY_COLOR_LINE_HORIZONTAL);
@@ -401,6 +435,53 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 		else if(diagramType == TYPE_DOI_USER && multiscanpath != null)
 		{
 			this.multiscanpath.render(g, objectColor, horizontalColor, transitionColor, heightRatio);
+		}
+		g.translate(-INIT_TRANSLATE_X, -INIT_TRANSLATE_Y);
+		
+	}
+	
+	public void renderTimeLine(Graphics2D g)
+	{
+		Color timelineColor = getColor(PROPERTY_COLOR_TIMELINE);
+		int diagramType = getSelectedIndexPOptions(PROPERTY_DIAGRAM_TYPE);
+		int TIME_DURATION = 5000;
+		g.translate(INIT_TRANSLATE_X, INIT_TRANSLATE_Y);
+		if(diagramType == TYPE_USER_DOI && this.scanpathList != null && !this.scanpathList.isEmpty())
+		{
+			Dimension imageDimension = Scanpath.getImageDimension(scanpathList);
+			
+			g.translate(Scanpath.WIDTH_TITLE+Scanpath.WIDTH_ANCHOR, 0);
+			
+			int totalTime = (imageDimension.width - Scanpath.WIDTH_TITLE+Scanpath.WIDTH_ANCHOR)* ScanpathViewer.TIME_STEP/ScanpathViewer.TIME_CELL_WIDTH;
+			int totalTimeLines = totalTime / TIME_DURATION;
+			
+			for(int i=0;i<totalTimeLines;i++)
+			{
+				int x = i*ScanpathViewer.TIME_CELL_WIDTH*TIME_DURATION / ScanpathViewer.TIME_STEP;
+				g.setColor(timelineColor);
+				g.drawLine(x, -10, x, imageDimension.height+10);
+				g.setColor(Color.black);
+				g.drawString(i*TIME_DURATION/1000+" s", x, -10);
+			}
+			g.translate(-Scanpath.WIDTH_TITLE-Scanpath.WIDTH_ANCHOR, 0);
+		}
+		else if(diagramType == TYPE_DOI_USER && multiscanpath != null)
+		{
+			Dimension imageDimension = multiscanpath.getImageDimension();
+			
+			g.translate(MultiScanpath.WIDTH_TITLE+MultiScanpath.WIDTH_ANCHOR, 0);
+			int totalTime = (imageDimension.width - MultiScanpath.WIDTH_TITLE+MultiScanpath.WIDTH_ANCHOR)* ScanpathViewer.TIME_STEP/ScanpathViewer.TIME_CELL_WIDTH;
+			int totalTimeLines = totalTime / TIME_DURATION;
+			g.setColor(timelineColor);
+			for(int i=0;i<totalTimeLines;i++)
+			{
+				int x = i*ScanpathViewer.TIME_CELL_WIDTH*TIME_DURATION / ScanpathViewer.TIME_STEP;
+				g.setColor(timelineColor);
+				g.drawLine(x, -10, x, imageDimension.height+10);
+				g.setColor(Color.black);
+				g.drawString(i*TIME_DURATION/1000+" s", x, -10);
+			}
+			g.translate(-MultiScanpath.WIDTH_TITLE-MultiScanpath.WIDTH_ANCHOR, 0);
 		}
 		g.translate(-INIT_TRANSLATE_X, -INIT_TRANSLATE_Y);
 		

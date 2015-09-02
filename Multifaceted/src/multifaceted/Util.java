@@ -496,4 +496,9 @@ public class Util {
 		
 		g.setColor(previousColor);
 	}
+	
+	public static Color getAlphaColor(Color c, int alpha)
+	{
+		return new Color(c.getRed(), c.getGreen(), c.getBlue(),alpha);
+	}
 }

@@ -41,10 +41,25 @@ public class MultiScanpathDiagram {
 		if(isSelected)
 		{
 			g.setColor(ScanpathViewer.COLOR_BACKGROUND_SELECTION);
-			g.fillRect(0, 0, imageDimension.width, userList.size()*ScanpathViewer.TIME_CELL_HEIGHT);			
+
+			g.fillRect(MultiScanpath.WIDTH_TITLE, 0, imageDimension.width, userList.size()*ScanpathViewer.TIME_CELL_HEIGHT);
+			
+			Color objectBackColor =Util.getRelevanceChartColor(this.dataObject.getType());
+			objectBackColor = Util.getAlphaColor(objectBackColor, ScanpathViewer.COLOR_BACKGROUND_SELECTION.getAlpha());
+			g.setColor(objectBackColor);
+			g.fillRect(0, 0,MultiScanpath.WIDTH_TITLE, userList.size()*ScanpathViewer.TIME_CELL_HEIGHT);
+		}
+		else
+		{
+			Color objectBackColor =Util.getRelevanceChartColor(this.dataObject.getType());
+			objectBackColor = Util.getAlphaColor(objectBackColor, 100);
+			g.setColor(objectBackColor);
+			g.fillRect(0, 0,MultiScanpath.WIDTH_TITLE, userList.size()*ScanpathViewer.TIME_CELL_HEIGHT);
 		}
 		
 		DataObject dataObject = this.dataObject;
+		
+			
 		
 		Util.drawTextBox(g, Color.black, dataObject.getLabel(), new Rectangle(0, 0, MultiScanpath.WIDTH_TITLE, userList.size()*ScanpathViewer.TIME_CELL_HEIGHT/2));
 		

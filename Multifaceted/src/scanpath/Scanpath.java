@@ -345,7 +345,9 @@ public class Scanpath {
 			
 			int textY = i* ScanpathViewer.TIME_CELL_HEIGHT-ScanpathViewer.TIME_CELL_HEIGHT/2;
 			Rectangle rect = new Rectangle(0,textY,WIDTH_ANCHOR,ScanpathViewer.TIME_CELL_HEIGHT);
-			Color textBackColor = ColorScheme.ALTERNATE_COLOR_BLUE[i%2];
+//			Color textBackColor = ColorScheme.ALTERNATE_COLOR_BLUE[i%2];
+			Color textBackColor = Util.getRelevanceChartColor(object.getType());
+			textBackColor = Util.getAlphaColor(textBackColor, 100);
 			g.setColor(textBackColor);
 			g.fillRect(rect.x, rect.y, rect.width, rect.height);
 			if(object.equals(selectedObject))

@@ -439,12 +439,13 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 		g.translate(-INIT_TRANSLATE_X, -INIT_TRANSLATE_Y);
 		
 	}
+	public static final int TIME_LINE_TIME_DURATION_RATIO =10;
 	
 	public void renderTimeLine(Graphics2D g)
 	{
 		Color timelineColor = getColor(PROPERTY_COLOR_TIMELINE);
 		int diagramType = getSelectedIndexPOptions(PROPERTY_DIAGRAM_TYPE);
-		int TIME_DURATION = 5000;
+		int TIME_DURATION =  ScanpathViewer.TIME_STEP*TIME_LINE_TIME_DURATION_RATIO;
 		g.translate(INIT_TRANSLATE_X, INIT_TRANSLATE_Y);
 		if(diagramType == TYPE_USER_DOI && this.scanpathList != null && !this.scanpathList.isEmpty())
 		{
@@ -457,7 +458,7 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 			
 			for(int i=0;i<totalTimeLines;i++)
 			{
-				int x = i*ScanpathViewer.TIME_CELL_WIDTH*TIME_DURATION / ScanpathViewer.TIME_STEP;
+				int x = i*ScanpathViewer.TIME_CELL_WIDTH*TIME_LINE_TIME_DURATION_RATIO;
 				g.setColor(timelineColor);
 				g.drawLine(x, -10, x, imageDimension.height+10);
 				g.setColor(Color.black);

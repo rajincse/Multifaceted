@@ -157,6 +157,10 @@ public class Scanpath {
 					{
 						distance[i][j] = 1.0f / transition[i][j];
 					}
+					else if(i==j)
+					{
+						distance[i][j] =0;
+					}
 					else
 					{
 						distance[i][j] = ScanpathViewer.INFINITY;
@@ -164,10 +168,14 @@ public class Scanpath {
 				}
 			}
 
+			//HAC Code Start
+			HACClusteringHelper clusteringHelper = new HACClusteringHelper(distance, clusteringPoints);
+			Tree t = clusteringHelper.getTree();
+			//HAC Code End
 			
-			Tree t = HierarchicalClustering.compute(this.clusteringPoints);
+//			Tree t = HierarchicalClustering.compute(this.clusteringPoints);
+			
 			traverseClusterNode(t.getRoot());
-//			System.out.println(renderingObjectList.size()+", "+clusteredSequence.size()+", "+clusteringPoints.getCount());
 			renderingObjectList = clusteredSequence;
 			
 

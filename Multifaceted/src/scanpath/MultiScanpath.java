@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.FileFilter;
@@ -12,16 +11,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
-import perspectives.graph.Graph;
 import perspectives.properties.PString;
 import perspectives.tree.Tree;
 import perspectives.tree.TreeNode;
 import perspectives.util.DistancedPoints;
-import perspectives.util.HierarchicalClustering;
-
-import multifaceted.ColorScheme;
 import multifaceted.FileLineReader;
-import multifaceted.Util;
 import realtime.DataObject;
 import realtime.EyeEvent;
 
@@ -166,12 +160,10 @@ public class MultiScanpath {
 			return diagramList.size();
 		}
 	};
-	private int transition[][];
 	private float distance[][];
-	
-	public void computeDistance()
+	public float[][] getDistanceMatrix()
 	{
-		transition = new int [diagramList.size()][diagramList.size()];
+		int[][] transition = new int [diagramList.size()][diagramList.size()];
 		
 		
 		for(int userIndex=0;userIndex<scanpathPointArray.length;userIndex++)
@@ -193,7 +185,7 @@ public class MultiScanpath {
 				sourceIndex = destinationIndex;
 			}
 		}
-		distance = new float [diagramList.size()][diagramList.size()];
+		float distance[][] = new float [diagramList.size()][diagramList.size()];
 		for(int i=0;i<transition.length;i++)
 		{
 			for(int j=0;j<transition[i].length;j++)
@@ -202,17 +194,33 @@ public class MultiScanpath {
 				{
 					distance[i][j] = 1.0f / transition[i][j];
 				}
+				else if(i==j)
+				{
+					distance[i][j] =0;
+				}
 				else
 				{
 					distance[i][j] = ScanpathViewer.INFINITY;
 				}
 			}
 		}
-
 		
-		Tree t = HierarchicalClustering.compute(this.clusteringPoints);
+		return distance;
+	}
+	public void computeDistance()
+	{
+		
+		distance = getDistanceMatrix();
+		
+		//HAC Codes Start
+		HACClusteringHelper clusteringHelper = new HACClusteringHelper(distance, this.clusteringPoints);		
+		Tree t = clusteringHelper.getTree();
+		//HAC Codes End
+		
+//		Tree t = HierarchicalClustering.compute(this.clusteringPoints);
+		
 		traverseClusterNode(t.getRoot());
-//		System.out.println(diagramList.size()+", "+clusteredSequence.size()+", "+clusteringPoints.getCount());
+		
 		diagramList = clusteredSequence;
 		
 		/*

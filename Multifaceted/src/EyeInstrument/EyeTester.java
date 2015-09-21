@@ -194,6 +194,11 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 			}
 		return prob;
 	}
+	
+	private void removeAllElements()
+	{
+		this.elems.clear();
+	}
 
 	@Override
 	public void render(Graphics2D g) {
@@ -441,13 +446,23 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 				this.tranform.scale(Double.parseDouble(split[1]), Double.parseDouble(split[2]));				
 			else if (split[0].equals("addElem"))
 			{	
-				this.addElement(split[1],Integer.parseInt(split[2]), Integer.parseInt(split[3]), Integer.parseInt(split[4]), Integer.parseInt(split[5]));
+				String id = split[1];
+				int x = (int)Double.parseDouble(split[2]);
+				int y = (int)Double.parseDouble(split[3]);
+				int w = (int)Double.parseDouble(split[4]);
+				int h = (int)Double.parseDouble(split[5]);
+				this.addElement(id,x,y,w,h);
 			}
 			else if (split[0].equals("addCategory"))
 			{	
 				Elem elem =this.getElem(split[1]); 
 				elem.addCategory(split[1]);
 			}
+			else if (split[0].equals("removeAllElem"))
+			{	
+				this.removeAllElements();
+				this.requestRender();
+			} 
 			else if (split[0].equals("reshapeElem"))
 			{	
 				String id = split[1];

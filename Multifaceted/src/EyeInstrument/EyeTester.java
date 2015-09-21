@@ -429,78 +429,88 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 
 	
 	public void processCommands(String command){
-		String[] split1 = command.split("command=");
-		
-		for (int i=0; i<split1.length; i++)
+		try
 		{
-			split1[i] = split1[i].trim();
-			if (split1[i].length() == 0) continue;
-		
-			String[] split = split1[i].split("_");
-		
-			if (split[0].equals("window"))
-				window = new Rectangle(Integer.parseInt(split[1]), Integer.parseInt(split[2]), Integer.parseInt(split[3]), Integer.parseInt(split[4]));
-			else if (split[0].equals("translate"))
-				this.tranform.translate(Double.parseDouble(split[1]), Double.parseDouble(split[2]));
-			else if (split[0].equals("scale"))
-				this.tranform.scale(Double.parseDouble(split[1]), Double.parseDouble(split[2]));				
-			else if (split[0].equals("addElem"))
-			{	
-				String id = split[1];
-				int x = (int)Double.parseDouble(split[2]);
-				int y = (int)Double.parseDouble(split[3]);
-				int w = (int)Double.parseDouble(split[4]);
-				int h = (int)Double.parseDouble(split[5]);
-				this.addElement(id,x,y,w,h);
+			String[] split1 = command.split("command=");
+			
+			for (int i=0; i<split1.length; i++)
+			{
+				split1[i] = split1[i].trim();
+				if (split1[i].length() == 0) continue;
+			
+				String[] split = split1[i].split("_");
+			
+				if (split[0].equals("window"))
+					window = new Rectangle(Integer.parseInt(split[1]), Integer.parseInt(split[2]), Integer.parseInt(split[3]), Integer.parseInt(split[4]));
+				else if (split[0].equals("translate"))
+					this.tranform.translate(Double.parseDouble(split[1]), Double.parseDouble(split[2]));
+				else if (split[0].equals("scale"))
+					this.tranform.scale(Double.parseDouble(split[1]), Double.parseDouble(split[2]));				
+				else if (split[0].equals("addElem"))
+				{	
+					String id = split[1];
+					int x = (int)Double.parseDouble(split[2]);
+					int y = (int)Double.parseDouble(split[3]);
+					int w = (int)Double.parseDouble(split[4]);
+					int h = (int)Double.parseDouble(split[5]);
+					this.addElement(id,x,y,w,h);
+				}
+				else if (split[0].equals("addCategory"))
+				{	
+					Elem elem =this.getElem(split[1]); 
+					elem.addCategory(split[1]);
+				}
+				else if (split[0].equals("removeAllElem"))
+				{	
+					this.removeAllElements();
+					this.requestRender();
+				} 
+				else if (split[0].equals("reshapeElem"))
+				{	
+					String id = split[1];
+					Elem elem =this.getElem(id);
+					if(elem != null)
+					{
+						int x = elem.x;
+						int y = elem.y;
+						int w = elem.w;
+						int h = elem.h;
+						
+						if(split.length >= 3)
+						{
+							x = (int)Double.parseDouble(split[2]);
+						}
+						if(split.length >= 4)
+						{
+							y = (int)Double.parseDouble(split[3]);
+						}
+						if(split.length >= 5)
+						{
+							w = (int)Double.parseDouble(split[4]);
+						}
+						if(split.length >= 6)
+						{
+							h =(int) Double.parseDouble(split[5]);
+						}
+						
+						this.reshapeElem(id, x, y, w, h);
+					}
+				}
+				else if (split[0].equals("setTransition"))
+					this.setTrans(split[1], split[2], Double.parseDouble(split[3]));
+				else if (split[0].equals("gainedfocus"))
+					hasFocus = true;
+				else if (split[0].equals("lostfocus"))
+					hasFocus = false;
+				//else if (split[0].equals("gaze"))
+				//	this.processGaze(Integer.parseInt(split[1]), Integer.parseInt(split[2]));
 			}
-			else if (split[0].equals("addCategory"))
-			{	
-				Elem elem =this.getElem(split[1]); 
-				elem.addCategory(split[1]);
-			}
-			else if (split[0].equals("removeAllElem"))
-			{	
-				this.removeAllElements();
-				this.requestRender();
-			} 
-			else if (split[0].equals("reshapeElem"))
-			{	
-				String id = split[1];
-				Elem elem =this.getElem(id);
-				int x = elem.x;
-				int y = elem.y;
-				int w = elem.w;
-				int h = elem.h;
-				
-				if(split.length >= 3)
-				{
-					x = (int)Double.parseDouble(split[2]);
-				}
-				if(split.length >= 4)
-				{
-					y = (int)Double.parseDouble(split[3]);
-				}
-				if(split.length >= 5)
-				{
-					w = (int)Double.parseDouble(split[4]);
-				}
-				if(split.length >= 6)
-				{
-					h =(int) Double.parseDouble(split[5]);
-				}
-				
-				this.reshapeElem(id, x, y, w, h);
-				
-			}
-			else if (split[0].equals("setTransition"))
-				this.setTrans(split[1], split[2], Double.parseDouble(split[3]));
-			else if (split[0].equals("gainedfocus"))
-				hasFocus = true;
-			else if (split[0].equals("lostfocus"))
-				hasFocus = false;
-			//else if (split[0].equals("gaze"))
-			//	this.processGaze(Integer.parseInt(split[1]), Integer.parseInt(split[2]));
 		}
+		catch(Exception ex)
+		{
+			ex.printStackTrace();
+		}
+		
 	}
 
 

@@ -4,6 +4,7 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,7 +19,6 @@ import java.util.concurrent.Executors;
 
 import perspectives.base.Viewer;
 import perspectives.two_d.JavaAwtRenderer;
-import eyetrack.EyeTrackerDataReceiver;
 import eyetrack.*;
 
 import com.sun.net.httpserver.*;
@@ -81,11 +81,11 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 	
 	
 	//a gaze score history (one array for each element)
-	ArrayList[] gs = new ArrayList[]{new ArrayList<Double>(),new ArrayList<Double>(),new ArrayList<Double>(),new ArrayList<Double>(),new ArrayList<Double>(),new ArrayList<Double>()};
+	ArrayList<ArrayList<Double>> gs = new ArrayList<ArrayList<Double>>();
 	//a probability score history (maybe don't need a whole history)
-	ArrayList[] ps = new ArrayList[]{new ArrayList<Double>(),new ArrayList<Double>(),new ArrayList<Double>(),new ArrayList<Double>(),new ArrayList<Double>(),new ArrayList<Double>()};
+	ArrayList<ArrayList<Double>> ps = new ArrayList<ArrayList<Double>>();
 	//and a final score history
-	ArrayList[] fs = new ArrayList[]{new ArrayList<Double>(),new ArrayList<Double>(),new ArrayList<Double>(),new ArrayList<Double>(),new ArrayList<Double>(),new ArrayList<Double>()};
+	ArrayList<ArrayList<Double>> fs = new ArrayList<ArrayList<Double>>();
 	
 	//Point gaze = null;
 	int radius = 200;
@@ -94,6 +94,10 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 	ArrayList<Elem> elems = new ArrayList<Elem>();
 	ArrayList<Transition> trans = new ArrayList<Transition>();
 	
+	double originX = 0;
+	double originY = 0;
+	
+	double scale=1;
 
 	public EyeTester(String name) {
 		super(name);
@@ -124,7 +128,7 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 					
 					String s=arg0.getRequestURI().getQuery();
 					
-					System.out.println(s); 
+//					System.out.println(s); 
 					processCommands(s);
 										
 					 String response = "This is the response";
@@ -152,6 +156,10 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 	public void addElement(String id, int x, int y, int w, int h){
 		synchronized(elems){
 			elems.add(new Elem(id, x,y,w,h));
+			gs.add(new ArrayList<Double>());
+			ps.add(new ArrayList<Double>());
+			fs.add(new ArrayList<Double>());
+			
 		}
 	}
 	
@@ -197,12 +205,18 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 	
 	private void removeAllElements()
 	{
-		this.elems.clear();
+		synchronized (elems) {
+			this.elems.clear();
+			this.gs.clear();
+			this.ps.clear();
+			this.fs.clear();
+		}
+		
 	}
 
 	@Override
 	public void render(Graphics2D g) {
-		
+		g.setTransform(this.tranform);
 		g.setColor(Color.LIGHT_GRAY);
 		g.drawLine(200, 50, 200, 250);
 		
@@ -210,35 +224,53 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 		//g.setTransform(tranform);
 		for (int i=0; i<elems.size(); i++){
 			g.setColor(Color.LIGHT_GRAY);
-			g.fillRect(elems.get(i).x, elems.get(i).y, elems.get(i).w, elems.get(i).h);
-			g.setColor(Color.black);
-			g.drawString(elems.get(i).id, elems.get(i).x, elems.get(i).y + elems.get(i).h - 5);
+			if(elems.get(i) != null)
+			{
+				g.fillRect(elems.get(i).x, elems.get(i).y, elems.get(i).w, elems.get(i).h);
+				g.setColor(Color.black);
+				g.drawString(elems.get(i).id, elems.get(i).x, elems.get(i).y + elems.get(i).h - 5);
+			}
 			
-		/*	if (gs[i].size() == 0) continue;
 			
-			double gg = (Double)gs[i].get(gs[i].size()-1);
-			double p = (Double)ps[i].get(ps[i].size()-1);
-			double f = (Double)fs[i].get(fs[i].size()-1);
+			///*
+			if (
+					(gs.get(i) != null && gs.get(i).size() == 0)
+				|| (ps.get(i) != null && gs.get(i).size() == 0)
+				|| (fs.get(i) != null && gs.get(i).size() == 0)
+				)
+			{
+				continue;
+			}
+
+			double gg = (Double)gs.get(i).get(gs.get(i).size()-1);
+			double p = (Double)ps.get(i).get(ps.get(i).size()-1);
+			double f = (Double)fs.get(i).get(fs.get(i).size()-1);
 			
 			//Sayeed, please print your debug numbers like this.
 			String s = (new DecimalFormat("##.00")).format(gg) + "; " + 
 			(new DecimalFormat("##.00")).format(p) + " (" + (new DecimalFormat("##.00")).format(transfp(p)) +  "); " + 
 					(new DecimalFormat("##.00")).format(f);
-			g.drawString(s, elems.get(i).x+10, elems.get(i).y);*/
+			g.drawString(s, elems.get(i).x+10, elems.get(i).y);
+			//*/
 		}
 		
 		//AffineTransform
-		
-		/*if (gaze != null){
+		/*
+		if (gaze != null){
 			g.fillOval(gaze.x-5, gaze.y-5, 10,10);
 			g.drawOval(gaze.x-radius, gaze.y-radius, 2*radius, 2*radius);
-		}*/
+		}
+		//*/
 		
 		for (int i=0; i<gazes.size(); i++){
 			g.setColor(new Color(0,0,250,50));
 			g.fillOval((int)gazes.get(i).getX()-2, (int)gazes.get(i).getY()-2, 4, 4);
 		}
 		
+		g.setColor(Color.red);
+		g.drawLine(0, 0, 1280, 0);
+		g.drawLine(0, 0, 0, 720);
+		g.translate(-originX, -originY);
 	}
 
 	@Override
@@ -249,8 +281,7 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 	
 	
 	public void processGaze(double x, double y){
-		
-		if (window == null || !hasFocus)
+		if (window == null || !hasFocus || gs.isEmpty() || gs.size() != elems.size())
 			return;
 		
 		x = x - window.x;
@@ -269,7 +300,7 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 		
 		gazes.add(new Point2D.Double(x,y));
 		
-		int t = gs[0].size()-1;	
+		int t = gs.get(0).size()-1;	
 		
 		Point2D gaze = new Point2D.Double(x,y);
 		
@@ -278,16 +309,16 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 			double d = gaze.distance(elems.get(i).getCenter());
 			
 			if (d > radius) 
-				gs[i].add(new Double(0));
+				gs.get(i).add(new Double(0));
 			else
-				gs[i].add(new Double((1.- d/radius)));
+				gs.get(i).add(new Double((1.- d/radius)));
 		}
 		
 	
 		if (t < 0){ //first time we initialize everything
 			for (int i=0; i<elems.size(); i++){
-				ps[i].add(new Double(1));
-				fs[i].add(gs[i].get(t+1));
+				ps.get(i).add(new Double(1));
+				fs.get(i).add(gs.get(i).get(t+1));
 			}
 			return;
 		}
@@ -303,9 +334,9 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 		double[] transProbs = new double[elems.size()];
 		for (int i=0; i<elems.size(); i++){
 			
-			if ((Double)gs[i].get(t+1) <= 0 ){
-				ps[i].add(new Double(0));
-				fs[i].add(new Double(0));
+			if ((Double)gs.get(i).get(t+1) <= 0 ){
+				ps.get(i).add(new Double(0));
+				fs.get(i).add(new Double(0));
 				continue;
 			}
 			
@@ -317,7 +348,7 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 				if (prevScores[j] == 0 || i==j) continue;
 								
 				//if object i is in competition with object j, then j cannot be used to discreminate!!!!				
-				if ((Double)gs[j].get(t+1) != 0) continue;
+				if ((Double)gs.get(j).get(t+1) != 0) continue;
 								
 				sumProb += prevScores[j] * getTransition(elems.get(j), elems.get(i));
 				sumCnt += prevScores[j];
@@ -343,7 +374,7 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 		}
 		
 		for (int i=0; i<elems.size(); i++){
-			double g = (Double)gs[i].get(t+1);
+			double g = (Double)gs.get(i).get(t+1);
 			
 			if (g <= 0) continue;
 			
@@ -352,8 +383,8 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 		
 			double f = g*transfp(p);
 			
-			ps[i].add(new Double(p));
-			fs[i].add(new Double(f));
+			ps.get(i).add(new Double(p));
+			fs.get(i).add(new Double(f));
 		}
 	}
 	
@@ -364,17 +395,17 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 		int recentSize = 20;
 		
 		//if we don't have enough samples for a window, return;
-		if (fs[e].size() < windowSize) return 0;
+		if (fs.get(e).size() < windowSize) return 0;
 		
 		//otherwise, slide the window backgrounds a compute average scores within the window; record the maximum average
 		double maxAv = 0;
 		for (int k=0; k<recentSize; k++){
-			if (fs[e].size()-k-windowSize < 0)
+			if (fs.get(e).size()-k-windowSize < 0)
 				break;
 			
 			double av = 0;
-			for (int i=fs[e].size()-k-windowSize; i<fs[e].size()-k; i++)
-				av += (Double)fs[e].get(i);
+			for (int i=fs.get(e).size()-k-windowSize; i<fs.get(e).size()-k; i++)
+				av += (Double)fs.get(e).get(i);
 			av /= windowSize;
 			
 			if (av > maxAv)
@@ -443,17 +474,52 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 				if (split[0].equals("window"))
 					window = new Rectangle(Integer.parseInt(split[1]), Integer.parseInt(split[2]), Integer.parseInt(split[3]), Integer.parseInt(split[4]));
 				else if (split[0].equals("translate"))
-					this.tranform.translate(Double.parseDouble(split[1]), Double.parseDouble(split[2]));
+				{	
+					
+					double newOriginX= Double.parseDouble(split[1]);
+					double newOriginY= Double.parseDouble(split[2]);
+					
+					double translateX = newOriginX - originX;
+					double translateY = newOriginY - originY;
+					
+					originX = newOriginX;
+					originY = newOriginY;
+					
+					this.tranform.translate(translateX, translateY);
+					requestRender();
+				}	
 				else if (split[0].equals("scale"))
-					this.tranform.scale(Double.parseDouble(split[1]), Double.parseDouble(split[2]));				
+				{
+					double newScale = Double.parseDouble(split[1]);
+					
+					double transformScale = newScale/ scale;
+					
+					scale = newScale;
+					
+					this.tranform.scale(transformScale,transformScale);
+					requestRender();
+				}
+									
 				else if (split[0].equals("addElem"))
 				{	
-					String id = split[1];
-					int x = (int)Double.parseDouble(split[2]);
-					int y = (int)Double.parseDouble(split[3]);
-					int w = (int)Double.parseDouble(split[4]);
-					int h = (int)Double.parseDouble(split[5]);
-					this.addElement(id,x,y,w,h);
+					try
+					{
+					
+						String id = split[1];
+						
+						int x = (int)Double.parseDouble(split[2]);
+						int y = (int)Double.parseDouble(split[3]);
+						int w = (int)Double.parseDouble(split[4]);
+						int h = (int)Double.parseDouble(split[5]);
+						this.addElement(id,x,y,w,h);
+					
+					
+					}
+					catch(NumberFormatException ex)
+					{
+						System.err.println(" Problem at :"+split1[i]);
+					}
+					
 				}
 				else if (split[0].equals("addCategory"))
 				{	

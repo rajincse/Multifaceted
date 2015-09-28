@@ -154,7 +154,7 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 	
 	
 	public void addElement(String id, int x, int y, int w, int h){
-		synchronized(elems){
+		synchronized(this){
 			elems.add(new Elem(id, x,y,w,h));
 			gs.add(new ArrayList<Double>());
 			ps.add(new ArrayList<Double>());
@@ -205,7 +205,7 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 	
 	private void removeAllElements()
 	{
-		synchronized (elems) {
+		synchronized (this) {
 			this.elems.clear();
 			this.gs.clear();
 			this.ps.clear();

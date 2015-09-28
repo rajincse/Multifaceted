@@ -2,6 +2,7 @@ package multifaceted;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
@@ -500,5 +501,23 @@ public class Util {
 	public static Color getAlphaColor(Color c, int alpha)
 	{
 		return new Color(c.getRed(), c.getGreen(), c.getBlue(),alpha);
+	}
+	
+	public static boolean isInsidePolygon(int[] polygonX, int[] polygonY, int x, int y)
+	{
+		if(polygonX.length != polygonY.length || polygonX.length < 3)
+		{
+			
+			System.err.println("isInsidePolygon error: Not enough points to determine");
+			return false;
+		}
+		Point[] points = new Point[polygonX.length];
+		for(int i=0;i<polygonX.length;i++)
+		{
+			points[i] = new Point(polygonX[i], polygonY[i]);
+		}
+		boolean contains = InsidePolygonTester.isInside(points, points.length, new Point(x,y));
+		
+		return contains;
 	}
 }

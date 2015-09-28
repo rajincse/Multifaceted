@@ -2,6 +2,10 @@ package doiriver;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.util.ArrayList;
+
+import multifaceted.InsidePolygonTester;
+import multifaceted.Util;
 
 import perspectives.util.SplineFactory;
 
@@ -15,6 +19,8 @@ public class River {
 	private Color color;
 
 	private River previousRiver =null;
+	
+	private boolean isSelected =false;
 
 	public River(DataObject dataObject, double[] timeScores, Color color)
 	{
@@ -226,7 +232,29 @@ public class River {
 	public void setPreviousRiver(River previousRiver) {
 		this.previousRiver = previousRiver;
 	}
+
+	public boolean isSelected() {
+		return isSelected;
+	}
+
+	public void setSelected(boolean isSelected) {
+		this.isSelected = isSelected;
+	}
 	
-	
+	public boolean containsPointInside(int x, int y)
+	{
+		int [] polygonX = getPolygonX();
+		int [] polygonY = getPolygonY();
+		Point[] points = new Point[polygonX.length];
+
+		for(int i=0;i<polygonX.length;i++)
+		{
+			points[i] = new Point(polygonX[i], polygonY[i]);
+		}
+
+		boolean contains = InsidePolygonTester.isInside(points, points.length, new Point(x,y));
+
+		return contains;
+	}
 	
 }

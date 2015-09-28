@@ -4,6 +4,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileFilter;
@@ -16,6 +17,7 @@ import java.util.Random;
 import javax.imageio.ImageIO;
 
 import multifaceted.FileLineReader;
+import multifaceted.InsidePolygonTester;
 import multifaceted.Util;
 
 import perspectives.base.Property;
@@ -41,7 +43,7 @@ public class DOIRiverViewer extends Viewer implements JavaAwtRenderer{
 	public static final Color COLOR_INITIAL_LINE_TRANSITION = new Color(0,0,0,100);
 	public static final Color COLOR_INITIAL_TIMELINE = new Color(0,0,0,75);
 
-	public static final int TIME_STEP =5000;
+	public static final int TIME_STEP =2500;
 	public static final int INVALID =-1;
 	public static final int INFINITY =10000;
 	
@@ -94,6 +96,7 @@ public class DOIRiverViewer extends Viewer implements JavaAwtRenderer{
 		
 		PFileInput loadFile = new PFileInput(path);
 		pLoad.setValue(loadFile);
+		
 	}
 
 	private void process(String directoryPath)
@@ -359,20 +362,52 @@ public class DOIRiverViewer extends Viewer implements JavaAwtRenderer{
 	}
 
 	@Override
-	public boolean mousemoved(int arg0, int arg1) {
+	public boolean mousemoved(int x, int y) {
 		// TODO Auto-generated method stub
+		int transformedX = x -INIT_X;
+		int transformedY = y -INIT_Y;
+		 
+		 setToolTipText("");
+		 
+		 for(int i=0;i<riverList.size() ;i++)
+		 {
+			 River river = riverList.get(i);
+			 if(river.containsPointInside(transformedX, transformedY)){
+				 setToolTipText(river.getDataObject().getLabel());
+				 break;
+			 }
+		 }
+		
 		return false;
 	}
 
 	@Override
-	public boolean mousepressed(int arg0, int arg1, int arg2) {
+	public boolean mousepressed(int x, int y, int button) {
 		// TODO Auto-generated method stub
+		int transformedX = x -INIT_X;
+		int transformedY = y -INIT_Y;
+		 
+		for(int i=0;i<riverList.size();i++)
+		{
+			 River river = riverList.get(i);
+			 river.setSelected(false);
+		}
+		 
+		 for(int i=0;i<riverList.size() ;i++)
+		 {
+			 River river = riverList.get(i);
+			 if(river.containsPointInside(transformedX, transformedY)){
+				 river.setSelected(true);
+				 break;
+			 }
+		 }
 		return false;
 	}
 
 	@Override
-	public boolean mousereleased(int arg0, int arg1, int arg2) {
+	public boolean mousereleased(int x, int y, int button) {
 		// TODO Auto-generated method stub
+		 
 		return false;
 	}
 
@@ -385,23 +420,37 @@ public class DOIRiverViewer extends Viewer implements JavaAwtRenderer{
 		g.setColor(Color.black);
 		g.drawLine(0, 0, TIME_CELL_WIDTH*maxTimeCell, 0);
 		
-		for(int i=0;i<riverList.size() ;i++)
+		for(int i=0;i<riverList.size()  ;i++)
 		{
 			River river = riverList.get(i);
 
-			g.setColor(river.getColor());
+			int alpha =130;
+			if(river.isSelected())
+			{
+				alpha = 255;
+				g.setColor(Color.black);
+				g.drawPolygon(river.getCurvedPolygonX(), river.getCurvedPolygonY(), river.getCurvedPolygonX().length);
+			}
+			g.setColor(Util.getAlphaColor(river.getColor(),alpha));
 			g.fillPolygon(river.getCurvedPolygonX(), river.getCurvedPolygonY(), river.getCurvedPolygonX().length);
+			
+			
 		}
 		
 		g.translate(TITLE_X, 0);
 		
 		
-		for(int i=0;i<riverList.size();i++)
+		for(int i=0;i<riverList.size() ;i++)
 		{
 			River river = riverList.get(i);
 			g.setColor(river.getColor());
 			g.fillRect(0,i*CURVE_WIDTH, WIDTH_TITLE-30,CURVE_WIDTH );
 			Util.drawTextBox(g, Color.black, river.getDataObject().getLabel(), new Rectangle(0,i*CURVE_WIDTH, WIDTH_TITLE-30,CURVE_WIDTH ));
+			if(river.isSelected())
+			{
+				g.setColor(Color.red);
+				g.drawRect(0,i*CURVE_WIDTH, WIDTH_TITLE-30,CURVE_WIDTH);
+			}
 		}
 		
 		

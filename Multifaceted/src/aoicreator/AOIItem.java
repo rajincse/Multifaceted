@@ -55,5 +55,12 @@ public class AOIItem {
 	{
 		return new TypeToken<AOIItem>(){}.getType();
 	}
+
+	@Override
+	public String toString() {
+		return "AOIItem [name=" + name + ", x=" + x + ", y=" + y + ", width="
+				+ width + ", height=" + height + "]";
+	}
+	
 	
 }

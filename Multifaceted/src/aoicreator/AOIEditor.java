@@ -33,6 +33,7 @@ public class AOIEditor extends Viewer implements JavaAwtRenderer{
 	public static final String PROPERTY_LIST="AOI List";
 	public static final String PROPERTY_ADD="Add";
 	public static final String PROPERTY_NAME="Name";
+	public static final String PROPERTY_SAVE_NAME="Save Name";
 	public static final String PROPERTY_RECREATE="Re Create";
 	public static final String PROPERTY_SAVE="Save";
 	
@@ -41,6 +42,7 @@ public class AOIEditor extends Viewer implements JavaAwtRenderer{
 	private BufferedImage currentImage = null;
 	private String currentImagePath="";
 	private AOIStimuliInfo currentStimuliInfo = null;
+	private int currentIndex =-1;
 	public AOIEditor(String name) {
 		super(name);
 		// TODO Auto-generated constructor stub
@@ -54,6 +56,7 @@ public class AOIEditor extends Viewer implements JavaAwtRenderer{
 						protected boolean updating(PFileInput newvalue) {
 							// TODO Auto-generated method stub
 							readImage(newvalue.path);
+							System.out.println("load");
 							updateList();
 							requestRender();
 							return super.updating(newvalue);
@@ -69,12 +72,13 @@ public class AOIEditor extends Viewer implements JavaAwtRenderer{
 		    				
 		    				if(newvalue.selectedIndeces.length > 0 && currentStimuliInfo != null)
 		    				{
-		    					int index = newvalue.selectedIndeces[0];
-		    					AOIItem aoi = currentStimuliInfo.getAoiItemList().get(index);
+		    					currentIndex = newvalue.selectedIndeces[0];
+		    					AOIItem aoi = currentStimuliInfo.getAoiItemList().get(currentIndex);
 		    					((Property<PString>) getProperty(PROPERTY_NAME)).setValue(new PString(aoi.getName()));
 		    					((Property<PBoolean>) getProperty(PROPERTY_RECREATE)).setValue(new PBoolean(false));
-		    					
+		    					requestRender();
 		    				}
+		    				
 		    					
 		    				return super.updating(newvalue);
 		    			};
@@ -88,6 +92,7 @@ public class AOIEditor extends Viewer implements JavaAwtRenderer{
 		    				{
 		    					AOIItem aoi = new AOIItem("aoi",0,0,0,0);
 		    					currentStimuliInfo.addItem(aoi);
+		    					
 		    					updateList();		    					
 		    				}
 		    				return super.updating(newvalue);
@@ -95,23 +100,23 @@ public class AOIEditor extends Viewer implements JavaAwtRenderer{
 		    		};
 		   addProperty(pAdd);
 		   
-		   Property<PString> pName = new Property<PString>(PROPERTY_NAME, new PString(""))
-				   {
-			   			@Override
-			   			protected boolean updating(PString newvalue) {
-			   				// TODO Auto-generated method stub
-			   				int index = getCurrentAOIIndex();
-			   				if(currentStimuliInfo != null && index >=0)
-			   				{
-			   					currentStimuliInfo.getAoiItemList().get(index).setName(newvalue.stringValue());
-			   					
-			   					updateList();
-			   				}
-			   				
-			   				return super.updating(newvalue);
-			   			}
-				   };
+		   Property<PString> pName = new Property<PString>(PROPERTY_NAME, new PString(""));
 		   addProperty(pName);
+		   
+		   Property<PSignal> pSaveName = new Property<PSignal>(PROPERTY_SAVE_NAME, new PSignal())
+		    		{
+		    			protected boolean updating(PSignal newvalue) {
+		    				if(currentStimuliInfo != null && currentIndex >=0)
+		    				{
+		    					String name = ((Property<PString>) getProperty(PROPERTY_NAME)).getValue().stringValue();
+		    					currentStimuliInfo.getAoiItemList().get(currentIndex).setName(name);
+		    					
+		    					updateList();
+		    				}
+		    				return super.updating(newvalue);
+		    			};
+		    		};
+		   addProperty(pSaveName);
 		   
 		   Property<PBoolean> pRecreate = new Property<PBoolean>(PROPERTY_RECREATE, new PBoolean(false))
 				   {
@@ -138,19 +143,7 @@ public class AOIEditor extends Viewer implements JavaAwtRenderer{
 			
 		}
 	}
-	private int getCurrentAOIIndex()
-	{
-		PList options = ((Property<PList>)getProperty(PROPERTY_LIST)).getValue();
-		if(options.selectedIndeces.length > 0)
-		{
-			return options.selectedIndeces[0];
-		}
-		else
-		{
-			return -1;
-		}
-		
-	}
+	
 	
 	private boolean isReCreateOn()
 	{
@@ -293,11 +286,17 @@ public class AOIEditor extends Viewer implements JavaAwtRenderer{
 		
 	}
 
+	private int x;
+	private int y;
+	private int w;
+	private int h;
+	private boolean dragging = false;
 	@Override
 	public boolean mousedragged(int x, int y, int oldX, int oldY) {
 		// TODO Auto-generated method stub
 		if(isReCreateOn())
 		{
+			
 			return true;
 		}
 		else
@@ -314,14 +313,36 @@ public class AOIEditor extends Viewer implements JavaAwtRenderer{
 	}
 
 	@Override
-	public boolean mousepressed(int arg0, int arg1, int arg2) {
+	public boolean mousepressed(int x, int y, int button) {
 		// TODO Auto-generated method stub
+		if(!dragging && isReCreateOn())
+		{
+			dragging = true;
+			this.x = x;
+			this.y = y;
+		}
+		
 		return false;
 	}
 
 	@Override
-	public boolean mousereleased(int arg0, int arg1, int arg2) {
+	public boolean mousereleased(int x, int y, int button) {
 		// TODO Auto-generated method stub
+		if(dragging && isReCreateOn())
+		{
+			dragging = false;
+			this.w = x - this.x;
+			this.h = y - this.y;
+			
+			if(this.currentStimuliInfo != null && currentIndex >= 0)
+			{
+				AOIItem aoi = this.currentStimuliInfo.getAoiItemList().get(currentIndex);
+				aoi.setX(this.x);
+				aoi.setY(this.y);
+				aoi.setWidth(this.w);
+				aoi.setHeight(this.h);
+			}
+		}
 		return false;
 	}
 
@@ -333,12 +354,14 @@ public class AOIEditor extends Viewer implements JavaAwtRenderer{
 			g.drawImage(currentImage, 0, 0, currentImage.getWidth(),  currentImage.getHeight(),
 					0, 0, currentImage.getWidth(), currentImage.getHeight(),null);
 			
-			int currentIndex = getCurrentAOIIndex();
-			if(this.currentStimuliInfo != null && getCurrentAOIIndex() >= 0)
+			if(this.currentStimuliInfo != null && currentIndex >= 0)
 			{
 				AOIItem aoi = this.currentStimuliInfo.getAoiItemList().get(currentIndex);
 				g.setColor(Color.red);
 				g.drawRect(aoi.getX(), aoi.getY(), aoi.getWidth(), aoi.getHeight());
+				
+//				g.setColor(Color.cyan);
+//				g.drawRect(x,y,w,h);
 			}
 		}
 	}

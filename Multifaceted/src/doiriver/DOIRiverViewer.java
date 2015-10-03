@@ -67,7 +67,8 @@ public class DOIRiverViewer extends Viewer implements JavaAwtRenderer{
 	
 	public DOIRiverViewer(String name) {
 		super(name);
-		String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\DOIRiver\\";
+//		String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\DOIRiver\\";
+		String path ="/media/rajin/Data/Graph/UserStudy/IEEEVIS_Poster/catData/DOIRiver/";
 		PFileInput dirInput = new PFileInput();
 		dirInput.onlyDirectories = true;
 		Property<PFileInput> pLoad = new Property<PFileInput>(PROPERTY_LOAD_FILE,dirInput)
@@ -154,7 +155,7 @@ public class DOIRiverViewer extends Viewer implements JavaAwtRenderer{
 			}
 		};
 		
-		DataObject[][] dataObjectPerTime = new DataObject[sequenceFiles.length][];
+		DataObject[][][] dataObjectPerTime = new DataObject[sequenceFiles.length][][];
 		int index=0;
 		for(File file: sequenceFiles)
 		{
@@ -172,7 +173,7 @@ public class DOIRiverViewer extends Viewer implements JavaAwtRenderer{
 			
 			fileLineReader.read(file.getAbsolutePath());
 			
-			dataObjectPerTime[index] = getObjectsPerTime(index);
+			dataObjectPerTime[index] = getMultipleObjectsPerTime(index);
 			index++;
 			
 		}
@@ -183,31 +184,39 @@ public class DOIRiverViewer extends Viewer implements JavaAwtRenderer{
 		{
 			for(int timeIndex=0;timeIndex<dataObjectPerTime[userIndex].length;timeIndex++)
 			{
-				DataObject object = dataObjectPerTime[userIndex][timeIndex];
-				if(object != null)
+				DataObject[] objects = dataObjectPerTime[userIndex][timeIndex];
+				if(objects != null)
 				{
-					if(timeScoreMap.containsKey(object))
+					for(DataObject object: objects)
 					{
-						HashMap< Integer, Double> timeScore = timeScoreMap.get(object);
-						Integer timeIndexObject = new Integer(timeIndex);
-						if(timeScore.containsKey(timeIndexObject))
+						if(object != null)
 						{
-							Double previousScore = timeScore.get(timeIndexObject);
-							previousScore+= 1.0;
-							timeScore.put(timeIndexObject, previousScore);
-						}
-						else
-						{
-							timeScore.put(timeIndex, 1.0);
+							if(timeScoreMap.containsKey(object))
+							{
+								HashMap< Integer, Double> timeScore = timeScoreMap.get(object);
+								Integer timeIndexObject = new Integer(timeIndex);
+								if(timeScore.containsKey(timeIndexObject))
+								{
+									Double previousScore = timeScore.get(timeIndexObject);
+									previousScore+= 1.0;
+									timeScore.put(timeIndexObject, previousScore);
+								}
+								else
+								{
+									timeScore.put(timeIndex, 1.0);
+								}
+							}
+							else
+							{
+								HashMap< Integer, Double> timeScore = new HashMap<Integer, Double>();
+								timeScore.put(new Integer(timeIndex), 1.0);
+								timeScoreMap.put(object, timeScore);
+							}	
 						}
 					}
-					else
-					{
-						HashMap< Integer, Double> timeScore = new HashMap<Integer, Double>();
-						timeScore.put(new Integer(timeIndex), 1.0);
-						timeScoreMap.put(object, timeScore);
-					}	
 				}
+				
+				
 				
 			}
 			if(dataObjectPerTime[userIndex].length > maxTimeCell)
@@ -269,7 +278,47 @@ public class DOIRiverViewer extends Viewer implements JavaAwtRenderer{
 		
 		System.out.println(msg);
 	}
-	
+	public DataObject[][] getMultipleObjectsPerTime(int userIndex)
+	{
+		ArrayList<EyeEvent> eyeEvents = eyeEventList.get(userIndex);
+		
+		int totalCells =(int)(eyeEvents.get(eyeEvents.size()-1).getTime()/ DOIRiverViewer.TIME_STEP)+1;
+		DataObject[][] objects = new DataObject[totalCells][];
+		ArrayList<DataObject> dataObjectCollection = new ArrayList<DataObject>();
+		int lastIndex =0;
+		for(EyeEvent eye: eyeEvents)
+		{
+			
+			int index = (int)(eye.getTime()/DOIRiverViewer.TIME_STEP);
+			if(index == lastIndex)
+			{
+				DataObject object = eye.getTarget();
+				if(dataObjectCollection.contains(object))
+				{
+					DataObject savedObject = dataObjectCollection.get(dataObjectCollection.indexOf(object));
+					savedObject.setSortingScore(savedObject.getSortingScore()+eye.getScore());
+				}
+				else
+				{
+					object.setSortingScore(eye.getScore());
+					dataObjectCollection.add(eye.getTarget());
+				}
+				
+			}
+			else
+			{	
+				objects[lastIndex] = new DataObject[dataObjectCollection.size()];
+				for(int i=0;i<dataObjectCollection.size();i++)
+				{
+					objects[lastIndex][i] = dataObjectCollection.get(i);
+				}
+				
+				lastIndex = index;
+				dataObjectCollection.clear();
+			}
+		}
+		return objects;
+	}
 	public DataObject[] getObjectsPerTime(int userIndex)
 	{
 		ArrayList<EyeEvent> eyeEvents = eyeEventList.get(userIndex);

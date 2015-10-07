@@ -55,6 +55,7 @@ public class AOIEditor extends Viewer implements JavaAwtRenderer{
 						@Override
 						protected boolean updating(PFileInput newvalue) {
 							// TODO Auto-generated method stub
+							init();
 							readImage(newvalue.path);
 							System.out.println("load");
 							updateList();
@@ -142,6 +143,13 @@ public class AOIEditor extends Viewer implements JavaAwtRenderer{
 		{
 			
 		}
+	}
+	private void init()
+	{
+		currentImage = null;
+		currentImagePath="";
+		currentStimuliInfo = null;
+		currentIndex =-1;
 	}
 	
 	

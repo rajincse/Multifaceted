@@ -14,6 +14,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.Executors;
 
@@ -28,6 +29,7 @@ class Elem{
 	String id;
 	
 	ArrayList<String> categories;
+	HashMap<String, String> properties ;
 	public Elem(String id, int x, int y, int w, int h){
 		this.x = x;
 		this.y = y;
@@ -35,8 +37,30 @@ class Elem{
 		this.h = h;
 		this.id = id;
 		categories = new ArrayList<String>();
+		properties = new HashMap<String, String>();
 	}
 	
+	public HashMap<String, String> getProperties()	
+	{
+		return properties;
+	}
+	
+	public void addProperty(String key, String value)
+	{
+		properties.put(key, value);
+	}
+	
+	public String getProperty(String key)
+	{
+		if(properties.containsKey(key))
+		{
+			return properties.get(key);
+		}
+		else
+		{
+			return "";
+		}
+	}
 	public Point getCenter(){
 		return new Point(x + w/2, y+w/2);
 	}
@@ -52,7 +76,7 @@ class Elem{
 	@Override
 	public String toString() {
 		return "Elem [x=" + x + ", y=" + y + ", w=" + w + ", h=" + h + ", id="
-				+ id + ", categories=" + categories + "]";
+				+ id + ", categories=" + categories +"properties="+properties+ "]";
 	}
 	
 }
@@ -128,7 +152,7 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 					
 					String s=arg0.getRequestURI().getQuery();
 					
-//					System.out.println(s); 
+					System.out.println(s); 
 					processCommands(s);
 										
 					 String response = "This is the response";
@@ -162,7 +186,10 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 			
 		}
 	}
-	
+	public void addElemProperty(String id, String propertyKey, String propertyValue)
+	{
+		Elem elem = getElem(id);
+	}
 	public Elem getElem(String id){
 		for (int i=0; i<elems.size(); i++)
 			if (elems.get(i).id.equals(id)) return elems.get(i);
@@ -216,7 +243,7 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 
 	@Override
 	public void render(Graphics2D g) {
-		g.setTransform(this.tranform);
+//		g.setTransform(this.tranform);
 		g.setColor(Color.LIGHT_GRAY);
 		g.drawLine(200, 50, 200, 250);
 		
@@ -226,8 +253,25 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 			g.setColor(Color.LIGHT_GRAY);
 			if(elems.get(i) != null)
 			{
-				g.fillRect(elems.get(i).x, elems.get(i).y, elems.get(i).w, elems.get(i).h);
+				g.drawRect(elems.get(i).x, elems.get(i).y, elems.get(i).w, elems.get(i).h);
 				g.setColor(Color.black);
+				Elem elem = elems.get(i);
+				if(elem.properties.containsKey("type"))
+				{
+					String type = elem.getProperty("type");
+					if(type.equalsIgnoreCase("text"))
+					{
+						g.setColor(Color.pink);
+					}
+					else if(type.equalsIgnoreCase("image"))
+					{
+						g.setColor(Color.magenta);
+					}
+					else if(type.equalsIgnoreCase("button"))
+					{
+						g.setColor(Color.orange);
+					}
+				}
 				g.drawString(elems.get(i).id, elems.get(i).x, elems.get(i).y + elems.get(i).h - 5);
 			}
 			
@@ -520,6 +564,21 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 						System.err.println(" Problem at :"+split1[i]);
 					}
 					
+				}
+				else if (split[0].equals("addProperty"))
+				{	
+					Elem elem =this.getElem(split[1]); 
+					String propertyString = split[2];
+					
+					String[] properties = propertyString.split("&");
+					for(String property: properties)
+					{
+						String[] keyValue = property.split("=");
+						String key = keyValue[0];
+						String value = keyValue[1];
+						elem.addProperty(key, value);
+					}
+					System.out.println(elem);
 				}
 				else if (split[0].equals("addCategory"))
 				{	

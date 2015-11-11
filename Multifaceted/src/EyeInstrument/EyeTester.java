@@ -7,20 +7,31 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Executors;
+
+import multifaceted.Util;
 
 import perspectives.base.Viewer;
 import perspectives.two_d.JavaAwtRenderer;
+
 import eyetrack.*;
+import eyetrack.probability.ProbabilityManager;
 
 import com.sun.net.httpserver.*;
 
@@ -60,6 +71,31 @@ class Elem{
 		{
 			return "";
 		}
+	}
+	
+	public int getTypeValue()	
+	{
+		String type = this.getProperty("type");
+		int val =5;
+		if(type.equals("button"))
+		{
+			val = 1;
+		}
+		else if(type.equals("text"))
+		{
+			val = 2;
+		}
+		else if(type.equals("image"))
+		{
+			val = 3;
+		}
+		else if(type.equals("aoi"))
+		{
+			val = 4;
+		}
+		
+		return val;
+		
 	}
 	public Point getCenter(){
 		return new Point(x + w/2, y+w/2);
@@ -173,7 +209,7 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 		
 		EyeTrackServer s = new EyeTrackServer(this);
 		
-		
+		startTimer();
 	}
 	
 	
@@ -325,7 +361,7 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 	
 	
 	public void processGaze(double x, double y){
-		if (window == null || !hasFocus || gs.isEmpty() || gs.size() != elems.size())
+		if (window == null  || gs.isEmpty() || gs.size() != elems.size())
 			return;
 		
 		x = x - window.x;
@@ -429,6 +465,21 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 			
 			ps.get(i).add(new Double(p));
 			fs.get(i).add(new Double(f));
+			
+			//Eye Track Saving
+			if (
+					(gs.get(i) != null && gs.get(i).size() == 0)
+				|| (ps.get(i) != null && gs.get(i).size() == 0)
+				|| (fs.get(i) != null && gs.get(i).size() == 0)
+				)
+			{
+				continue;
+			}
+
+			double gg = (Double)gs.get(i).get(gs.get(i).size()-1);
+			double pp = (Double)ps.get(i).get(ps.get(i).size()-1);
+			double ff = (Double)fs.get(i).get(fs.get(i).size()-1);
+			addResultData(elems.get(i), gg, pp, ff);
 		}
 	}
 	
@@ -578,7 +629,7 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 						String value = keyValue[1];
 						elem.addProperty(key, value);
 					}
-					System.out.println(elem);
+//					System.out.println(elem);
 				}
 				else if (split[0].equals("addCategory"))
 				{	
@@ -641,12 +692,98 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 
 	@Override
 	public void processGaze(Point gazePoint, double pupilDiameter) {
-		this.processGaze(gazePoint.x, gazePoint.y);
+		try
+		{
+			this.processGaze(gazePoint.x, gazePoint.y);
+		}
+		catch(Exception ex)
+		{
+			ex.printStackTrace();
+		}
 		
 		requestRender();
+//		System.out.println("received gaze");
+		
+	}
+	
+	//Sayeed File tasks
+	public static final String RESULT_ANCHOR_EYE_ELEMENT ="Eye";
+	public static final String IMAGE_RESULT_DIR="C:\\work\\";
+	
+	private String currentResultFileName ="";
+	private StringBuffer resultText = new StringBuffer();
+	private Timer timer =new Timer("EyeTrack Data Collection Timer");
+	private Timer timerSavingFile =new Timer("EyeTrack Data Collection Timer Saving file");
+	private void addResultData(Elem elem, double gaze, double probability, double finalScore)
+	{
+		
+		long time = System.currentTimeMillis();
+		String id = elem.id;
+		String name = elem.id;
 		
 		
-		//System.out.println("received gaze");
+		String data = RESULT_ANCHOR_EYE_ELEMENT+"\t"+time+"\t"+id+"\t"+name+"\t"+elem.getTypeValue()
+				+"\t"+String.format("%.2f",finalScore)
+				+"\t"+String.format("%.2f",probability)
+				+"\t"+probability
+				+"\t"+time+"\t"+elem.x+"\t"+(elem.y);
+		synchronized (this) {
+//			System.out.println("##"+data);
+			this.resultText.append(data+"\r\n");
+		}
+		
+		
+	}
+	
+	private void startTimer()
+	{
+		System.out.println("Starting timer");
+		this.timerSavingFile.schedule(new TimerTask() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				System.out.println("Saving result:"+resultText.length());
+				saveResult();
+			}
+		}, 0,10000);
+	}
+	private void saveResult()
+	{
+		
+		
+		if(!resultText.toString().isEmpty())
+		{
+			this.timer.schedule(new TimerTask() {
+				
+				@Override
+				public void run() {
+					// TODO Auto-generated method stub
+					System.out.println("Saving result");
+					try {
+						if(currentResultFileName.isEmpty())
+						{
+							currentResultFileName = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date())+"_RESULT.txt";
+						}
+
+						FileWriter fstream = new FileWriter(new File(IMAGE_RESULT_DIR+currentResultFileName), true);
+						BufferedWriter br = new BufferedWriter(fstream);
+
+						br.write(resultText.toString());
+
+						br.close();
+						synchronized (this) {
+							resultText.setLength(0);
+						}
+						
+						System.out.println("File saved:"+currentResultFileName);
+
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}, 0);
+		}
 		
 	}
 

@@ -91,7 +91,7 @@ public class AOIEditor extends Viewer implements JavaAwtRenderer{
 		    			protected boolean updating(PSignal newvalue) {
 		    				if(currentStimuliInfo != null)
 		    				{
-		    					AOIItem aoi = new AOIItem("aoi",0,0,0,0);
+		    					AOIItem aoi = new AOIItem("aoi",0,0,currentImage.getWidth(),currentImage.getHeight());
 		    					currentStimuliInfo.addItem(aoi);
 		    					
 		    					updateList();		    					
@@ -186,7 +186,7 @@ public class AOIEditor extends Viewer implements JavaAwtRenderer{
 			}
 			else
 			{
-				this.currentStimuliInfo = new AOIStimuliInfo(imageFile.getName());
+				this.currentStimuliInfo = new AOIStimuliInfo(imageFile.getName(), currentImage.getWidth(), currentImage.getHeight());
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

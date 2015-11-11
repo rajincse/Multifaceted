@@ -10,11 +10,17 @@ public class AOIStimuliInfo {
 	
 	protected String imageName;
 	
+	protected int width;
+	
+	protected int height;
+	
 	protected ArrayList<AOIItem> aoiItemList;
 	
-	public AOIStimuliInfo(String imageName) {
+	public AOIStimuliInfo(String imageName,int width, int height ) {
 		super();
 		this.imageName = imageName;
+		this.width = width;
+		this.height = height;
 		this.aoiItemList = new ArrayList<AOIItem>();
 	}
 	
@@ -31,6 +37,14 @@ public class AOIStimuliInfo {
 	public ArrayList<AOIItem> getAoiItemList() {
 		return aoiItemList;
 	}
+	public int getWidth() {
+		return width;
+	}
+
+	public void setWidth(int width) {
+		this.width = width;
+	}
+
 	public void setAoiItemList(ArrayList<AOIItem> aoiItemList) {
 		this.aoiItemList = aoiItemList;
 	}

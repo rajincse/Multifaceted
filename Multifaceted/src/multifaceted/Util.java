@@ -463,9 +463,13 @@ public class Util {
 	 */
 	public static void drawTextBox(Graphics2D g, Color textColor, String message, Rectangle rect)
 	{
+		drawTextBox(g, textColor, message, rect, 0.75);
+	}
+	public static void drawTextBox(Graphics2D g, Color textColor, String message, Rectangle rect, double fontRatio)
+	{
 		Color previousColor = g.getColor();
 		g.setColor(textColor);
-		java.awt.Font font = g.getFont().deriveFont(rect.height*0.75f);
+		java.awt.Font font = g.getFont().deriveFont(rect.height*(float)fontRatio);
 		g.setFont(font);
 		
 		

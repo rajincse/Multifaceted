@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 
 import javax.imageio.ImageIO;
@@ -30,8 +31,9 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 	public static final String PROPERTY_LOAD_FILE ="Load File";
 	public static final String PROPERTY_SAVE_IMAGE="Save Image";
 
-	private static final int TIME_STEP = 100;
+	private static final int TIME_STEP = 500;
 	public static final int THRESHOLD =5;
+	private static final int MAX_COUNT = 25;
 	
 	private ArrayList<EyeEvent> eyeEventList = new ArrayList<EyeEvent>();
 	private HashMap<String, DataObject> dataObjectList = new HashMap<String, DataObject>();
@@ -40,7 +42,7 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 	private DataObject[] objectSequence;
 
 	private ArrayList<DataObject> renderingObjectList = new ArrayList<DataObject>();
-	private ArrayList<DataObject> qualifyingObjectList  = new ArrayList<DataObject>();
+	
 	public TransitionMatrixViewer(String name) {
 		super(name);
 		String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Matrix\\4_1.txt";
@@ -118,6 +120,7 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 	private void prepareRender()
 	{
 		prepareRenderingObjects();
+		renderingObjectList = filterSequence(objectSequence, MAX_COUNT);
 		
 		this.transitionMatrix = new int[renderingObjectList.size()][renderingObjectList.size()];
 		for(int i=0;i<transitionMatrix.length;i++)
@@ -133,7 +136,9 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 		{
 			DataObject currentObject = objectSequence[i];
 			
-			if(lastObject != null && currentObject != null && !currentObject.equals(lastObject))
+			if(lastObject != null && currentObject != null && !currentObject.equals(lastObject)
+					&& renderingObjectList.contains(currentObject) && renderingObjectList.contains(lastObject)
+			)
 			{
 				int sourceIndex = renderingObjectList.indexOf(lastObject);
 				int destination = renderingObjectList.indexOf(currentObject);
@@ -142,40 +147,27 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 				value++;
 				transitionMatrix[sourceIndex][destination] = value;
 				
-				if(value > THRESHOLD)
-				{
-					if(!qualifyingObjectList.contains(lastObject))
-					{
-						qualifyingObjectList.add(lastObject);
-					}
-					
-					if(!qualifyingObjectList.contains(currentObject))
-					{
-						qualifyingObjectList.add(currentObject);
-					}
-				}
+				
 			}
 			lastObject = currentObject;
+			
 		}
 		
 	}
 	private void printData()
 	{
-		for(int i=0;i<qualifyingObjectList.size();i++)
+		for(int i=0;i<renderingObjectList.size();i++)
 		{
-			System.out.println(i+"\t"+qualifyingObjectList.get(i).getLabel());
+			System.out.println(i+"\t"+renderingObjectList.get(i).getLabel()+"\t"+(int)renderingObjectList.get(i).getSortingScore());
 		}
 		String msg ="";
-		for(int i=0;i<qualifyingObjectList.size();i++)
+		for(int i=0;i<renderingObjectList.size();i++)
 		{
-			DataObject source = qualifyingObjectList.get(i);
-			int sourceIndex = renderingObjectList.indexOf(source);
 			
-			for(int j=0;j<qualifyingObjectList.size();j++)
+			for(int j=0;j<renderingObjectList.size();j++)
 			{
-				DataObject destination = qualifyingObjectList.get(j);
-				int destinationIndex = renderingObjectList.indexOf(destination);
-				int value = transitionMatrix[sourceIndex][destinationIndex];
+				
+				int value = transitionMatrix[i][j];
 				msg+=value+"\t";
 			}
 			msg+="\r\n";
@@ -186,7 +178,7 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 	{
 		int totalCells =(int)(eyeEventList.get(eyeEventList.size()-1).getTime()/ TIME_STEP)+1;
 		objectSequence = new DataObject[totalCells];
-		double maxScore=Double.MIN_VALUE;
+
 		
 		ArrayList<DataObject> dataObjectCollection = new ArrayList<DataObject>();
 		int lastIndex =0;
@@ -213,20 +205,55 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 			{
 				DataObject bestDataObject = getBestDataObject(dataObjectCollection);
 				objectSequence[lastIndex] = bestDataObject;
-				if(bestDataObject != null && !renderingObjectList.contains(bestDataObject))
+				if(bestDataObject != null )
 				{
 					renderingObjectList.add(bestDataObject);
 				}
 				
-				if(bestDataObject != null && bestDataObject.getSortingScore() > maxScore)
-				{
-					maxScore = bestDataObject.getSortingScore();
-				}
 				
 				lastIndex = index;
 				dataObjectCollection.clear();
 			}
 		}
+	}
+	private ArrayList<DataObject> filterSequence(DataObject[] objectSequence, int maxCount)
+	{
+		ArrayList<DataObject> sortingList = new ArrayList<DataObject>();
+		for(int i=0;i<objectSequence.length;i++)
+		{
+			if(objectSequence[i] != null)
+			{
+				if(!sortingList.contains(objectSequence[i]))
+				{
+					objectSequence[i].setSortingScore(1);
+					sortingList.add(objectSequence[i]);
+				}
+				else
+				{
+					double sortingScore = objectSequence[i].getSortingScore()+1;
+					objectSequence[i].setSortingScore(sortingScore);
+					int objectIndex = sortingList.indexOf(objectSequence[i]);
+					sortingList.set(objectIndex, objectSequence[i]);
+				}
+			}
+		}
+		Collections.sort(sortingList, new Comparator<DataObject>() {
+
+			@Override
+			public int compare(DataObject o1, DataObject o2) {
+				// TODO Auto-generated method stub
+				return Double.compare(o2.getSortingScore(), o1.getSortingScore() );
+			}
+			
+		});
+		
+		ArrayList<DataObject> filteringList = new ArrayList<DataObject>();
+		for(int i=0;i<sortingList.size() && i < maxCount;i++)
+		{
+			filteringList.add(sortingList.get(i));
+		}
+		
+		return filteringList;
 	}
 	public DataObject getBestDataObject(ArrayList<DataObject> dataObjectCollection)
 	{
@@ -313,10 +340,10 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 			
 			int cellSize = LABEL_HEIGHT;
 			g.setColor(COLOR_MATIRX_BORDER);
-			for(int i=0;i<=qualifyingObjectList.size();i++)
+			for(int i=0;i<=renderingObjectList.size();i++)
 			{
-				g.drawLine(i*cellSize, 0,i*cellSize, qualifyingObjectList.size()*cellSize);
-				g.drawLine( 0,i*cellSize, qualifyingObjectList.size()*cellSize, i*cellSize);
+				g.drawLine(i*cellSize, 0,i*cellSize, renderingObjectList.size()*cellSize);
+				g.drawLine( 0,i*cellSize, renderingObjectList.size()*cellSize, i*cellSize);
 			}
 			
 			for(int i=0;i<transitionMatrix.length;i++)
@@ -328,13 +355,8 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 						DataObject source = renderingObjectList.get(i);
 						
 						DataObject destination = renderingObjectList.get(j);
-						if(qualifyingObjectList.contains(source) && qualifyingObjectList.contains(destination))
-						{
-							int sourceIndex = qualifyingObjectList.indexOf(source);
-							int destinationIndex = qualifyingObjectList.indexOf(destination);
-							drawMatrixCell(g, sourceIndex, destinationIndex, transitionMatrix[i][j]);
-						}
 						
+						drawMatrixCell(g, i, j, transitionMatrix[i][j]);
 						
 					}
 					
@@ -357,9 +379,9 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 	public void drawLabels(Graphics2D g)
 	{
 		
-		for(int i=0;i<qualifyingObjectList.size();i++)
+		for(int i=0;i<renderingObjectList.size();i++)
 		{
-			DataObject dataObject = qualifyingObjectList.get(i);
+			DataObject dataObject = renderingObjectList.get(i);
 			
 			int y = i*LABEL_HEIGHT;
 			
@@ -374,7 +396,7 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 		
 		// TODO Auto-generated method stub
 		
-		Dimension dimension =new Dimension(LABEL_WIDTH + qualifyingObjectList.size()* LABEL_HEIGHT, LABEL_WIDTH +  qualifyingObjectList.size()* LABEL_HEIGHT);
+		Dimension dimension =new Dimension(LABEL_WIDTH + renderingObjectList.size()* LABEL_HEIGHT, LABEL_WIDTH +  renderingObjectList.size()* LABEL_HEIGHT);
 		if(dimension != null)
 		{
 			BufferedImage bim = new BufferedImage((int)((dimension.width)* SAVE_VIEW_ZOOM),(int)((dimension.height)*SAVE_VIEW_ZOOM), BufferedImage.TYPE_INT_ARGB);

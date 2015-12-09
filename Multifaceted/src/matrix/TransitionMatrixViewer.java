@@ -30,7 +30,8 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 	public static final String PROPERTY_LOAD_FILE ="Load File";
 	public static final String PROPERTY_SAVE_IMAGE="Save Image";
 
-	private static final int TIME_STEP = 1000;
+	private static final int TIME_STEP = 100;
+	public static final int THRESHOLD =5;
 	
 	private ArrayList<EyeEvent> eyeEventList = new ArrayList<EyeEvent>();
 	private HashMap<String, DataObject> dataObjectList = new HashMap<String, DataObject>();
@@ -39,9 +40,10 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 	private DataObject[] objectSequence;
 
 	private ArrayList<DataObject> renderingObjectList = new ArrayList<DataObject>();
+	private ArrayList<DataObject> qualifyingObjectList  = new ArrayList<DataObject>();
 	public TransitionMatrixViewer(String name) {
 		super(name);
-		String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Matrix\\3_2.txt";
+		String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Matrix\\4_1.txt";
 		
 		Property<PFileInput> pLoad = new Property<PFileInput>(PROPERTY_LOAD_FILE,new PFileInput())
 				{
@@ -49,6 +51,7 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 					protected boolean updating(PFileInput newvalue) {
 						loadFile(newvalue.path);
 						prepareRender();
+//						printData();
 						requestRender();
 						return super.updating(newvalue);
 					}
@@ -134,13 +137,51 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 			{
 				int sourceIndex = renderingObjectList.indexOf(lastObject);
 				int destination = renderingObjectList.indexOf(currentObject);
-				transitionMatrix[sourceIndex][destination]++;
+				
+				int value = transitionMatrix[sourceIndex][destination];
+				value++;
+				transitionMatrix[sourceIndex][destination] = value;
+				
+				if(value > THRESHOLD)
+				{
+					if(!qualifyingObjectList.contains(lastObject))
+					{
+						qualifyingObjectList.add(lastObject);
+					}
+					
+					if(!qualifyingObjectList.contains(currentObject))
+					{
+						qualifyingObjectList.add(currentObject);
+					}
+				}
 			}
 			lastObject = currentObject;
 		}
 		
 	}
-	
+	private void printData()
+	{
+		for(int i=0;i<qualifyingObjectList.size();i++)
+		{
+			System.out.println(i+"\t"+qualifyingObjectList.get(i).getLabel());
+		}
+		String msg ="";
+		for(int i=0;i<qualifyingObjectList.size();i++)
+		{
+			DataObject source = qualifyingObjectList.get(i);
+			int sourceIndex = renderingObjectList.indexOf(source);
+			
+			for(int j=0;j<qualifyingObjectList.size();j++)
+			{
+				DataObject destination = qualifyingObjectList.get(j);
+				int destinationIndex = renderingObjectList.indexOf(destination);
+				int value = transitionMatrix[sourceIndex][destinationIndex];
+				msg+=value+"\t";
+			}
+			msg+="\r\n";
+		}
+		System.out.println(msg);
+	}
 	private void prepareRenderingObjects()
 	{
 		int totalCells =(int)(eyeEventList.get(eyeEventList.size()-1).getTime()/ TIME_STEP)+1;
@@ -272,10 +313,10 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 			
 			int cellSize = LABEL_HEIGHT;
 			g.setColor(COLOR_MATIRX_BORDER);
-			for(int i=0;i<=renderingObjectList.size();i++)
+			for(int i=0;i<=qualifyingObjectList.size();i++)
 			{
-				g.drawLine(i*cellSize, 0,i*cellSize, renderingObjectList.size()*cellSize);
-				g.drawLine( 0,i*cellSize, renderingObjectList.size()*cellSize, i*cellSize);
+				g.drawLine(i*cellSize, 0,i*cellSize, qualifyingObjectList.size()*cellSize);
+				g.drawLine( 0,i*cellSize, qualifyingObjectList.size()*cellSize, i*cellSize);
 			}
 			
 			for(int i=0;i<transitionMatrix.length;i++)
@@ -284,7 +325,17 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 				{
 					if(transitionMatrix[i][j] >0)
 					{
-						drawMatrixCell(g, i, j, transitionMatrix[i][j]);
+						DataObject source = renderingObjectList.get(i);
+						
+						DataObject destination = renderingObjectList.get(j);
+						if(qualifyingObjectList.contains(source) && qualifyingObjectList.contains(destination))
+						{
+							int sourceIndex = qualifyingObjectList.indexOf(source);
+							int destinationIndex = qualifyingObjectList.indexOf(destination);
+							drawMatrixCell(g, sourceIndex, destinationIndex, transitionMatrix[i][j]);
+						}
+						
+						
 					}
 					
 				}
@@ -296,7 +347,7 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 	{
 		int cellSize = LABEL_HEIGHT;
 		g.setColor(COLOR_CELL_BACKGROUND);
-		Rectangle rect = new Rectangle(i*cellSize, j*cellSize, cellSize, cellSize);
+		Rectangle rect = new Rectangle(j*cellSize, i*cellSize, cellSize, cellSize);
 		
 		g.fillRect(rect.x, rect.y, rect.width, rect.height);
 		
@@ -306,9 +357,9 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 	public void drawLabels(Graphics2D g)
 	{
 		
-		for(int i=0;i<renderingObjectList.size();i++)
+		for(int i=0;i<qualifyingObjectList.size();i++)
 		{
-			DataObject dataObject = renderingObjectList.get(i);
+			DataObject dataObject = qualifyingObjectList.get(i);
 			
 			int y = i*LABEL_HEIGHT;
 			
@@ -323,7 +374,7 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 		
 		// TODO Auto-generated method stub
 		
-		Dimension dimension =new Dimension(LABEL_WIDTH + renderingObjectList.size()* LABEL_HEIGHT, LABEL_WIDTH +  renderingObjectList.size()* LABEL_HEIGHT);
+		Dimension dimension =new Dimension(LABEL_WIDTH + qualifyingObjectList.size()* LABEL_HEIGHT, LABEL_WIDTH +  qualifyingObjectList.size()* LABEL_HEIGHT);
 		if(dimension != null)
 		{
 			BufferedImage bim = new BufferedImage((int)((dimension.width)* SAVE_VIEW_ZOOM),(int)((dimension.height)*SAVE_VIEW_ZOOM), BufferedImage.TYPE_INT_ARGB);

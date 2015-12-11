@@ -14,6 +14,7 @@ import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
+import multifaceted.ColorScheme;
 import multifaceted.FileLineReader;
 import multifaceted.Util;
 
@@ -22,17 +23,26 @@ import perspectives.base.Property;
 import perspectives.base.Viewer;
 import perspectives.properties.PFileInput;
 import perspectives.properties.PFileOutput;
+import perspectives.properties.PInteger;
+import perspectives.properties.PString;
+import perspectives.tree.Tree;
+import perspectives.tree.TreeNode;
 import perspectives.two_d.JavaAwtRenderer;
+import perspectives.util.DistancedPoints;
 import realtime.DataObject;
 import realtime.EyeEvent;
+import scanpath.HACClusteringHelper;
+import scanpath.ScanpathViewer;
 
 
 public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 	public static final String PROPERTY_LOAD_FILE ="Load File";
+	public static final String PROPERTY_TIME_WINDOW ="Time Window";
+	
 	public static final String PROPERTY_SAVE_IMAGE="Save Image";
 
 	private static final int TIME_STEP = 100;
-	private static final int TIME_WINDOW = 3000;
+	private static final int INITIAL_TIME_WINDOW =500;
 	public static final int THRESHOLD =5;
 	private static final int MAX_COUNT = 25;
 	
@@ -42,6 +52,7 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 	private double[][] transitionMatrix;
 	private DataObject[] objectSequence;
 
+	private double averageTransitionValue = Double.MIN_VALUE;
 	private ArrayList<DataObject> renderingObjectList = new ArrayList<DataObject>();
 	
 	public TransitionMatrixViewer(String name) {
@@ -53,13 +64,23 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 					@Override
 					protected boolean updating(PFileInput newvalue) {
 						loadFile(newvalue.path);
-						prepareRender();
-//						printData();
-						requestRender();
+						update(getTimeWindow());
 						return super.updating(newvalue);
 					}
 				};
 		addProperty(pLoad);
+		
+		Property<PInteger> pTimeWindow = new Property<PInteger>(PROPERTY_TIME_WINDOW, new PInteger(INITIAL_TIME_WINDOW))
+				{
+						@Override
+						protected boolean updating(PInteger newvalue) {
+							// TODO Auto-generated method stub
+							update(newvalue.intValue());
+
+							return super.updating(newvalue);
+						}
+				};
+		addProperty(pTimeWindow);
 		
 		Property<PFileOutput> pSaveImage = new Property<PFileOutput>(PROPERTY_SAVE_IMAGE, new PFileOutput())
 				{
@@ -76,6 +97,14 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 		
 		PFileInput loadFile = new PFileInput(path);
 		pLoad.setValue(loadFile);
+	}
+	
+	private void update(int timeWindow)
+	{
+		prepareRender(timeWindow);
+		cluster();
+//		printData();
+		requestRender();
 	}
 
 	private void loadFile(String path)
@@ -118,8 +147,15 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 		};
 		fileLineReader.read(path);
 	}
-	private void prepareRender()
+	private int getTimeWindow()
 	{
+		return ((PInteger)getProperty(PROPERTY_TIME_WINDOW).getValue()).intValue();
+	}
+	
+	private void prepareRender(int timeWindow)
+	{
+		System.out.println("Preparing render: "+timeWindow);
+		
 		prepareRenderingObjects();
 		renderingObjectList = filterSequence(objectSequence, MAX_COUNT);
 		
@@ -132,7 +168,7 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 			}
 		}
 		
-		int timeWindowCellCount = TIME_WINDOW/TIME_STEP;
+		int timeWindowCellCount = timeWindow/TIME_STEP;
 		for(int i=0;i<objectSequence.length;i++)
 		{
 			DataObject source = objectSequence[i];
@@ -164,27 +200,23 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 				}
 			}
 		}
-//		for(int i=0;i<objectSequence.length;i++)
-//		{
-//			DataObject currentObject = objectSequence[i];
-//			
-//			if(lastObject != null && currentObject != null && !currentObject.equals(lastObject)
-//					&& renderingObjectList.contains(currentObject) && renderingObjectList.contains(lastObject)
-//			)
-//			{
-//				int sourceIndex = renderingObjectList.indexOf(lastObject);
-//				int destination = renderingObjectList.indexOf(currentObject);
-//				
-//				double value = transitionMatrix[sourceIndex][destination];
-//				value++;
-//				transitionMatrix[sourceIndex][destination] = value;
-//				
-//				
-//			}
-//			lastObject = currentObject;
-//			
-//		}
 		
+		double sum =0;
+		int count=0;
+		for(int i=0;i<transitionMatrix.length;i++)
+		{
+			for(int j=0;j<transitionMatrix[i].length;j++)
+			{
+				if(transitionMatrix[i][j] > 0)
+				{
+					sum+=transitionMatrix[i][j];
+					count++;
+				}
+				
+			}
+		}
+		this.averageTransitionValue = sum / count;
+		System.out.println("Average:"+String.format("%.2f", averageTransitionValue));
 	}
 	private void printData()
 	{
@@ -300,6 +332,163 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 			return null;
 		}
 	}
+	
+	private DistancedPoints clusteringPoints = new DistancedPoints() {
+		
+		@Override
+		public void normalize() {
+			// TODO Auto-generated method stub
+			
+		}
+		
+		@Override
+		public int getPointIndex(String id) {
+			// TODO Auto-generated method stub
+			for(int i=0;i<renderingObjectList.size();i++)
+			{
+				DataObject object =renderingObjectList.get(i); 
+				String objectId = object.getId()+"-"+object.getType();
+				if(objectId.equalsIgnoreCase(id))
+				{
+					return i;
+				}
+			}
+			return -1;
+		}
+		
+		@Override
+		public String getPointId(int index) {
+			// TODO Auto-generated method stub
+			DataObject object =renderingObjectList.get(index); 
+			return object.getId()+"-"+object.getType();
+		}
+		
+		@Override
+		public float getDistance(int index1, int index2) {
+			// TODO Auto-generated method stub
+			float score =(float) transitionMatrix[index1][index2];
+			if(index1 == index2)
+			{
+				return 0;
+			}
+			else if(score ==0)
+			{
+				return Float.MAX_VALUE;
+			}
+			else
+			{
+				return 1.0f / score;
+			}
+				
+		}
+		
+		@Override
+		public int getCount() {
+			// TODO Auto-generated method stub
+			return renderingObjectList.size();
+		}
+	};
+	
+	private void cluster()
+	{
+		clusteredSequence.clear();
+		
+		float distance[][] = new float[transitionMatrix.length][transitionMatrix.length];
+		for(int i=0;i<distance.length;i++)
+		{
+			for(int j=0; j< distance[i].length;j++)
+			{
+				distance[i][j] = clusteringPoints.getDistance(i, j);
+			}
+		}
+		
+		HACClusteringHelper clusteringHelper = new HACClusteringHelper(distance, clusteringPoints);
+		Tree t = clusteringHelper.getTree();
+		
+		traverseClusterNode(t.getRoot());
+		
+		double[][] clusteredTransitionMatrix = new double[clusteredSequence.size()][clusteredSequence.size()];
+		for(int i=0;i<clusteredTransitionMatrix.length;i++)
+		{
+			DataObject source = clusteredSequence.get(i);
+			int sourceIndex = renderingObjectList.indexOf(source);
+			if(sourceIndex < 0)
+			{
+				System.out.println("Cant find source:"+source.getLabel());
+			}
+			for(int j=0;j<clusteredTransitionMatrix[i].length;j++)
+			{
+				DataObject destination = clusteredSequence.get(j);
+				int destinationIndex = renderingObjectList.indexOf(destination);
+				if(destinationIndex < 0)
+				{
+					System.out.println("Cant find destination:"+destination.getLabel());
+				}
+				clusteredTransitionMatrix[i][j] = transitionMatrix[sourceIndex][destinationIndex];
+			}
+		}
+		transitionMatrix = clusteredTransitionMatrix;
+		renderingObjectList = clusteredSequence;
+	}
+	
+	private ArrayList<DataObject> clusteredSequence= new ArrayList<DataObject>(); 
+	
+	private void traverseClusterNode(TreeNode node)
+	{
+//		System.out.println("<Node>");
+		
+		if(node.isLeaf())
+		{
+			PString pId =(PString) node.getProperty("Id").getValue();
+			int index = clusteringPoints.getPointIndex(pId.stringValue());
+			if(index > ScanpathViewer.INVALID)
+			{
+				DataObject object = renderingObjectList.get(index);
+//				System.out.println("<Id>"+diagram.dataObject.getLabel()+"</Id>");
+				clusteredSequence.add(0,object);
+			}
+			else
+			{
+//				System.out.println("Invalid Id:"+pId.stringValue());
+			}
+			
+			
+		}
+		else
+		{
+			
+			if(node.getProperty("Id") != null)
+			{
+				PString pId =(PString) node.getProperty("Id").getValue();
+				
+				int index = clusteringPoints.getPointIndex(pId.stringValue());
+				if(index > ScanpathViewer.INVALID)
+				{
+					DataObject object = renderingObjectList.get(index);
+//					System.out.println("<Id>"+diagram.dataObject.getLabel()+"</Id>");
+					clusteredSequence.add(0,object);
+				}
+				else
+				{
+//					System.out.println("Invalid Id:"+pId.stringValue());
+				}
+			}
+			else
+			{
+//				System.out.println("<Id>Intermediate</Id>");
+			}
+			
+//			System.out.println("<Children>");
+			for(TreeNode child: node.getChildren())
+			{
+				traverseClusterNode(child);
+			}
+//			System.out.println("</Children>");
+			
+		}
+//		System.out.println("</Node>");
+	}
+	// Clustering End
 	@Override
 	public Color getBackgroundColor() {
 		// TODO Auto-generated method stub
@@ -400,9 +589,10 @@ public class TransitionMatrixViewer extends Viewer implements JavaAwtRenderer{
 		g.setColor(COLOR_CELL_BACKGROUND);
 		Rectangle rect = new Rectangle(j*cellSize, i*cellSize, cellSize, cellSize);
 		
+		double score = Math.min(1.0,value/ 2 / this.averageTransitionValue);
+		Color heatmapColor = perspectives.util.Util.getColorFromRange(ColorScheme.LINEAR_INVERTED_GRAY,score);
+		g.setColor(heatmapColor);
 		g.fillRect(rect.x, rect.y, rect.width, rect.height);
-		
-		Util.drawTextBox(g, COLOR_CELL_FOREGROUND, String.format("%.1f",value), rect, 0.5);
 	}
 	
 	public void drawLabels(Graphics2D g)

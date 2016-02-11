@@ -279,78 +279,112 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 
 	@Override
 	public void render(Graphics2D g) {
-//		g.setTransform(this.tranform);
-		g.setColor(Color.LIGHT_GRAY);
-		g.drawLine(200, 50, 200, 250);
+		try
+		{
+			
 		
-	//	AffineTransform savedt = g.getTransform();
-		//g.setTransform(tranform);
-		for (int i=0; i<elems.size(); i++){
-			g.setColor(Color.LIGHT_GRAY);
-			if(elems.get(i) != null)
+	//		g.setTransform(this.tranform);
+			g.setColor(Color.red);
+			g.drawLine(0, 0, 1280, 0);
+			g.drawLine(0, 0, 0, 720);
+			
+			if(window != null)
 			{
-				g.drawRect(elems.get(i).x, elems.get(i).y, elems.get(i).w, elems.get(i).h);
-				g.setColor(Color.black);
-				Elem elem = elems.get(i);
-				if(elem.properties.containsKey("type"))
+				g.setColor(Color.blue);
+				g.translate(window.x, window.y);
+				
+				g.drawRect(0, 0, window.width, window.height);
+				
+				g.translate(originX, originY);
+				
+			}
+			
+			
+			
+			
+			
+			
+			
+			
+	//		g.setColor(Color.LIGHT_GRAY);
+	//		g.drawLine(200, 50, 200, 250);
+			
+		//	AffineTransform savedt = g.getTransform();
+	//		g.setTransform(tranform);
+			for (int i=0; i<elems.size(); i++){
+				g.setColor(Color.LIGHT_GRAY);
+				if(elems.get(i) != null)
 				{
-					String type = elem.getProperty("type");
-					if(type.equalsIgnoreCase("text"))
+					g.drawRect(elems.get(i).x, elems.get(i).y, elems.get(i).w, elems.get(i).h);
+					g.setColor(Color.black);
+					Elem elem = elems.get(i);
+					if(elem.properties.containsKey("type"))
 					{
-						g.setColor(Color.pink);
+						String type = elem.getProperty("type");
+						if(type.equalsIgnoreCase("text"))
+						{
+							g.setColor(Color.pink);
+						}
+						else if(type.equalsIgnoreCase("image"))
+						{
+							g.setColor(Color.magenta);
+						}
+						else if(type.equalsIgnoreCase("button"))
+						{
+							g.setColor(Color.orange);
+						}
 					}
-					else if(type.equalsIgnoreCase("image"))
-					{
-						g.setColor(Color.magenta);
-					}
-					else if(type.equalsIgnoreCase("button"))
-					{
-						g.setColor(Color.orange);
-					}
+					g.drawString(elems.get(i).id+":"+elems.get(i).x+", "+elems.get(i).y, elems.get(i).x, elems.get(i).y + elems.get(i).h - 5);
 				}
-				g.drawString(elems.get(i).id, elems.get(i).x, elems.get(i).y + elems.get(i).h - 5);
+				
+				
+				/*
+				if (
+						(gs.get(i) != null && gs.get(i).size() == 0)
+					|| (ps.get(i) != null && gs.get(i).size() == 0)
+					|| (fs.get(i) != null && gs.get(i).size() == 0)
+					)
+				{
+					continue;
+				}
+	
+				double gg = (Double)gs.get(i).get(gs.get(i).size()-1);
+				double p = (Double)ps.get(i).get(ps.get(i).size()-1);
+				double f = (Double)fs.get(i).get(fs.get(i).size()-1);
+				
+				//Sayeed, please print your debug numbers like this.
+				String s = (new DecimalFormat("##.00")).format(gg) + "; " + 
+				(new DecimalFormat("##.00")).format(p) + " (" + (new DecimalFormat("##.00")).format(transfp(p)) +  "); " + 
+						(new DecimalFormat("##.00")).format(f);
+				g.drawString(s, elems.get(i).x+10, elems.get(i).y);
+				//*/
 			}
 			
-			
-			///*
-			if (
-					(gs.get(i) != null && gs.get(i).size() == 0)
-				|| (ps.get(i) != null && gs.get(i).size() == 0)
-				|| (fs.get(i) != null && gs.get(i).size() == 0)
-				)
-			{
-				continue;
+			//AffineTransform
+			/*
+			if (gaze != null){
+				g.fillOval(gaze.x-5, gaze.y-5, 10,10);
+				g.drawOval(gaze.x-radius, gaze.y-radius, 2*radius, 2*radius);
 			}
-
-			double gg = (Double)gs.get(i).get(gs.get(i).size()-1);
-			double p = (Double)ps.get(i).get(ps.get(i).size()-1);
-			double f = (Double)fs.get(i).get(fs.get(i).size()-1);
-			
-			//Sayeed, please print your debug numbers like this.
-			String s = (new DecimalFormat("##.00")).format(gg) + "; " + 
-			(new DecimalFormat("##.00")).format(p) + " (" + (new DecimalFormat("##.00")).format(transfp(p)) +  "); " + 
-					(new DecimalFormat("##.00")).format(f);
-			g.drawString(s, elems.get(i).x+10, elems.get(i).y);
 			//*/
+			
+			for (int i=0; i<gazes.size(); i++){
+				g.setColor(new Color(0,0,250,50));
+				g.fillOval((int)gazes.get(i).getX()-2, (int)gazes.get(i).getY()-2, 4, 4);
+			}
+			
+			
+			if(window != null)
+			{
+				g.translate(-originX,-originY);
+				g.translate(-window.x, -window.y);
+			}
 		}
-		
-		//AffineTransform
-		/*
-		if (gaze != null){
-			g.fillOval(gaze.x-5, gaze.y-5, 10,10);
-			g.drawOval(gaze.x-radius, gaze.y-radius, 2*radius, 2*radius);
+		catch(Exception ex)
+		{
+			System.err.println(ex.getMessage());
+			ex.printStackTrace();
 		}
-		//*/
-		
-		for (int i=0; i<gazes.size(); i++){
-			g.setColor(new Color(0,0,250,50));
-			g.fillOval((int)gazes.get(i).getX()-2, (int)gazes.get(i).getY()-2, 4, 4);
-		}
-		
-		g.setColor(Color.red);
-		g.drawLine(0, 0, 1280, 0);
-		g.drawLine(0, 0, 0, 720);
-		g.translate(-originX, -originY);
 	}
 
 	@Override
@@ -579,7 +613,7 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 					
 					originX = newOriginX;
 					originY = newOriginY;
-					
+					System.out.println("Translating:"+translateX+", "+translateY+" origin:"+originX+", "+originY);
 					this.tranform.translate(translateX, translateY);
 					requestRender();
 				}	
@@ -610,6 +644,10 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 					
 					
 					}
+					catch(ArrayIndexOutOfBoundsException ax)
+					{
+						System.err.println(" Problem at :"+split1[i]);
+					}
 					catch(NumberFormatException ex)
 					{
 						System.err.println(" Problem at :"+split1[i]);
@@ -619,16 +657,20 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 				else if (split[0].equals("addProperty"))
 				{	
 					Elem elem =this.getElem(split[1]); 
-					String propertyString = split[2];
-					
-					String[] properties = propertyString.split("&");
-					for(String property: properties)
+					if(elem != null)
 					{
-						String[] keyValue = property.split("=");
-						String key = keyValue[0];
-						String value = keyValue[1];
-						elem.addProperty(key, value);
+						String propertyString = split[2];
+						
+						String[] properties = propertyString.split("&");
+						for(String property: properties)
+						{
+							String[] keyValue = property.split("=");
+							String key = keyValue[0];
+							String value = keyValue[1];
+							elem.addProperty(key, value);
+						}
 					}
+					
 //					System.out.println(elem);
 				}
 				else if (split[0].equals("addCategory"))

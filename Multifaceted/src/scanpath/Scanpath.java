@@ -321,7 +321,7 @@ public class Scanpath {
 			return null;
 		}
 	}
-	public static final int WIDTH_TITLE = 100;
+	public static final int WIDTH_TITLE = 500;
 	public static final int WIDTH_ANCHOR = 50;
 	
 	public void render(Graphics2D g, Color objectColor, Color horizontalLineColor, Color transitionLineColor, double heightRatio)
@@ -331,7 +331,7 @@ public class Scanpath {
 			Dimension d = getImageDimension();
 			
 			g.setColor(ScanpathViewer.COLOR_BACKGROUND_SELECTION);
-			g.fillRect(0, 0, d.width, d.height);
+//			g.fillRect(0, 0, d.width, d.height);
 		}
 		
 		String fileName = new File(this.filepath).getName();
@@ -486,8 +486,9 @@ public class Scanpath {
 					biggestObjectList.add(dataObject);
 				}
 			}
+			
 		}
-		
+		System.out.println("BigList Size:"+biggestObjectList.size());
 		for(Scanpath scan: scanpathList)
 		{
 			scan.setRenderingObjectList(biggestObjectList);

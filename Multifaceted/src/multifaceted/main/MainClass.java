@@ -5,6 +5,8 @@ import java.text.NumberFormat;
 import matrix.TransitionMatrixViewer;
 
 import aoicreator.AOIEditor;
+import architecture.DataFileCreator;
+import architecture.HeatmapAnalysis;
 import doiriver.DOIRiverViewer;
 import eyeinterestanalyzer.EyeInterestAnalyzerViewerFactory;
 import eyeinterestanalyzer.ScarfplotViewer;
@@ -30,7 +32,7 @@ public class MainClass {
 	public static void main(String[] args)
 	{
 		Environment e = new Environment(false);
-		e.registerDataSourceFactory(new IMDBDataFactory());
+//		e.registerDataSourceFactory(new IMDBDataFactory());
 //		e.registerViewerFactory(new IMDBViewerFactory());
 //		e.registerViewerFactory(new StripViewerFactory());
 //		e.registerViewerFactory(new HeatMapAnalysisViewerFactory());
@@ -38,10 +40,10 @@ public class MainClass {
 //		e.registerViewerFactory(new RecommendViewerFactory());
 //		e.registerViewerFactory(new PivotPathViewerFactory());
 //		e.registerViewerFactory(new PivotPathSimulationViewerFactory());
-//		e.registerViewerFactory(new EyeInterestAnalyzerViewerFactory());
+		e.registerViewerFactory(new EyeInterestAnalyzerViewerFactory());
 //		e.registerViewerFactory(new ElementStatViewerFactory());
 //		e.registerViewerFactory(new StreamDataViewerFactory());
-//		e.addViewer(new EyeTrackDataStreamViewer("Rajin"));
+//		e.addViewer(new EyeTrackDataStreamViewer("Heatmap"));
 //		e.addViewer(new ScarfplotViewer("Scarfplot"));
 //		e.addViewer(new ScanpathViewer("Scanpath"));
 //		e.addViewer(new DOIRiverViewer("DOI River"));
@@ -50,6 +52,9 @@ public class MainClass {
 //		e.registerDataSourceFactory(new GraphDataFactory());
 //		e.registerViewerFactory(new GraphViewerFactory());
 //		e.addViewer(new TransitionMatrixViewer("Matrix"));
+		
+		e.addViewer(new HeatmapAnalysis("Architecture"));
+//		e.addViewer(new DataFileCreator("Data"));
 		
 	}
 }

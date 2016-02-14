@@ -44,7 +44,7 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 	public static final int TYPE_USER_DOI =0;
 	public static final int TYPE_DOI_USER =1;
 	
-	public static final int TIME_STEP = 500;
+	public static final int TIME_STEP = 3000;
 	
 	public static final int SCANPATH_DIAGRAM_GAP =10;
 	
@@ -87,7 +87,7 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 		addProperty(pLoad);
 		
 		POptions diagramNameOptions = new POptions(TYPE_NAME_DIAGRAM);
-		diagramNameOptions.selectedIndex = TYPE_USER_DOI;
+		diagramNameOptions.selectedIndex = TYPE_DOI_USER;
 		Property<POptions> pDiagramType = new Property<POptions>(PROPERTY_DIAGRAM_TYPE, diagramNameOptions)
 				{
 						@Override
@@ -487,7 +487,7 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 		g.translate(-INIT_TRANSLATE_X, -INIT_TRANSLATE_Y);
 		
 	}
-	public static double SAVE_VIEW_ZOOM =3;
+	public static double SAVE_VIEW_ZOOM =1;
 	private void saveView(String filePath)
 	{	
 		
@@ -497,6 +497,7 @@ public class ScanpathViewer extends Viewer implements JavaAwtRenderer{
 		if(diagramType == TYPE_USER_DOI)
 		{
 			dimension = Scanpath.getImageDimension(scanpathList);
+			dimension.width+=50;
 		}
 		else if(diagramType == TYPE_DOI_USER)
 		{

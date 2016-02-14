@@ -51,6 +51,7 @@ SELECT 	T.id,
 FROM movie AS T 
 WHERE   
  T.title LIKE '%The Dark Knight%' 
+ORDER BY T.rating DESC
 LIMIT 0,10 ;
 
 SELECT 	T.title AS title,  

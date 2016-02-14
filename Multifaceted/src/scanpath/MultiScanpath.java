@@ -16,6 +16,7 @@ import perspectives.properties.PString;
 import perspectives.tree.Tree;
 import perspectives.tree.TreeNode;
 import perspectives.util.DistancedPoints;
+import multifaceted.ColorScheme;
 import multifaceted.FileLineReader;
 import multifaceted.Util;
 import realtime.DataObject;
@@ -465,8 +466,8 @@ public class MultiScanpath {
 						
 						if(lastPoint != null)
 						{							
-							g.setColor(transitionLineColor);							
-//							g.setColor(ColorScheme.LINE_COLOR[userIndex]);
+//							g.setColor(transitionLineColor);							
+							g.setColor(ColorScheme.LINE_COLOR[userIndex]);
 							if(userIndex == selectedUserIndex)
 							{
 								g.setColor(ScanpathViewer.COLOR_SELECTION);
@@ -474,7 +475,8 @@ public class MultiScanpath {
 							g.drawLine(lastPoint.x+ScanpathViewer.TIME_CELL_WIDTH, lastPoint.y, x, y);
 						}
 						lastPoint = new Point(x,y);
-						g.setColor(objectColor);
+//						g.setColor(objectColor);
+						g.setColor(ColorScheme.LINE_COLOR[userIndex]);
 						if(userIndex == selectedUserIndex)
 						{
 							g.setColor(ScanpathViewer.COLOR_SELECTION);
@@ -487,8 +489,8 @@ public class MultiScanpath {
 					{
 						int x = time*ScanpathViewer.TIME_CELL_WIDTH+WIDTH_TITLE+WIDTH_ANCHOR;
 						int y = lastPoint.y;
-						g.setColor(transitionLineColor);
-//						g.setColor(ColorScheme.LINE_COLOR[userIndex]);
+//						g.setColor(transitionLineColor);
+						g.setColor(ColorScheme.LINE_COLOR[userIndex]);
 						if(userIndex == selectedUserIndex)
 						{
 							g.setColor(ScanpathViewer.COLOR_SELECTION);

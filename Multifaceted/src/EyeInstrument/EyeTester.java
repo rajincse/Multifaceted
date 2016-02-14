@@ -4,8 +4,10 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -100,6 +102,22 @@ class Elem{
 	public Point getCenter(){
 		return new Point(x + w/2, y+w/2);
 	}
+
+	//Radu
+	public double distanceToGaze(Point2D gaze){
+		Rectangle2D r = new Rectangle2D.Double(x,y,x+w,y+h);
+		if (r.contains(gaze))
+			return 0;
+
+		double d1 = Line2D.ptSegDist(x,y,x+w,y,gaze.getX(), gaze.getY());
+		double d2 = Line2D.ptSegDist(x+w,y,x+w,y+h,gaze.getX(), gaze.getY());
+		double d3 = Line2D.ptSegDist(x+w,y+h,x,y+h,gaze.getX(), gaze.getY());
+		double d4 = Line2D.ptSegDist(x,y+h,x,y,gaze.getX(), gaze.getY());
+
+
+		return Math.min(d1, Math.min(d2, Math.min(d3, d4)));
+
+	}
 	
 	public void addCategory(String cat){
 		categories.add(cat);
@@ -148,7 +166,7 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 	ArrayList<ArrayList<Double>> fs = new ArrayList<ArrayList<Double>>();
 	
 	//Point gaze = null;
-	int radius = 200;
+	int radius = 40;
 	
 	
 	ArrayList<Elem> elems = new ArrayList<Elem>();
@@ -420,89 +438,30 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 		
 		//find non-null gaze scores for all elements
 		for (int i=0; i<elems.size(); i++){
-			double d = gaze.distance(elems.get(i).getCenter());
 			
-			if (d > radius) 
+			//Radu:
+			//old: double d = gaze.distance(elems.get(i).getCenter());
+			double d = elems.get(i).distanceToGaze(gaze);
+
+			if (gs.get(i).size() > 100) gs.get(i).remove(0);
+			if (ps.get(i).size() > 100) ps.get(i).remove(0);
+			if (fs.get(i).size() > 100) fs.get(i).remove(0);
+			
+			if (d > radius){
 				gs.get(i).add(new Double(0));
-			else
-				gs.get(i).add(new Double((1.- d/radius)));
-		}
-		
-	
-		if (t < 0){ //first time we initialize everything
-			for (int i=0; i<elems.size(); i++){
 				ps.get(i).add(new Double(1));
-				fs.get(i).add(gs.get(i).get(t+1));
-			}
-			return;
-		}
-		
-		
-		//find previously viewed candidates (see avScore method)
-		double[] prevScores = new double[elems.size()];
-		for (int i=0; i<elems.size(); i++)
-			prevScores[i] = avScore(i);
-
-			
-		//we will compute transition probabilities for all elements with non-zero gaze scores
-		double[] transProbs = new double[elems.size()];
-		for (int i=0; i<elems.size(); i++){
-			
-			if ((Double)gs.get(i).get(t+1) <= 0 ){
-				ps.get(i).add(new Double(0));
 				fs.get(i).add(new Double(0));
-				continue;
 			}
-			
-			//from here on, this is a potentially viewed element; we will use transition probabilities to dicreminate between other potentially viewed elements
-			
-			double sumProb = 0;
-			double sumCnt = 0;
-			for (int j=0; j<elems.size(); j++){
-				if (prevScores[j] == 0 || i==j) continue;
-								
-				//if object i is in competition with object j, then j cannot be used to discreminate!!!!				
-				if ((Double)gs.get(j).get(t+1) != 0) continue;
-								
-				sumProb += prevScores[j] * getTransition(elems.get(j), elems.get(i));
-				sumCnt += prevScores[j];
-			}
-			
-
-			if (sumCnt != 0)
-				transProbs[i] = sumProb / sumCnt;
 			else
-				transProbs[i] = 0;
-			
-		}
-		
-		//transProbs now contains probabilities for all elements with non-zero gazes;
-		double sum = 0;
-		double mx = 0;
-		for (int i=0; i<transProbs.length; i++)
-			sum += transProbs[i];
-		
-		for (int i=0; i<transProbs.length; i++){
-			transProbs[i] /= sum;
-			mx = Math.max(mx, transProbs[i]);
-		}
-		
-		for (int i=0; i<elems.size(); i++){
-			double g = (Double)gs.get(i).get(t+1);
-			
-			if (g <= 0) continue;
-			
-			double p = transProbs[i] / mx;
-			if (sum == 0) p = 1;
-		
-			double f = g*transfp(p);
-			
-			ps.get(i).add(new Double(p));
-			fs.get(i).add(new Double(f));
-			
+			{
+				gs.get(i).add(new Double((1.- d/radius)));
+				ps.get(i).add(new Double(1));
+				fs.get(i).add(new Double((1.- d/radius)));
+			}
+
 			//Eye Track Saving
 			if (
-					(gs.get(i) != null && gs.get(i).size() == 0)
+				   (gs.get(i) != null && gs.get(i).size() == 0)
 				|| (ps.get(i) != null && gs.get(i).size() == 0)
 				|| (fs.get(i) != null && gs.get(i).size() == 0)
 				)
@@ -515,6 +474,96 @@ public class EyeTester extends Viewer implements JavaAwtRenderer, EyeTrackerData
 			double ff = (Double)fs.get(i).get(fs.get(i).size()-1);
 			addResultData(elems.get(i), gg, pp, ff);
 		}
+
+		return;
+		
+	
+//		if (t < 0){ //first time we initialize everything
+//			for (int i=0; i<elems.size(); i++){
+//				ps.get(i).add(new Double(1));
+//				fs.get(i).add(gs.get(i).get(t+1));
+//			}
+//			return;
+//		}
+		
+		
+		//find previously viewed candidates (see avScore method)
+//		double[] prevScores = new double[elems.size()];
+//		for (int i=0; i<elems.size(); i++)
+//			prevScores[i] = avScore(i);
+
+			
+		//we will compute transition probabilities for all elements with non-zero gaze scores
+//		double[] transProbs = new double[elems.size()];
+//		for (int i=0; i<elems.size(); i++){
+//			
+//			if ((Double)gs.get(i).get(t+1) <= 0 ){
+//				ps.get(i).add(new Double(0));
+//				fs.get(i).add(new Double(0));
+//				continue;
+//			}
+//			
+//			//from here on, this is a potentially viewed element; we will use transition probabilities to dicreminate between other potentially viewed elements
+//			
+//			double sumProb = 0;
+//			double sumCnt = 0;
+//			for (int j=0; j<elems.size(); j++){
+//				if (prevScores[j] == 0 || i==j) continue;
+//								
+//				//if object i is in competition with object j, then j cannot be used to discreminate!!!!				
+//				if ((Double)gs.get(j).get(t+1) != 0) continue;
+//								
+//				sumProb += prevScores[j] * getTransition(elems.get(j), elems.get(i));
+//				sumCnt += prevScores[j];
+//			}
+//			
+//
+//			if (sumCnt != 0)
+//				transProbs[i] = sumProb / sumCnt;
+//			else
+//				transProbs[i] = 0;
+//			
+//		}
+//		
+//		//transProbs now contains probabilities for all elements with non-zero gazes;
+//		double sum = 0;
+//		double mx = 0;
+//		for (int i=0; i<transProbs.length; i++)
+//			sum += transProbs[i];
+//		
+//		for (int i=0; i<transProbs.length; i++){
+//			transProbs[i] /= sum;
+//			mx = Math.max(mx, transProbs[i]);
+//		}
+//		
+//		for (int i=0; i<elems.size(); i++){
+//			double g = (Double)gs.get(i).get(t+1);
+//			
+//			if (g <= 0) continue;
+//			
+//			double p = transProbs[i] / mx;
+//			if (sum == 0) p = 1;
+//		
+//			double f = g*transfp(p);
+//			
+//			ps.get(i).add(new Double(p));
+//			fs.get(i).add(new Double(f));
+//			
+//			//Eye Track Saving
+//			if (
+//					(gs.get(i) != null && gs.get(i).size() == 0)
+//				|| (ps.get(i) != null && gs.get(i).size() == 0)
+//				|| (fs.get(i) != null && gs.get(i).size() == 0)
+//				)
+//			{
+//				continue;
+//			}
+//
+//			double gg = (Double)gs.get(i).get(gs.get(i).size()-1);
+//			double pp = (Double)ps.get(i).get(ps.get(i).size()-1);
+//			double ff = (Double)fs.get(i).get(fs.get(i).size()-1);
+//			addResultData(elems.get(i), gg, pp, ff);
+//		}
 	}
 	
 	

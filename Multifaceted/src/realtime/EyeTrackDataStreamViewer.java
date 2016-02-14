@@ -31,7 +31,7 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 	public static final int CELL_WIDTH =5;
 	public static final int CELL_HEIGHT =12;
 	public static final int MAX_CELLS =10;
-	public static final int MAX_CELL_COLUMNS = 100;
+	public static final int MAX_CELL_COLUMNS = 300;
 	public static final int MAX_X =1200;
 	public static final int MAX_Y = 1000;
 	public static final int TRANSLATE_X =100;
@@ -71,11 +71,7 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		super(name);
 		try
 		{
-//			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Part_1.txt";
-//			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Part_2.txt";
-//			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Practice.txt";
-			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Protocol_2_anonymous.txt";
-//			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\Protocol_2_Practice.txt";
+			String path ="E:\\Graph\\UserStudy\\IEEEVIS_Poster\\catData\\StreamViewer\\Task3.txt";
 			int initialTime =0;
 			int intialTimeWindow =90;
 			int initialTimeStep =1000;
@@ -498,8 +494,8 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 	}
 	public static final int SAVE_VIEW_X=205;
 	public static final int SAVE_VIEW_Y=10;
-	public static final int SAVE_VIEW_WIDTH=1010;
-	public static final int SAVE_VIEW_HEIGHT=530;
+	public static final int SAVE_VIEW_WIDTH=1850;
+	public static final int SAVE_VIEW_HEIGHT=1050;
 	public static final double SAVE_VIEW_ZOOM =2.0;
 	
 	private void showBoundingBox(Graphics2D g)
@@ -512,6 +508,42 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 		g.drawRect(0, 0, SAVE_VIEW_WIDTH, SAVE_VIEW_HEIGHT);
 		
 		g.translate(SAVE_VIEW_X, SAVE_VIEW_Y);
+		
+		
+		g.setColor(previousColor);
+	}
+	
+	private void overlayTimeWindow(Graphics2D g)
+	{
+		Color previousColor = g.getColor();
+		g.setColor(new Color(120,120,120,75));
+		
+		int totalUsers = testSubjectList.size();
+		int height = totalUsers * HEIGHT_PER_SUBJECT;
+		int currentTime = getCurrentTime();
+		int timeWindow = getCurrentTimeWindow();
+		
+		
+		int width = (Math.min(MAX_CELL_COLUMNS,currentTime) - timeWindow)*CELL_WIDTH;
+		
+		g.translate(TRANSLATE_X, TRANSLATE_Y);
+		//drawGray Area
+		if(width > 0)
+		{
+			g.fillRect(0, -40, width, height+80);
+		}
+		
+		//drawWindow
+//		int x = Math.max(0, width);
+//		width = Math.min(currentTime * CELL_WIDTH - x, timeWindow*CELL_WIDTH);
+//		g.setColor(Color.black);
+//		g.setStroke(new BasicStroke(5));
+//		g.drawRect(x, -40, width, height+80);
+		
+		g.translate(-TRANSLATE_X, -TRANSLATE_Y);
+	
+		
+		
 		
 		
 		g.setColor(previousColor);
@@ -595,6 +627,7 @@ public class EyeTrackDataStreamViewer extends Viewer implements JavaAwtRenderer 
 			g.translate(-TRANSLATE_X, 0);
 			
 //			showBoundingBox(g);
+			overlayTimeWindow(g);
 		}
 	}
 

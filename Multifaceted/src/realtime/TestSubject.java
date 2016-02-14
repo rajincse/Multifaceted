@@ -216,12 +216,12 @@ public class TestSubject {
 				g.fillRect(x-stringWidth-5, lastY, stringWidth+5, allottedHeight);
 				
 				int rightX =(Math.min(currentTime, EyeTrackDataStreamViewer.MAX_CELL_COLUMNS)+1) * EyeTrackDataStreamViewer.CELL_WIDTH; 
-				g.fillRect( rightX, lastY, stringWidth+10, allottedHeight);
+//				g.fillRect( rightX, lastY, stringWidth+10, allottedHeight);
 				
 				g.setColor(Color.black);
 				g.drawString(label, x-stringWidth-5, lastY+height);
 				
-				g.drawString(label, rightX, lastY+height);
+//				g.drawString(label, rightX, lastY+height);
 				int cellIndex =0;
 				for(int taskIndex=0;taskIndex<heatmapCellPerItem[i].length;taskIndex++)
 				{	
@@ -229,7 +229,7 @@ public class TestSubject {
 					{
 						for(int timeIndex=0; timeIndex<heatmapCellPerItem[i][taskIndex].length;timeIndex++)
 						{
-							Color[] colorScheme = ColorScheme.DEFAULT;
+							Color[] colorScheme = ColorScheme.LINEAR_INVERTED_GRAY;
 							double score = heatmapCellPerItem[i][taskIndex][timeIndex];
 							
 							Color heatmapColor = perspectives.util.Util.getColorFromRange(colorScheme, score);

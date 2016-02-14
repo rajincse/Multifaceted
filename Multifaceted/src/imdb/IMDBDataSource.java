@@ -21,6 +21,7 @@ public class IMDBDataSource extends DataSource{
 	private static final String PROPERTY_URL = "DataService Host";
 	private static final String PROPERTY_STATUS = "Status";
 	private static final String PROPERTY_URL_VALUE = "http://vizlab.cs.fiu.edu/IMDBDataService/";
+//	private static final String PROPERTY_URL_VALUE = "http://localhost:8084/IMDBDataService/";
 	
 	
 	private static final String STATUS_CONNECTED="Connected";

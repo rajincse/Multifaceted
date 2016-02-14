@@ -4,7 +4,8 @@ import java.awt.Color;
 
 public class ColorScheme {
 	public static Color[] ALTERNATE_COLOR_BLUE ={new Color(168,221,181), new Color(67,162,202)};
-	public static Color[] LINE_COLOR ={new Color(170,37,94),new Color(37,60,194),new Color(13,130,29),new Color(150,132,9)}; 
+	public static Color[] LINE_COLOR ={new Color(170,37,94),new Color(37,60,194),new Color(13,130,29),new Color(166,66,33),
+		Color.red, Color.cyan, Color.orange, Color.black}; 
 	public static Color[] DEFAULT ={Color.white,Color.green,Color.yellow,Color.red};
 	
 	public static Color[] LINEAR_INVERTED_GRAY = {Color.white, Color.gray, Color.black};
@@ -527,4 +528,5 @@ public class ColorScheme {
 		new Color(255, 255, 255)
 
 	};
+
 }

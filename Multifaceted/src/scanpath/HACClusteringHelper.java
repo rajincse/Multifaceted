@@ -40,7 +40,7 @@ public class HACClusteringHelper implements Experiment, DissimilarityMeasure{
 	public Tree getTree()
 	{
 		DendrogramBuilder dendrogramBuilder = new DendrogramBuilder(getNumberOfObservations());
-		HierarchicalAgglomerativeClusterer clusterer = new HierarchicalAgglomerativeClusterer(this, this, new SingleLinkage());
+		HierarchicalAgglomerativeClusterer clusterer = new HierarchicalAgglomerativeClusterer(this, this, new AverageLinkage());
 		clusterer.cluster(dendrogramBuilder);
 		Dendrogram dendrogram = dendrogramBuilder.getDendrogram();
 		TreeNode root = getTreeNode(dendrogram.getRoot());

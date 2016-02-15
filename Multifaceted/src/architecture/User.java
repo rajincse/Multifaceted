@@ -23,6 +23,9 @@ import multifaceted.ColorScheme;
 import multifaceted.Util;
 
 public class User {
+	public static final int TYPE_BUTTON =1;
+	public static final int TYPE_TEXT =2;
+	public static final int TYPE_IMAGE =3;
 	String name;
 	
 	ArrayList<EyeEvent> events;
@@ -61,7 +64,7 @@ public class User {
 	ArrayList<ArrayList<String>> vectorLabel;
 	ArrayList<ArrayList<Double>> vectorLabelScores;
 	
-	int heatmapXOffset = 200;
+	int heatmapXOffset = 300;
 	
 	boolean isAggregated;
 	
@@ -100,9 +103,9 @@ public class User {
 		try {		
 		long time = System.currentTimeMillis();
 		System.out.println("Loading user ...");
-		String folder = path.substring(0,path.lastIndexOf("\\")) + "\\";
+//		String folder = path.substring(0,path.lastIndexOf("\\")) + "\\";
 		
-		if(path.toUpperCase().endsWith(".TXT"))
+		if(path.toUpperCase().endsWith(".TXT_OUT"))
 	    {
 			BufferedReader br = new BufferedReader(new FileReader(path));
 			String prevView = "";
@@ -121,23 +124,36 @@ public class User {
 	        	if (startTime < 0)
 	        		startTime =  Long.parseLong(split[1]);
 	        	
-	        	if (split[0].equals("Eye")){
+	        	if (split[0].equals("E")){	        		
 	        		
-	        		//if (gazeSpeed > 70) 
-	        		//	continue;
-	        		
-//	        		System.out.println(line);
 	        		long t = Long.parseLong(split[1]) - startTime;
-	        		double s = Double.parseDouble(split[5]);
-	        		double p = 1;//Double.parseDouble(split[8]);
+	        		double s = Double.parseDouble(split[4]);
 	        		
-	        	//	if (p >= 0)
-	        	//		s  = s / p;
-	        	//	if (s < 0 || s > 1) System.out.println("score: " + s + " ; " + line);
-	        		if (split[4].trim().equals("5")) continue;
+	        	
 	        	
 	        		
 	        		String objId = split[2];
+	        		int type = Integer.parseInt(split[3]);
+	        		if(type == TYPE_TEXT )
+	        		{
+	        			int indexOfColon = objId.indexOf(":text");
+	        			int indexOfW = objId.indexOf("w", objId.indexOf("@"));
+	        			if(indexOfColon >= 0 && indexOfW >= 0)
+	        			{
+	        				try
+	        				{
+	        					objId = "Paragraph"+ objId.substring(indexOfColon, indexOfW);
+	        				}
+	        				catch(Exception ex)
+	        				{
+	        					System.err.println("Problem at "+objId);
+	        				}
+	        				
+	        			}
+	        			
+	        			
+	        		}
+	        		
 	        		DataObject object = null;
 	        		for (int i=0; i<dataObjects.size(); i++)
 	        			if (dataObjects.get(i).id.equals(objId)){
@@ -145,11 +161,11 @@ public class User {
 	        				break;
 	        			}
 	        		if (object == null){
-	        			object = new DataObject(objId, split[3], Integer.parseInt(split[4].trim()));
+	        			object = new DataObject(objId, type);
 	        			dataObjects.add(object);
 	        		}	        		
 	        		
-	        		EyeEvent e = new EyeEvent(t,object, s, p);
+	        		EyeEvent e = new EyeEvent(t,object, s, 1);
 	        		events.add(e);
 	        	}    	
 	        	else     		
@@ -158,6 +174,75 @@ public class User {
 	        }
     		br.close();
 	    }
+		else if(path.toUpperCase().endsWith(".TXT"))
+		{
+			BufferedReader br = new BufferedReader(new FileReader(path));
+			String prevView = "";
+			
+			Point prevGazePos = null;
+			long prevGazeTime = 0;
+			double gazeSpeed = 0;
+				
+		    String line;
+		    long startTime = -1;
+	    
+    		while ((line = br.readLine()) != null) {
+	            
+	        	String[] split = line.split("\t");
+	        	
+	        	if (startTime < 0)
+	        		startTime =  Long.parseLong(split[1]);
+	        	
+	        	if (split[0].equals("Eye")){	        		
+	        		
+	        		long t = Long.parseLong(split[1]) - startTime;
+	        		double s = Double.parseDouble(split[5]);
+	        		
+	        	
+	        	
+	        		
+	        		String objId = split[2];
+	        		int type = Integer.parseInt(split[4]);
+	        		if(type == TYPE_TEXT )
+	        		{
+	        			int indexOfColon = objId.indexOf(":text");
+	        			int indexOfW = objId.indexOf("w", objId.indexOf("@"));
+	        			if(indexOfColon >= 0 && indexOfW >= 0)
+	        			{
+	        				try
+	        				{
+	        					objId = "Paragraph"+ objId.substring(indexOfColon, indexOfW);
+	        				}
+	        				catch(Exception ex)
+	        				{
+	        					System.err.println("Problem at "+objId);
+	        				}
+	        				
+	        			}
+	        			
+	        			
+	        		}
+	        		
+	        		DataObject object = null;
+	        		for (int i=0; i<dataObjects.size(); i++)
+	        			if (dataObjects.get(i).id.equals(objId)){
+	        				object = dataObjects.get(i);
+	        				break;
+	        			}
+	        		if (object == null){
+	        			object = new DataObject(objId, type);
+	        			dataObjects.add(object);
+	        		}	        		
+	        		
+	        		EyeEvent e = new EyeEvent(t,object, s, 1);
+	        		events.add(e);
+	        	}    	
+	        	else     		
+	        		System.out.println("Unrecognized event " + split[0]);
+	        	
+	        }
+    		br.close();
+		}
 	    else if(path.toUpperCase().endsWith(".EYE"))
 	    {
 	    	FileInputStream fin = new FileInputStream(path);

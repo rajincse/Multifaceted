@@ -1,12 +1,18 @@
 package architecture;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
+import javax.imageio.ImageIO;
+
+import perspectives.base.Environment;
 import perspectives.base.Property;
 import perspectives.base.Viewer;
 import perspectives.properties.PDouble;
@@ -17,6 +23,7 @@ import perspectives.properties.POptions;
 import perspectives.two_d.JavaAwtRenderer;
 
 public class HeatmapAnalysis extends Viewer implements JavaAwtRenderer {
+	
 	
 	ArrayList<User> users;
 	User currentUser;
@@ -171,6 +178,11 @@ public class HeatmapAnalysis extends Viewer implements JavaAwtRenderer {
 		if (currentUser == null)
 			return;
 		
+		g.setColor(Color.red);
+		int width = currentUser.heatmap.getWidth()+ currentUser.heatmapXOffset;
+		int height = currentUser.heatmap.getHeight();
+		g.drawRect(0, 0, width, height);
+		
 		g.drawString("" + currentUser.currentTime/100, 0, -80);
 
 		if (currentUser.image != null){
@@ -252,9 +264,11 @@ public class HeatmapAnalysis extends Viewer implements JavaAwtRenderer {
 					g.setColor(new Color(250,250,150));
 				else if (currentUser.viewedObjects.get(i).type == 5)
 					g.setColor(new Color(250,150,250));
-				g.fillRect(0, heatmapYOffset+currentUser.cellHeight*i, 200,currentUser.cellHeight-1);
+				g.fillRect(0, heatmapYOffset+currentUser.cellHeight*i, currentUser.heatmapXOffset,currentUser.cellHeight-1);
 				g.setColor(Color.black);
-				String label = currentUser.viewedObjects.get(i).label.substring(0, Math.min(26, currentUser.viewedObjects.get(i).label.length()));
+//				String label = currentUser.viewedObjects.get(i).label.substring(0, Math.min(26, currentUser.viewedObjects.get(i).label.length()));
+				String label = currentUser.viewedObjects.get(i).label;
+				
 				g.setFont(g.getFont().deriveFont(10f));
 				g.drawString(label, 0, heatmapYOffset+currentUser.cellHeight*i+currentUser.cellHeight-2);
 				
@@ -397,7 +411,65 @@ public class HeatmapAnalysis extends Viewer implements JavaAwtRenderer {
 		
 	}
 	
+	private static final int SAVE_VIEW_ZOOM = 3;
+	public void saveView(String filePath)
+	{	
+		
+		// TODO Auto-generated method stub
+		int width = currentUser.heatmap.getWidth()+ currentUser.heatmapXOffset;
+		int height = currentUser.heatmap.getHeight();
+		Dimension dimension =new Dimension(width, height);
+		
+		
+		if(dimension != null)
+		{
+			BufferedImage bim = new BufferedImage((int)((dimension.width)* SAVE_VIEW_ZOOM),(int)((dimension.height)*SAVE_VIEW_ZOOM), BufferedImage.TYPE_INT_ARGB);
+			
+			Graphics2D g = bim.createGraphics();
+//			g.translate(-INIT_X-TITLE_X+300, -INIT_Y);
+			g.scale(SAVE_VIEW_ZOOM, SAVE_VIEW_ZOOM);
+			
+			render(g);
+			g.dispose();
+			
+			if(!filePath.contains(".PNG"))
+			{
+				filePath+=".PNG";
+			}
+			
+			try {
+				ImageIO.write(bim, "PNG", new File(filePath));
+			
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			System.out.println("Image Saved:"+filePath);
+		}
+	}
 
+	public static void main(String[] args)
+	{
+		if(args.length >=2)
+		{
+			Environment e = new Environment(true);
+			
+			HeatmapAnalysis heatmap = new HeatmapAnalysis("Architecture");
+			
+			e.addViewer(heatmap);
+			
+			String path =args[0];
+			PFileInput input = new PFileInput(path);
+			
+			heatmap.getProperty("Load User").setValue(input);
+			
+			heatmap.saveView(args[1]);
+			
+			System.exit(0);
+		}
+		
+		
+	}
 	
 
 	

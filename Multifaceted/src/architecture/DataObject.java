@@ -1,6 +1,12 @@
 package architecture;
 
+import imdb.entity.CompactMovie;
+
 import java.io.Serializable;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+
+import com.google.gson.reflect.TypeToken;
 
 public class DataObject implements Serializable{
 	
@@ -82,5 +88,12 @@ public class DataObject implements Serializable{
 			return false;
 		return true;
 	}
-	
+	public static Type getTokenType()
+	{
+		return new TypeToken<DataObject>(){}.getType();
+	}
+	public static Type getListType()
+	{
+		return new TypeToken<ArrayList<DataObject>>(){}.getType();
+	}
 }

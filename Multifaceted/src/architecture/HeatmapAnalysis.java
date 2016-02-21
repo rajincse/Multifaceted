@@ -6,11 +6,15 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
+
+import com.google.gson.Gson;
 
 import perspectives.base.Environment;
 import perspectives.base.Property;
@@ -448,6 +452,26 @@ public class HeatmapAnalysis extends Viewer implements JavaAwtRenderer {
 		}
 	}
 
+	public void saveHeatmapData(String filePath)
+	{
+		try {
+			
+
+			FileWriter fstream = new FileWriter(new File(filePath), false);
+			BufferedWriter br = new BufferedWriter(fstream);
+
+			Gson gson = new Gson();
+			String jsonData = gson.toJson(currentUser.getHeatmapObject());
+			br.write(jsonData);
+
+			br.close();
+			
+			System.out.println("File saved:"+filePath);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 	public static void main(String[] args)
 	{
 		if(args.length >=2)
@@ -464,6 +488,7 @@ public class HeatmapAnalysis extends Viewer implements JavaAwtRenderer {
 			heatmap.getProperty("Load User").setValue(input);
 			
 			heatmap.saveView(args[1]);
+			heatmap.saveHeatmapData(args[1]+".JSON");
 			
 			System.exit(0);
 		}

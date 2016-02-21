@@ -203,7 +203,7 @@ public class User {
 	        		
 	        		String objId = split[2];
 	        		int type = Integer.parseInt(split[4]);
-	        		if(type == TYPE_TEXT )
+	        		if(type == TYPE_TEXT || objId.contains(":text"))
 	        		{
 	        			int indexOfColon = objId.indexOf(":text");
 	        			int indexOfW = objId.indexOf("w", objId.indexOf("@"));

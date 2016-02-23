@@ -459,8 +459,7 @@ public class HeatmapAnalysis extends Viewer implements JavaAwtRenderer {
 			ArrayList<HeatmapEntry> entryList = new ArrayList<HeatmapEntry>();
 			for(int i=0;i<currentUser.viewedObjects.size();i++)
 			{
-				String imagePath  = filePath+i;
-				this.saveImage(imagePath, heatmapStrips[i]);
+				String imagePath  = this.saveImage(filePath+i, heatmapStrips[i]);
 				HeatmapEntry entry = new HeatmapEntry(imagePath, currentUser.viewedObjects.get(i));
 				
 				entryList.add(entry);
@@ -483,21 +482,22 @@ public class HeatmapAnalysis extends Viewer implements JavaAwtRenderer {
 		}
 	}
 	
-	public void saveImage(String fileName, BufferedImage img)
+	public String saveImage(String fileName, BufferedImage img)
 	{
 		if(!fileName.contains(".PNG"))
 		{
 			fileName+=".PNG";
 		}
-		
+		File file = new File(fileName);
 		try {
-			ImageIO.write(img, "PNG", new File(fileName));
+			ImageIO.write(img, "PNG", file);
 		
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		System.out.println("Image Saved:"+fileName);
+		return file.getName();
 	}
 	public static void main(String[] args)
 	{

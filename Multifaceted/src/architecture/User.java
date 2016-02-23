@@ -441,13 +441,24 @@ public class User {
 		}
 		return index;
 	}
-	public HeatmapObject getHeatmapObject()
+	public BufferedImage[] getHeatmapStrips(int zoom)
 	{
-		double[][] heatmap = getHeatmapArray();
-		int[] index = getSortedIndex(heatmap);
-		HeatmapObject heatmapObject = new HeatmapObject(heatmap, index, dataObjects, viewedObjects);
+		BufferedImage[] heatmapStrips = new BufferedImage[viewedObjects.size()];
+		for(int i=0;i<viewedObjects.size();i++)
+		{
+			heatmapStrips[i] = new BufferedImage(this.heatmap.getWidth()* zoom, cellHeight*zoom, BufferedImage.TYPE_INT_ARGB);
+			
+			Graphics2D g = heatmapStrips[i].createGraphics();
+			
+			g.scale(zoom, zoom);
+			g.drawImage(this.heatmap, 0, 0, this.heatmap.getWidth(), cellHeight, 0, i*cellHeight, this.heatmap.getWidth(), (i+1)*cellHeight, null);
+			
+			g.dispose();
+			
+		}
 		
-		return heatmapObject;
+		
+		return heatmapStrips;
 	}
 	
 	public void createHeatmap(){

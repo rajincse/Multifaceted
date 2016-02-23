@@ -455,13 +455,23 @@ public class HeatmapAnalysis extends Viewer implements JavaAwtRenderer {
 	public void saveHeatmapData(String filePath)
 	{
 		try {
+			BufferedImage[] heatmapStrips = currentUser.getHeatmapStrips(SAVE_VIEW_ZOOM);
+			ArrayList<HeatmapEntry> entryList = new ArrayList<HeatmapEntry>();
+			for(int i=0;i<currentUser.viewedObjects.size();i++)
+			{
+				String imagePath  = filePath+i;
+				this.saveImage(imagePath, heatmapStrips[i]);
+				HeatmapEntry entry = new HeatmapEntry(imagePath, currentUser.viewedObjects.get(i));
+				
+				entryList.add(entry);
+			}
 			
-
-			FileWriter fstream = new FileWriter(new File(filePath), false);
+			HeatmapObject heatmapObject = new HeatmapObject(entryList);
+			FileWriter fstream = new FileWriter(new File(filePath+".JSON"), false);
 			BufferedWriter br = new BufferedWriter(fstream);
 
 			Gson gson = new Gson();
-			String jsonData = gson.toJson(currentUser.getHeatmapObject());
+			String jsonData = gson.toJson(heatmapObject);
 			br.write(jsonData);
 
 			br.close();
@@ -471,6 +481,23 @@ public class HeatmapAnalysis extends Viewer implements JavaAwtRenderer {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public void saveImage(String fileName, BufferedImage img)
+	{
+		if(!fileName.contains(".PNG"))
+		{
+			fileName+=".PNG";
+		}
+		
+		try {
+			ImageIO.write(img, "PNG", new File(fileName));
+		
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println("Image Saved:"+fileName);
 	}
 	public static void main(String[] args)
 	{
@@ -488,7 +515,7 @@ public class HeatmapAnalysis extends Viewer implements JavaAwtRenderer {
 			heatmap.getProperty("Load User").setValue(input);
 			
 			heatmap.saveView(args[1]);
-			heatmap.saveHeatmapData(args[1]+".JSON");
+			heatmap.saveHeatmapData(args[1]);
 			
 			System.exit(0);
 		}

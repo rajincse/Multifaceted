@@ -1,27 +1,40 @@
 package architecture;
 
-import imdb.entity.CompactMovie;
-
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
-
 import com.google.gson.reflect.TypeToken;
 
 
 public class HeatmapObject {
 	protected ArrayList<HeatmapEntry> entryList;
-	public HeatmapObject(ArrayList<HeatmapEntry> entry) {
+	protected int totalCells;
+	public HeatmapObject(ArrayList<HeatmapEntry> entry, int totalCells) {
 		
 		this.entryList = entry;
-	}
-	public ArrayList<HeatmapEntry> getEntry() {
-		return entryList;
-	}
-	public void setEntry(ArrayList<HeatmapEntry> entry) {
-		this.entryList = entry;
+		this.totalCells = totalCells;
 	}
 	
+	
+	public ArrayList<HeatmapEntry> getEntryList() {
+		return entryList;
+	}
+
+
+	public void setEntryList(ArrayList<HeatmapEntry> entryList) {
+		this.entryList = entryList;
+	}
+
+
+	public int getTotalCells() {
+		return totalCells;
+	}
+
+
+	public void setTotalCells(int totalCells) {
+		this.totalCells = totalCells;
+	}
+
+
 	public static Type getType()
 	{
 		return new TypeToken<HeatmapObject>(){}.getType();
@@ -30,13 +43,19 @@ public class HeatmapObject {
 	{
 		return new TypeToken<ArrayList<HeatmapObject>>(){}.getType();
 	}
+
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((entryList == null) ? 0 : entryList.hashCode());
+		result = prime * result
+				+ ((entryList == null) ? 0 : entryList.hashCode());
+		result = prime * result + totalCells;
 		return result;
 	}
+
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -50,6 +69,8 @@ public class HeatmapObject {
 			if (other.entryList != null)
 				return false;
 		} else if (!entryList.equals(other.entryList))
+			return false;
+		if (totalCells != other.totalCells)
 			return false;
 		return true;
 	}

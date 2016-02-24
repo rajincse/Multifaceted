@@ -465,7 +465,7 @@ public class HeatmapAnalysis extends Viewer implements JavaAwtRenderer {
 				entryList.add(entry);
 			}
 			
-			HeatmapObject heatmapObject = new HeatmapObject(entryList);
+			HeatmapObject heatmapObject = new HeatmapObject(entryList, currentUser.heatmap.getWidth()/currentUser.cellWidth);
 			FileWriter fstream = new FileWriter(new File(filePath+".JSON"), false);
 			BufferedWriter br = new BufferedWriter(fstream);
 

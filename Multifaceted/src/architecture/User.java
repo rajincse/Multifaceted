@@ -95,9 +95,130 @@ public class User {
 	public User(File f){
 		
 		this(f.getName(), false);
-		loadUser(f.getAbsolutePath());
+//		loadUser(f.getAbsolutePath());
+		loadUserWithErrorCorrection(f.getAbsolutePath());
 	}
-	
+	public void loadUserWithErrorCorrection(String path)
+	{
+		try {		
+			long time = System.currentTimeMillis();
+			System.out.println("Loading user ...");
+//			String folder = path.substring(0,path.lastIndexOf("\\")) + "\\";
+			
+			
+				BufferedReader br = new BufferedReader(new FileReader(path));
+				String prevView = "";
+				
+				Point prevGazePos = null;
+				long prevGazeTime = 0;
+				double gazeSpeed = 0;
+					
+			    String line;
+			    long startTime = -1;
+			    long lastTime =-1;
+			    EyeEvent lastEvent = null;
+			    Point lastPosition =null;
+	    		while ((line = br.readLine()) != null) {
+		            
+		        	String[] split = line.split("\t");
+		        	
+		        	if (startTime < 0)
+		        		startTime =  Long.parseLong(split[1]);
+		        	
+		        	if (split[0].equals("Eye")){	        		
+		        		
+		        		long t = Long.parseLong(split[1]) - startTime;
+		        		double s = Double.parseDouble(split[5]);
+		        		
+		        		int x = Integer.parseInt(split[9]);
+		        		int y = Integer.parseInt(split[10]);
+		        	
+		        	
+		        		
+		        		String objId = split[2];
+		        		int type = Integer.parseInt(split[4]);
+		        		if(isParagraphDOI(objId, type))
+		        		{
+		        			int indexOfColon = objId.indexOf(":text");
+		        			int indexOfW = objId.indexOf("w", objId.indexOf("@"));
+		        			if(indexOfColon >= 0 && indexOfW >= 0)
+		        			{
+		        				try
+		        				{
+		        					objId = "Paragraph"+ objId.substring(indexOfColon, indexOfW);
+		        				}
+		        				catch(Exception ex)
+		        				{
+		        					System.err.println("Problem at "+objId);
+		        				}
+		        				
+		        			}
+		        		}
+		        		
+	        			DataObject object = null;
+		        		for (int i=0; i<dataObjects.size(); i++)
+		        			if (dataObjects.get(i).id.equals(objId)){
+		        				object = dataObjects.get(i);
+		        				break;
+		        			}
+		        		if (object == null){
+		        			object = new DataObject(objId, type);
+		        			dataObjects.add(object);
+		        		}	        		
+		        		
+		        		EyeEvent e = new EyeEvent(t,object, s, 1);
+		        		
+		        		if(lastTime <0 && lastEvent == null)
+		        		{
+		        			lastTime = t;
+		        			lastEvent = e;
+		        			lastPosition = new Point(x, y);
+		        		}
+		        		else if(t == lastTime && lastEvent != null)
+		        		{
+		        			if(e.score >= lastEvent.score && (x> lastPosition.x && y > lastPosition.y))
+		        			{
+		        				lastEvent = e;
+		        				lastPosition = new Point(x, y);
+		        			}
+		        		}
+		        		else if(t > lastTime && lastEvent !=null)
+		        		{
+		        			events.add(lastEvent);
+		        			lastTime = t;
+		        			lastEvent = e;
+		        			lastPosition = new Point(x, y);
+		        		}
+//		        		events.add(e);
+		        		
+		        		
+		        		
+		        	}    	
+		        	else     		
+		        		System.out.println("Unrecognized event " + split[0]);
+		        	
+		        }
+	    		br.close();
+			
+		        
+		        
+				for (int i=0; i<dataObjects.size(); i++)
+					dataToIndex.put(dataObjects.get(i), i);
+		        
+		        
+		        
+		        
+		        timePeriodStart = 0;
+		        timePeriodEnd = events.get(events.size()-1).time;
+		        createHeatmap();
+		        
+		        time = System.currentTimeMillis()-time;
+		        System.out.println("Done loading! time="+time);
+		    }
+			catch(Exception e){
+				e.printStackTrace();
+		    }
+	}
 	public void loadUser(String path){
 		
 		try {		
@@ -193,7 +314,31 @@ public class User {
 	    }
 	}
 	
+	private boolean isParagraphDOI(String objId, int type)
+	{
+		int indexOfColon = objId.indexOf(":text");
+		int indexOfW = objId.indexOf("w", objId.indexOf("@"));
+		boolean result = type == TYPE_TEXT || objId.contains(":text");
+		result = result && indexOfColon >= 0 && indexOfW >= 0;
+		return result;
+	}
 	
+	
+	private double getCellScore(double sum, ArrayList<EyeEvent> list)
+	{
+		double score = 0;
+		double max = Double.MIN_VALUE;
+		for(EyeEvent e: list)
+		{
+			if(e.getScore() > max)
+			{
+				max = e.getScore();
+			}
+		}
+		
+		score = Math.min(1,sum / max);
+		return score ;
+	}
 	private double[][] getHeatmapArray()
 	{
 		long ts = timePeriodStart;
@@ -248,7 +393,7 @@ public class User {
 					}
 				}
 				}
-				heatmap[i][j] = sum/Math.max(l.size(),Math.sqrt(timeStep/1000.*60));
+				heatmap[i][j] = getCellScore(sum, l);
 				
 				if (heatmap[i][j] != 0){
 					avgCell += heatmap[i][j];
@@ -436,7 +581,7 @@ public class User {
 					}
 				}
 				}
-				heatmap[i][j] = sum/Math.max(l.size(),Math.sqrt(timeStep/1000.*60));
+				heatmap[i][j] = getCellScore(sum, l);
 				
 				if (heatmap[i][j] != 0){
 					avgCell += heatmap[i][j];

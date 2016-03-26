@@ -514,6 +514,14 @@ public class HeatmapAnalysis extends Viewer implements JavaAwtRenderer {
 			
 			heatmap.getProperty("Load User").setValue(input);
 			
+			
+			if(args.length >= 3)
+			{
+				int timeStamp = Integer.parseInt(args[2]);
+				PInteger pTimeStamp = new PInteger(timeStamp);
+				heatmap.getProperty("Time Step").setValue(pTimeStamp);
+			}
+			
 			heatmap.saveView(args[1]);
 			heatmap.saveHeatmapData(args[1]);
 			

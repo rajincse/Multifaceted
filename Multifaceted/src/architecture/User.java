@@ -421,90 +421,107 @@ public class User {
 		this.feature = feature;
 	}
 
-	public int[] getSortedIndex(double[][] heatmap)
+	public static final int TOTAL_SORTS =3;
+	public int[][] getSortedIndex()
 	{
-		double[] heatmapAvg = new double[heatmap.length];
-		int[] firstIndex = new int[heatmap.length];
-		int[] index = new int[heatmap.length];
-		for (int i=0; i<heatmap.length; i++){
-			heatmapAvg[i] = 0;
-			firstIndex[i] = -1;
-			index[i] = i;
-			for (int j=0; j<heatmap[i].length; j++){
-				heatmapAvg[i] += heatmap[i][j];
-				if (heatmap[i][j] != 0 && firstIndex[i] < 0)
-					firstIndex[i] = j;
-			}
-			heatmapAvg[i] /= heatmap[i].length;
-		}
+		double[][] heatmap = getHeatmapArray();
+		int[][] index = new int[TOTAL_SORTS][heatmap.length];
 		
-		double avg = 0;
-		for (int i=0; i<heatmap.length; i++)
-			if (heatmapAvg[i] != 0)
-				avg+= heatmapAvg[i];
-		avg /= heatmapAvg.length;
-		
-		for (int i=0; i<heatmap.length; i++)
-			if (heatmapAvg[i] < rowFilter*avg){
-				firstIndex[i] = -1;
+		for(int sortIndex =0;sortIndex<TOTAL_SORTS;sortIndex++)
+		{
+			//INIT heatmapAvg, firstIndex
+			double[] heatmapAvg = new double[heatmap.length];
+			int[] firstIndex = new int[heatmap.length];
+			
+			
+			for (int i=0; i<heatmap.length; i++){
 				heatmapAvg[i] = 0;
+				firstIndex[i] = -1;
+				
+				
+				index[sortIndex][i] = i;
+				
+				for (int j=0; j<heatmap[i].length; j++){
+					heatmapAvg[i] += heatmap[i][j];
+					if (heatmap[i][j] != 0 && firstIndex[i] < 0)
+						firstIndex[i] = j;
+				}
+				heatmapAvg[i] /= heatmap[i].length;
 			}
-		
-		
-		if (sort.equals("First Viewed")){
-		//sort by first index
-		while (true){
-			boolean sw = false;
-			for (int i=0; i<firstIndex.length-1; i++)
-				if (firstIndex[i] > firstIndex[i+1]){
-					sw = true;
-					int tmpi = firstIndex[i]; firstIndex[i] = firstIndex[i+1]; firstIndex[i+1] = tmpi;
-					    tmpi = index[i];      index[i] = index[i+1];           index[i+1] = tmpi;
-					double tmpd = heatmapAvg[i]; heatmapAvg[i] = heatmapAvg[i+1]; heatmapAvg[i+1] = tmpd;
+			
+			double avg = 0;
+			for (int i=0; i<heatmap.length; i++)
+				if (heatmapAvg[i] != 0)
+					avg+= heatmapAvg[i];
+			avg /= heatmapAvg.length;
+			
+			for (int i=0; i<heatmap.length; i++)
+				if (heatmapAvg[i] < rowFilter*avg){
+					firstIndex[i] = -1;
+					heatmapAvg[i] = 0;
 				}
-			if (!sw) break;
-		}}
+			//END INIT heatmapAvg, firstIndex
+				if (sortIndex == 0){
+				//sort by first index
+				while (true){
+					boolean sw = false;
+					for (int i=0; i<firstIndex.length-1; i++)
+						if (firstIndex[i] > firstIndex[i+1]){
+							sw = true;
+							int tmpi = firstIndex[i]; firstIndex[i] = firstIndex[i+1]; firstIndex[i+1] = tmpi;
+							    tmpi = index[sortIndex][i];      index[sortIndex][i] = index[sortIndex][i+1];           index[sortIndex][i+1] = tmpi;
+							double tmpd = heatmapAvg[i]; heatmapAvg[i] = heatmapAvg[i+1]; heatmapAvg[i+1] = tmpd;
+						}
+					if (!sw) break;
+				}}
+				
+				if (sortIndex == 1 || sortIndex == 2){	
+				//sort by activity
+				while (true){
+					boolean sw = false;
+					for (int i=0; i<firstIndex.length-1; i++)
+						if (heatmapAvg[i] < heatmapAvg[i+1]){
+							sw = true;
+							int tmpi = firstIndex[i]; firstIndex[i] = firstIndex[i+1]; firstIndex[i+1] = tmpi;
+							    tmpi = index[sortIndex][i];      index[sortIndex][i] = index[sortIndex][i+1];           index[sortIndex][i+1] = tmpi;
+							double tmpd = heatmapAvg[i]; heatmapAvg[i] = heatmapAvg[i+1]; heatmapAvg[i+1] = tmpd;
+						}
+					if (!sw) break;
+				}}
+				
+				if (sortIndex == 2){		
+				//sort by type
+				while (true){
+					boolean sw = false;
+					for (int i=0; i<firstIndex.length-1; i++)
+						if (dataObjects.get(index[sortIndex][i]).type < dataObjects.get(index[sortIndex][i+1]).type){
+							sw = true;
+							int tmpi = firstIndex[i]; firstIndex[i] = firstIndex[i+1]; firstIndex[i+1] = tmpi;
+							    tmpi = index[sortIndex][i];      index[sortIndex][i] = index[sortIndex][i+1];           index[sortIndex][i+1] = tmpi;
+							double tmpd = heatmapAvg[i]; heatmapAvg[i] = heatmapAvg[i+1]; heatmapAvg[i+1] = tmpd;
+						}
+					if (!sw) break;
+				}}
+		}
 		
-		if (sort.equals("Most Viewed") || sort.equals("Category")){	
-		//sort by activity
-		while (true){
-			boolean sw = false;
-			for (int i=0; i<firstIndex.length-1; i++)
-				if (heatmapAvg[i] < heatmapAvg[i+1]){
-					sw = true;
-					int tmpi = firstIndex[i]; firstIndex[i] = firstIndex[i+1]; firstIndex[i+1] = tmpi;
-					    tmpi = index[i];      index[i] = index[i+1];           index[i+1] = tmpi;
-					double tmpd = heatmapAvg[i]; heatmapAvg[i] = heatmapAvg[i+1]; heatmapAvg[i+1] = tmpd;
+		
+		int[][] sorting  = new int[TOTAL_SORTS][viewedObjects.size()];
+		
+		for(int sortingIndex =0;sortingIndex < TOTAL_SORTS;sortingIndex++)
+		{
+			int j=0;
+			for(int i =0; i< index[sortingIndex].length;i++)
+			{
+				int viewedObjectIndex = viewedObjects.indexOf(dataObjects.get(index[sortingIndex][i]));
+				if(viewedObjectIndex >= 0 )
+				{
+					sorting[sortingIndex][j] = viewedObjectIndex;					
+					j++;
 				}
-			if (!sw) break;
-		}}
-		
-		if (sort.equals("Category")){		
-		//sort by type
-		while (true){
-			boolean sw = false;
-			for (int i=0; i<firstIndex.length-1; i++)
-				if (dataObjects.get(index[i]).type < dataObjects.get(index[i+1]).type){
-					sw = true;
-					int tmpi = firstIndex[i]; firstIndex[i] = firstIndex[i+1]; firstIndex[i+1] = tmpi;
-					    tmpi = index[i];      index[i] = index[i+1];           index[i+1] = tmpi;
-					double tmpd = heatmapAvg[i]; heatmapAvg[i] = heatmapAvg[i+1]; heatmapAvg[i+1] = tmpd;
-				}
-			if (!sw) break;
-		}}
-		
-		
-		
-		viewedObjects = new ArrayList<DataObject>();
-		for (int i=0; i<index.length; i++){
-			if (heatmapAvg[i] == 0)
-				dataObjects.get(index[i]).hidden = true;
-			else{
-				dataObjects.get(index[i]).hidden = false;
-				viewedObjects.add(dataObjects.get(index[i]));
+				
 			}
 		}
-		return index;
+		return sorting;
 	}
 	public BufferedImage[] getHeatmapStrips(int zoom)
 	{
@@ -692,6 +709,11 @@ public class User {
 			for (int j=0; j<heatmap[index[i]].length; j++){
 				Color[] colorScheme = ColorScheme.DEFAULT;
 				Color c = perspectives.util.Util.getColorFromRange(colorScheme, heatmap[index[i]][j]);
+				if(c.equals(Color.white))
+				{
+					
+					c = new Color(255,255,255,0);
+				}
 				g.setColor(c);
 				g.fillRect(j*cellWidth, v*cellHeight, cellWidth, cellHeight);
 			}

@@ -8,10 +8,12 @@ import com.google.gson.reflect.TypeToken;
 public class HeatmapObject {
 	protected ArrayList<HeatmapEntry> entryList;
 	protected int totalCells;
-	public HeatmapObject(ArrayList<HeatmapEntry> entry, int totalCells) {
+	protected int[][] sortingIndex;
+	public HeatmapObject(ArrayList<HeatmapEntry> entry, int totalCells,int[][] sortingIndex) {
 		
 		this.entryList = entry;
 		this.totalCells = totalCells;
+		this.sortingIndex = sortingIndex;
 	}
 	
 	
@@ -32,6 +34,16 @@ public class HeatmapObject {
 
 	public void setTotalCells(int totalCells) {
 		this.totalCells = totalCells;
+	}
+
+
+	public int[][] getSortingIndex() {
+		return sortingIndex;
+	}
+
+
+	public void setSortingIndex(int[][] sortingIndex) {
+		this.sortingIndex = sortingIndex;
 	}
 
 

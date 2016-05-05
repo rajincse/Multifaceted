@@ -1,15 +1,18 @@
 package multifaceted.main;
 
+import java.awt.Point;
 import java.text.NumberFormat;
 
 import matrix.TransitionMatrixViewer;
 
+import EyeInstrument.EyeTester;
 import aoicreator.AOIEditor;
 import architecture.DataFileCreator;
 import architecture.HeatmapAnalysis;
 import doiriver.DOIRiverViewer;
 import eyeinterestanalyzer.EyeInterestAnalyzerViewerFactory;
 import eyeinterestanalyzer.ScarfplotViewer;
+import eyetracker.instrument.EyeTrackerTestViewer;
 import imdb.IMDBDataFactory;
 import imdb.IMDBViewerFactory;
 import imdb.analysis.HeatMapAnalysisViewerFactory;
@@ -53,8 +56,8 @@ public class MainClass {
 //		e.registerViewerFactory(new GraphViewerFactory());
 //		e.addViewer(new TransitionMatrixViewer("Matrix"));
 		
-		e.addViewer(new HeatmapAnalysis("Architecture"));
+//		e.addViewer(new HeatmapAnalysis("Architecture"));
 //		e.addViewer(new DataFileCreator("Data"));
-		
+		e.addViewer(new EyeTrackerTestViewer("Rajin EyeTracker"));
 	}
 }

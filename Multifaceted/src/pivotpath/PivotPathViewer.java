@@ -141,7 +141,7 @@ public class PivotPathViewer extends Viewer implements JavaAwtRenderer, PivotPat
 	
 	private SearchItem currentItem;
 	
-	private GeneralPivotPaths pivotPaths;
+	protected GeneralPivotPaths pivotPaths;
 	public PivotPathViewer(String name, IMDBDataSource data) {
 		super(name);
 		this.data = data;		

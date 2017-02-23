@@ -17,11 +17,15 @@ import javax.imageio.stream.ImageInputStreamImpl;
 
 import perspectives.base.Property;
 import perspectives.base.Viewer;
+import perspectives.properties.PDouble;
+import perspectives.properties.PInteger;
 import perspectives.properties.PSignal;
 import perspectives.two_d.JavaAwtRenderer;
 
 public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer {
-	
+	private static final String PROPERTY_ADVANCE = "Advance";
+	private static final String PROPERTY_ADVANCE_ALL = "Advance All";
+	private static final String PROPERTY_TIME="Time";
 	boolean withCutouts = false;
 
 	String[] imageNames;
@@ -61,9 +65,9 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 	
 	public ThreeDProjectionDetector(String name, String dataInputDirectory) {
 		super(name);
-		this.folder = dataInputDirectory;
+		this.folder = dataInputDirectory+"/";
 		load(folder);
-		String dataOutputFile = folder+"/proc/props.txt";
+		String dataOutputFile = folder+"proc/props.txt";
 		File outputFile = new File(dataOutputFile);
 		try {
 			if(!outputFile.getParentFile().exists())
@@ -93,7 +97,7 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 	//	this.computeAllVisible();
 		
 		
-		Property<PSignal> padv = new Property<PSignal>("Adv", new PSignal()){
+		Property<PSignal> padv = new Property<PSignal>(PROPERTY_ADVANCE, new PSignal()){
 
 			@Override
 			protected boolean updating(PSignal newvalue) {
@@ -104,24 +108,90 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 		};
 		this.addProperty(padv);
 		
-		Property<PSignal> padvall = new Property<PSignal>("AdvAll", new PSignal()){
+		Property<PSignal> padvall = new Property<PSignal>(PROPERTY_ADVANCE_ALL, new PSignal()){
 
 			@Override
 			protected boolean updating(PSignal newvalue) {
-				while(advance());
+//				while(advance());
+				advanceAll();
 				return super.updating(newvalue);
 			}
 			
 		};
 		this.addProperty(padvall);
 		
+		Property<PDouble> pTime = new Property<PDouble>(PROPERTY_TIME, new PDouble(0)){
+			
+			@Override
+			protected boolean updating(PDouble newvalue) {
+				// TODO Auto-generated method stub
+				double time = newvalue.doubleValue();
+				cgc = getGazeIndex(time)-1;
+				advance();
+				return super.updating(newvalue);
+			}
+		};
+		this.addProperty(pTime);
 	}
 	public void advanceAll()
 	{
-		while(advance());
+		boolean keepRunning = true;
+		long time = System.currentTimeMillis();
+		while(keepRunning)
+		{
+			time = System.currentTimeMillis();
+			keepRunning = advance();
+			time = System.currentTimeMillis() -time;
+			System.out.println("Time :"+time);
+		}
 		System.out.println("Advancing all complete");
 	}
 	
+	private double minGazeTime = Double.MAX_VALUE;
+	private double maxGazeTime = Double.MIN_VALUE;
+	private int getGazeIndex(double time)
+	{
+		if(time > maxGazeTime)
+		{
+			return gazeT.length-2;
+		}
+		else if(time < minGazeTime)
+		{
+			return -1;
+		}
+		else
+		{
+			return binaryGazeIndexSearch(0, gazeT.length-1, time);
+		}
+	
+		
+	}
+	
+	private int binaryGazeIndexSearch(int startIndex, int endIndex, double value)
+	{
+		if(startIndex == endIndex)
+		{
+			return startIndex;
+		}
+		else
+		{
+			int midIndex = (startIndex+endIndex)/2;
+			double distanceLeft = Math.abs(gazeT[midIndex] -value);
+			double distanceRight = Math.abs(gazeT[midIndex+1] -value);
+			if(distanceLeft < distanceRight)
+			{
+				return binaryGazeIndexSearch(startIndex, midIndex, value);
+			}
+			else
+			{
+				return binaryGazeIndexSearch(midIndex+1, endIndex, value);
+			}
+		}
+		
+		
+		
+		
+	}
 	private void load(String folder){
 		
 		File f = new File(folder);
@@ -202,7 +272,12 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 		    	String[] split = lines.get(i).split(",");
 		    	gazeX[i] = Integer.parseInt(split[4]) - xOffset;
 		    	gazeY[i] = Integer.parseInt(split[5]) - yOffset;
-		    	gazeT[i] = Double.parseDouble(split[3]);
+		    	double gazeTime = Double.parseDouble(split[3]);
+		    	gazeT[i] = gazeTime;
+		    	
+		    	minGazeTime = Math.min(gazeTime, minGazeTime);
+		    	maxGazeTime = Math.max(gazeTime, maxGazeTime);
+		    	
 		    }
 		    
 		    //smooth out gazeT
@@ -250,6 +325,7 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 		catch(Exception e){
 			
 		}
+		System.out.println(" MaskTimes:"+maskTimes.length+", gazeT:"+gazeT.length);
 	}
 	
 	int[] minx;
@@ -463,6 +539,10 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 		if (cgc > 0){
 			g.setColor(new Color(200,200,100));
 			g.fillOval(gazeX[cgc]-5, gazeY[cgc]-5, 10,10);
+		
+			//print time and index
+			g.setColor(Color.magenta);			
+			g.drawString("Time: "+this.gazeT[cgc]+", index:"+cgc,50, 600);
 		}
 		
 	}

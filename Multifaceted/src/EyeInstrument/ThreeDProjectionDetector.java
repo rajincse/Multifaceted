@@ -13,12 +13,10 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 
 import javax.imageio.ImageIO;
-import javax.imageio.stream.ImageInputStreamImpl;
 
 import perspectives.base.Property;
 import perspectives.base.Viewer;
 import perspectives.properties.PDouble;
-import perspectives.properties.PInteger;
 import perspectives.properties.PSignal;
 import perspectives.two_d.JavaAwtRenderer;
 
@@ -62,10 +60,11 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 	int cutoutIndex = 0;
 	
 	PrintStream outstream = null;
-	
-	public ThreeDProjectionDetector(String name, String dataInputDirectory) {
+	private boolean saveFile = false; 
+	public ThreeDProjectionDetector(String name, String dataInputDirectory, boolean saveFile) {
 		super(name);
 		this.folder = dataInputDirectory+"/";
+		this.saveFile = saveFile;
 		load(folder);
 		String dataOutputFile = folder+"proc/props.txt";
 		File outputFile = new File(dataOutputFile);
@@ -87,11 +86,14 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		try {
-			outstream = new PrintStream(outputFile);
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if(saveFile)
+		{
+			try {			
+				outstream = new PrintStream(outputFile);
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
 	//	this.computeAllVisible();
@@ -139,10 +141,10 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 		long time = System.currentTimeMillis();
 		while(keepRunning)
 		{
-			time = System.currentTimeMillis();
+//			time = System.currentTimeMillis();
 			keepRunning = advance();
-			time = System.currentTimeMillis() -time;
-			System.out.println("Time :"+time);
+//			time = System.currentTimeMillis() -time;
+//			System.out.println("Time :"+time);
 		}
 		System.out.println("Advancing all complete");
 	}
@@ -325,7 +327,6 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 		catch(Exception e){
 			
 		}
-		System.out.println(" MaskTimes:"+maskTimes.length+", gazeT:"+gazeT.length);
 	}
 	
 	int[] minx;
@@ -338,7 +339,12 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 	
 	private boolean advance(){
 		cgc++;
-
+		
+		if(cgc >= gazeT.length)
+		{
+			return false;
+		}
+		System.out.println("Progress: "+String.format("%.2f", (100.0 * cgc /gazeT.length))+"% ("+gazeT[cgc]+" s)");
 		//if we need to advance the current mask we do the following:
 		//advance the current mask
 		//find the prop file that is closest (in terms of time) to the current mask
@@ -404,14 +410,20 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 			//then look for the DOIs in the mask
 			//then extract the DOIs from the image
 			try {
-				System.out.println("load mask " + maskNames[currentMaskIndex]);
+				
+//				System.out.println("load mask " + maskNames[currentMaskIndex]);
 				currentMask = ImageIO.read(new File(maskNames[currentMaskIndex]));
 				
-				System.out.println("load image " + imageNames[currentImageIndex]);
+//				System.out.println("load image " + imageNames[currentImageIndex]);
 				currentImage = ImageIO.read(new File(imageNames[currentImageIndex]));
 				
-				if (!withCutouts){
+
+				if(withCutouts)
+				{
 					cutoutIndex++;
+				}
+				if (!withCutouts && saveFile){
+					
 					String filename = folder + "proc/frame" + cutoutIndex + ".png";
 					ImageIO.write(currentImage, "PNG", new File(filename));
 				}
@@ -447,34 +459,36 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 							}
 					}
 				
-				for (int i=0; i<com1.length; i++){				
-					if (visible[i]){
-						
-						double centerX = (maxx[i] + minx[i]) / 2.;
-						double centerY = (maxy[i] + miny[i]) / 2.;
-						int width = maxx[i] - minx[i] + 1;
-						int height = maxy[i] - miny[i] + 1;
-						
-						if (this.withCutouts){
-							BufferedImage cutout = new BufferedImage(width,height, BufferedImage.TYPE_INT_ARGB);
-							cutout.createGraphics().drawImage(currentImage,0,0,width-1,height-1,minx[i],miny[i], maxx[i], maxy[i],null);
-							for (int xx=0; xx<width; xx++)
-								for (int yy=0; yy<height; yy++){
-									Color c = new Color(currentMask.getRGB(xx+minx[i], yy+miny[i]));
-									if (!(com1[i][0] == c.getRed() && com1[i][1] == c.getGreen() && com1[i][2] == c.getBlue())){
-										cutout.setRGB(xx, yy, (0 << 24) | (0 << 16) | (0 << 8) | 0);
+				if (this.withCutouts && saveFile){
+					for (int i=0; i<com1.length; i++){				
+						if (visible[i]){
+							
+							double centerX = (maxx[i] + minx[i]) / 2.;
+							double centerY = (maxy[i] + miny[i]) / 2.;
+							int width = maxx[i] - minx[i] + 1;
+							int height = maxy[i] - miny[i] + 1;
+							
+							
+								BufferedImage cutout = new BufferedImage(width,height, BufferedImage.TYPE_INT_ARGB);
+								cutout.createGraphics().drawImage(currentImage,0,0,width-1,height-1,minx[i],miny[i], maxx[i], maxy[i],null);
+								for (int xx=0; xx<width; xx++)
+									for (int yy=0; yy<height; yy++){
+										Color c = new Color(currentMask.getRGB(xx+minx[i], yy+miny[i]));
+										if (!(com1[i][0] == c.getRed() && com1[i][1] == c.getGreen() && com1[i][2] == c.getBlue())){
+											cutout.setRGB(xx, yy, (0 << 24) | (0 << 16) | (0 << 8) | 0);
+									}
+									}
+										
+								try {
+									String filename = folder + "/proc/cutout" + (cutoutIndex++) + ".png";
+									ImageIO.write(cutout, "PNG", new File(filename));
+									doiNames[i] = "cutout" + (cutoutIndex) + ".png";
+								} catch (IOException e) {
+									e.printStackTrace();
 								}
-								}
-									
-							try {
-								String filename = folder + "/proc/cutout" + (cutoutIndex++) + ".png";
-								ImageIO.write(cutout, "PNG", new File(filename));
-								doiNames[i] = filename;
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-						}						
-
+													
+	
+						}
 					}
 				}
 
@@ -486,15 +500,22 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 					
 		
 		//advance time
-		outstream.println();
-		if (withCutouts)
-			outstream.print("T=" + gazeT[cgc]);
-		else
-			outstream.print("T=" + gazeT[cgc] + " || screenImage=" + ("frame" + cutoutIndex + ".png"));
-		processTime(this.outstream, gazeX[cgc], gazeY[cgc], visible, minx, miny, maxx, maxy, doiNames, doiProps);
-
+		if(saveFile)
+		{
+			outstream.println();
+			if (withCutouts)
+				outstream.print("T=" + gazeT[cgc]);
+			else
+				outstream.print("T=" + gazeT[cgc] + " || screenImage=" + ("frame" + cutoutIndex + ".png"));
+			processTime(this.outstream, gazeX[cgc], gazeY[cgc], visible, minx, miny, maxx, maxy, doiNames, doiProps);
+		}
 		
-		requestRender();
+
+		if(!this.getContainer().getEnvironment().isOffline())
+		{
+			requestRender();
+		}
+		
 		return true;
 	}
 	
@@ -534,9 +555,10 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 
 	@Override
 	public void render(Graphics2D g) {
+		
 		if (currentMask != null)
 			g.drawImage(currentMask, 0,0,null);
-		if (cgc > 0){
+		if (cgc >= 0){
 			g.setColor(new Color(200,200,100));
 			g.fillOval(gazeX[cgc]-5, gazeY[cgc]-5, 10,10);
 		

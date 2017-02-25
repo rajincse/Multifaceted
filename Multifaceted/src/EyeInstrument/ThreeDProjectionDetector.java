@@ -11,12 +11,15 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.imageio.ImageIO;
 
 import perspectives.base.Property;
 import perspectives.base.Viewer;
 import perspectives.properties.PDouble;
+import perspectives.properties.POptions;
 import perspectives.properties.PSignal;
 import perspectives.two_d.JavaAwtRenderer;
 
@@ -24,6 +27,20 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 	private static final String PROPERTY_ADVANCE = "Advance";
 	private static final String PROPERTY_ADVANCE_ALL = "Advance All";
 	private static final String PROPERTY_TIME="Time";
+	private static final String PROPERTY_SKIP_FORWARD = "Skip+";
+	private static final String PROPERTY_SKIP_BACKWARD = "Skip-";
+	private static final String PROPERTY_PLAY = "Play";
+	private static final String PROPERTY_PAUSE = "Pause";
+	private static final String PROPERTY_IMAGE_TYPE = "Image Type";
+	
+	
+	public static final String[] IMAGE_TYPE= new String[]{"Original", "Masked"};
+	public static final int TYPE_ORIGIINAL =0;
+	public static final int TYPE_MASKED =1;
+	
+	public static final long TIME_LAPSE = 100;
+	
+	private static final int SKIP_VALUE =10;
 	boolean withCutouts = false;
 
 	String[] imageNames;
@@ -134,6 +151,74 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 			}
 		};
 		this.addProperty(pTime);
+		
+		Property<PSignal> pSkipForward = new Property<PSignal>(PROPERTY_SKIP_FORWARD, new PSignal()){
+			@Override
+			protected boolean updating(PSignal newvalue) {
+				// TODO Auto-generated method stub
+				skip(SKIP_VALUE);
+				return super.updating(newvalue);
+			}
+		};
+		this.addProperty(pSkipForward);
+		
+		Property<PSignal> pSkipBackward = new Property<PSignal>(PROPERTY_SKIP_BACKWARD, new PSignal()){
+			@Override
+			protected boolean updating(PSignal newvalue) {
+				// TODO Auto-generated method stub
+				skip(-SKIP_VALUE);
+				return super.updating(newvalue);
+			}
+		};
+		this.addProperty(pSkipBackward);
+		
+		Property<PSignal> pPlay = new Property<PSignal>(PROPERTY_PLAY, new PSignal()){
+			@Override
+			protected boolean updating(PSignal newvalue) {
+				// TODO Auto-generated method stub
+				startTimer();
+				return super.updating(newvalue);
+			}
+		};
+		this.addProperty(pPlay);
+		
+		Property<PSignal> pPause = new Property<PSignal>(PROPERTY_PAUSE, new PSignal()){
+			@Override
+			protected boolean updating(PSignal newvalue) {
+				// TODO Auto-generated method stub
+				stopTimer();
+				return super.updating(newvalue);
+			}
+		};
+		this.addProperty(pPause);
+		
+		POptions imageType = new POptions(IMAGE_TYPE);
+		imageType.selectedIndex = TYPE_ORIGIINAL;
+		Property<POptions> pImageType = new Property<POptions>(PROPERTY_IMAGE_TYPE, imageType)
+				{
+						@Override
+						protected boolean updating(POptions newvalue) {
+							// TODO Auto-generated method stub
+							requestRender();
+							return super.updating(newvalue);
+						}
+				};
+		addProperty(pImageType);
+	}
+	
+	private void skip(int value)
+	{
+		this.cgc+= value -1;
+		
+		if(this.cgc < -1)
+		{
+			this.cgc = -1;
+		}
+		else if(this.cgc > this.gazeT.length)
+		{
+			this.cgc = this.gazeT.length -2;
+		}
+		advance();
 	}
 	public void advanceAll()
 	{
@@ -190,9 +275,30 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 			}
 		}
 		
-		
-		
-		
+	}
+	private Timer timer;
+	private void startTimer()
+	{
+		this.timer = new Timer();
+		this.timer.schedule(new TimerTask() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				boolean isStillRunning = advance();
+				
+				if(!isStillRunning)
+				{
+					stopTimer();
+				}
+			}
+		}
+		, 0, TIME_LAPSE);
+	}
+	
+	private void stopTimer()
+	{
+		this.timer.cancel();
 	}
 	private void load(String folder){
 		
@@ -344,7 +450,11 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 		{
 			return false;
 		}
-		System.out.println("Progress: "+String.format("%.2f", (100.0 * cgc /gazeT.length))+"% ("+gazeT[cgc]+" s)");
+		if(saveFile)
+		{
+			System.out.println("Progress: "+String.format("%.2f", (100.0 * cgc /gazeT.length))+"% ("+gazeT[cgc]+" s)");
+		}
+		
 		//if we need to advance the current mask we do the following:
 		//advance the current mask
 		//find the prop file that is closest (in terms of time) to the current mask
@@ -556,15 +666,31 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 	@Override
 	public void render(Graphics2D g) {
 		
-		if (currentMask != null)
-			g.drawImage(currentMask, 0,0,null);
+
+		Property<POptions> pImageType = (Property<POptions>)getProperty(PROPERTY_IMAGE_TYPE);
+		int index = pImageType.getValue().selectedIndex;
+		
+		if(index == TYPE_ORIGIINAL)
+		{
+			if(currentImage != null)
+			{
+				g.drawImage(currentImage, 0,0,null);
+			}
+		}
+		else
+		{
+			if (currentMask != null)
+				g.drawImage(currentMask, 0,0,null);
+		}
+
 		if (cgc >= 0){
-			g.setColor(new Color(200,200,100));
+//			g.setColor(new Color(200,200,100));
+			g.setColor(Color.MAGENTA);
 			g.fillOval(gazeX[cgc]-5, gazeY[cgc]-5, 10,10);
 		
 			//print time and index
-			g.setColor(Color.magenta);			
-			g.drawString("Time: "+this.gazeT[cgc]+", index:"+cgc,50, 600);
+			g.setColor(Color.black);			
+			g.drawString("Time: "+this.gazeT[cgc]+", index:"+cgc,50, 800);
 		}
 		
 	}

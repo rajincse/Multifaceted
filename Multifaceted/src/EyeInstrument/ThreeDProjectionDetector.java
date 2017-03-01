@@ -145,8 +145,7 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 			protected boolean updating(PDouble newvalue) {
 				// TODO Auto-generated method stub
 				double time = newvalue.doubleValue();
-				cgc = getGazeIndex(time)-1;
-				advance();
+				setTime(time);				
 				return super.updating(newvalue);
 			}
 		};
@@ -234,27 +233,40 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 		System.out.println("Advancing all complete");
 	}
 	
-	private double minGazeTime = Double.MAX_VALUE;
-	private double maxGazeTime = Double.MIN_VALUE;
-	private int getGazeIndex(double time)
+	private boolean imageChanged = false;
+	private void setTime(double time)
 	{
-		if(time > maxGazeTime)
+		if(time > gazeT[gazeT.length-1])
 		{
-			return gazeT.length-2;
+			cgc= gazeT.length-2;
 		}
-		else if(time < minGazeTime)
+		else if(time < gazeT[0])
 		{
-			return -1;
+			cgc= -1;
 		}
 		else
 		{
-			return binaryGazeIndexSearch(0, gazeT.length-1, time);
+			cgc= binaryIndexSearch(gazeT, 0, gazeT.length-1, time)-1;
 		}
-	
 		
+		if(time > maskTimes[maskTimes.length-1])
+		{
+			currentMaskIndex = maskTimes.length-2;
+		}
+		else if(time < maskTimes[0])
+		{
+			currentMaskIndex =-1;
+		}
+		else
+		{
+			currentMaskIndex= binaryIndexSearch(maskTimes, 0, maskTimes.length-1, time)-1;
+		}
+		
+		imageChanged = true;
+		advance();
 	}
 	
-	private int binaryGazeIndexSearch(int startIndex, int endIndex, double value)
+	private int binaryIndexSearch(double[] timeArray, int startIndex, int endIndex, double value)
 	{
 		if(startIndex == endIndex)
 		{
@@ -263,15 +275,15 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 		else
 		{
 			int midIndex = (startIndex+endIndex)/2;
-			double distanceLeft = Math.abs(gazeT[midIndex] -value);
-			double distanceRight = Math.abs(gazeT[midIndex+1] -value);
+			double distanceLeft = Math.abs(timeArray[midIndex] -value);
+			double distanceRight = Math.abs(timeArray[midIndex+1] -value);
 			if(distanceLeft < distanceRight)
 			{
-				return binaryGazeIndexSearch(startIndex, midIndex, value);
+				return binaryIndexSearch(timeArray, startIndex, midIndex, value);
 			}
 			else
 			{
-				return binaryGazeIndexSearch(midIndex+1, endIndex, value);
+				return binaryIndexSearch(timeArray, midIndex+1, endIndex, value);
 			}
 		}
 		
@@ -381,11 +393,7 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 		    	gazeX[i] = Integer.parseInt(split[4]) - xOffset;
 		    	gazeY[i] = Integer.parseInt(split[5]) - yOffset;
 		    	double gazeTime = Double.parseDouble(split[3]);
-		    	gazeT[i] = gazeTime;
-		    	
-		    	minGazeTime = Math.min(gazeTime, minGazeTime);
-		    	maxGazeTime = Math.max(gazeTime, maxGazeTime);
-		    	
+		    	gazeT[i] = gazeTime;		    	
 		    }
 		    
 		    //smooth out gazeT
@@ -462,8 +470,9 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 		//find the image file that is closest (in terms of time) to the current mask
 		//   -- for each DOI find its image cutout as well as the center and size of the cutout in relation to the image
 		//   -- save the cutout with a unique file name and store that file name into doiNames
-		if (currentMaskIndex < 0 || gazeT[cgc] > maskTimes[currentMaskIndex]){
+		if (currentMaskIndex < 0 || gazeT[cgc] > maskTimes[currentMaskIndex] || imageChanged){
 			currentMaskIndex++;
+			imageChanged = false;
 			if (currentMaskIndex >= maskTimes.length-1)
 				return false;
 			
@@ -528,10 +537,8 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 				currentImage = ImageIO.read(new File(imageNames[currentImageIndex]));
 				
 
-				if(withCutouts)
-				{
-					cutoutIndex++;
-				}
+				cutoutIndex++;
+				
 				if (!withCutouts && saveFile){
 					
 					String filename = folder + "proc/frame" + cutoutIndex + ".png";
@@ -669,28 +676,33 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 
 		Property<POptions> pImageType = (Property<POptions>)getProperty(PROPERTY_IMAGE_TYPE);
 		int index = pImageType.getValue().selectedIndex;
-		
+		String imageFileName ="";
 		if(index == TYPE_ORIGIINAL)
 		{
 			if(currentImage != null)
 			{
+				imageFileName = imageNames[currentImageIndex];
 				g.drawImage(currentImage, 0,0,null);
 			}
 		}
 		else
 		{
 			if (currentMask != null)
+			{
+				imageFileName = maskNames[currentMaskIndex];
 				g.drawImage(currentMask, 0,0,null);
+			}
+				
 		}
 
-		if (cgc >= 0){
+		if (cgc >= 0 && cgc < gazeT.length){
 //			g.setColor(new Color(200,200,100));
 			g.setColor(Color.MAGENTA);
 			g.fillOval(gazeX[cgc]-5, gazeY[cgc]-5, 10,10);
 		
 			//print time and index
 			g.setColor(Color.black);			
-			g.drawString("Time: "+this.gazeT[cgc]+", index:"+cgc,50, 800);
+			g.drawString("Time: "+this.gazeT[cgc]+", index:"+cgc+" file :"+imageFileName,50, 800);
 		}
 		
 	}

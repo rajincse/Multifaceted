@@ -537,10 +537,10 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 				currentImage = ImageIO.read(new File(imageNames[currentImageIndex]));
 				
 
-				cutoutIndex++;
+				
 				
 				if (!withCutouts && saveFile){
-					
+					cutoutIndex++;
 					String filename = folder + "proc/frame" + cutoutIndex + ".png";
 					ImageIO.write(currentImage, "PNG", new File(filename));
 				}

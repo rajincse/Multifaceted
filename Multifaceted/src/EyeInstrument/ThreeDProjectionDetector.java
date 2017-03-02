@@ -1,7 +1,9 @@
 package EyeInstrument;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
@@ -10,6 +12,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Hashtable;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -23,6 +26,36 @@ import perspectives.properties.POptions;
 import perspectives.properties.PSignal;
 import perspectives.two_d.JavaAwtRenderer;
 
+class VisibleObject implements Comparable<VisibleObject>{
+	public int index;
+	public String name;
+	public int[] colorArray;
+	public Point topLeftPoint;
+	public Dimension size;
+	public String doiProperties;
+	public double gazeDistance;
+	public VisibleObject(int index, String name, int[] colorArray, Point topLeftPoint, 
+			Dimension size, String doiProperties, double gazeDistance) {
+		this.index = index;
+		this.name = name;
+		this.colorArray = colorArray;
+		this.topLeftPoint = topLeftPoint;
+		this.size = size;
+		this.doiProperties = doiProperties;
+		this.gazeDistance = gazeDistance;
+	}
+	
+	public Color getColor()
+	{
+		return new Color(this.colorArray[0], this.colorArray[1], this.colorArray[2]);
+	}
+
+	@Override
+	public int compareTo(VisibleObject o) {
+		// TODO Auto-generated method stub
+		return Double.compare(this.gazeDistance, o.gazeDistance);
+	}
+}
 public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer {
 	private static final String PROPERTY_ADVANCE = "Advance";
 	private static final String PROPERTY_ADVANCE_ALL = "Advance All";
@@ -425,8 +458,8 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 		      lines.add(line.trim());
 		    }
 		    
-		    com1 = new int[lines.size()][];
-		    com2 = new String[lines.size()];
+		    com1 = new int[lines.size()][]; // color
+		    com2 = new String[lines.size()]; // name
 		    for (int i=0; i<com1.length; i++){
 		    	String[] split = lines.get(i).split(",");
 		    	com1[i] = new int[]{(int)(255*Double.parseDouble(split[0])), (int)(255*Double.parseDouble(split[1])), (int)(255*Double.parseDouble(split[2]))};
@@ -624,8 +657,9 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 				outstream.print("T=" + gazeT[cgc]);
 			else
 				outstream.print("T=" + gazeT[cgc] + " || screenImage=" + ("frame" + cutoutIndex + ".png"));
-			processTime(this.outstream, gazeX[cgc], gazeY[cgc], visible, minx, miny, maxx, maxy, doiNames, doiProps);
+			
 		}
+		processTime(this.outstream, gazeX[cgc], gazeY[cgc], visible, minx, miny, maxx, maxy, doiNames, doiProps);
 		
 
 		if(!this.getContainer().getEnvironment().isOffline())
@@ -635,15 +669,17 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 		
 		return true;
 	}
-	
+	private ArrayList<VisibleObject> visibleObjectList = new ArrayList<VisibleObject>();
 	private void processTime(PrintStream out, int x, int y, boolean[] visible, int[] minx, int[] miny, int[] maxx, int[] maxy, String[] doiNames, String[] doiProps){
 	
+		this.visibleObjectList.clear();
+		String printText ="";
 		//go through all objects, detect if they were viewed, print their properties, save their outlines
 		for (int i=0; i<com1.length; i++){
-			out.println();
-			out.print(com2[i]);
-			if (visible[i]) out.print(" || visible = true");
-			else out.print(" || visible=false");
+			printText+=System.lineSeparator();
+			printText+=com2[i];
+			if (visible[i]) printText+=" || visible = true";
+			else printText+=" || visible=false";
 			
 			if (visible[i]){
 				
@@ -653,15 +689,27 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 				int height = maxy[i] - miny[i] + 1;
 								
 				double dToCenter = Math.sqrt((centerX - x)*(centerX-x) + (centerY-y)*(centerY-y));
-				out.print(" || viewed=" + dToCenter);
+				printText+=" || viewed=" + dToCenter;
 				
-				out.print(" || center=(" + centerX + "," + centerY + ")");
-				out.print(" || size=(" + width + "," + height + ")");
+				printText+=" || center=(" + centerX + "," + centerY + ")";
+				printText+=" || size=(" + width + "," + height + ")";
 					
 				if (this.withCutouts)
-					out.print(" || cutout=" + doiNames[i]);	
+					printText+=" || cutout=" + doiNames[i];
+				
+				VisibleObject visibleObject 
+				= new VisibleObject(i,com2[i], com1[i], new Point((int)(centerX-width/2), (int)(centerY-height/2)), new Dimension(width, height), doiProps[i], dToCenter);
+				visibleObjectList.add(visibleObject);
 			}
-			out.print(" || " + doiProps[i]);
+			printText+=" || " + doiProps[i];
+			
+			
+		}
+		
+		Collections.sort(this.visibleObjectList);
+		if(saveFile)
+		{
+			out.print(printText);
 		}
 
 
@@ -699,10 +747,34 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 //			g.setColor(new Color(200,200,100));
 			g.setColor(Color.MAGENTA);
 			g.fillOval(gazeX[cgc]-5, gazeY[cgc]-5, 10,10);
+			if(!visibleObjectList.isEmpty())
+			{
+				g.drawString(visibleObjectList.get(0).name, gazeX[cgc]+25, gazeY[cgc]+5);
+			}
 		
 			//print time and index
 			g.setColor(Color.black);			
 			g.drawString("Time: "+this.gazeT[cgc]+", index:"+cgc+" file :"+imageFileName,50, 800);
+		}
+		
+		if(!visibleObjectList.isEmpty())
+		{
+			int y = 800;
+			int yGap = 30;
+			
+			for(int i=0;i<visibleObjectList.size();i++)
+			{
+				y+= yGap;
+				VisibleObject obj = visibleObjectList.get(i);
+				g.setColor(obj.getColor());
+				
+				g.fillRect(50, y, 20, 20);
+				
+				g.drawRect(obj.topLeftPoint.x, obj.topLeftPoint.y, obj.size.width, obj.size.height);
+				
+				g.setColor(Color.black);
+				g.drawString(obj.name +" ("+obj.gazeDistance+")",  80, y+10);
+			}
 		}
 		
 	}

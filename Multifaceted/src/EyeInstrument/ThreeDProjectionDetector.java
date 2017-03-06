@@ -21,6 +21,7 @@ import javax.imageio.ImageIO;
 
 import perspectives.base.Property;
 import perspectives.base.Viewer;
+import perspectives.properties.PBoolean;
 import perspectives.properties.PDouble;
 import perspectives.properties.POptions;
 import perspectives.properties.PSignal;
@@ -65,6 +66,8 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 	private static final String PROPERTY_PLAY = "Play";
 	private static final String PROPERTY_PAUSE = "Pause";
 	private static final String PROPERTY_IMAGE_TYPE = "Image Type";
+	private static final String PROPERTY_DRAW_TEXT ="Text";
+	private static final String PROPERTY_DRAW_RECT ="Rectangle";
 	
 	
 	public static final String[] IMAGE_TYPE= new String[]{"Original", "Masked"};
@@ -236,6 +239,11 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 						}
 				};
 		addProperty(pImageType);
+		
+		Property<PBoolean> pDrawText= new Property<PBoolean>(PROPERTY_DRAW_TEXT, new PBoolean(true));
+		addProperty(pDrawText);
+		Property<PBoolean> pDrawRect= new Property<PBoolean>(PROPERTY_DRAW_RECT, new PBoolean(true));
+		addProperty(pDrawRect);
 	}
 	
 	private void skip(int value)
@@ -717,7 +725,13 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 
 
 	}
-
+	private boolean getBooleanProperty(String propertyName)
+	{
+		Property<PBoolean> pBool = (Property<PBoolean>)getProperty(propertyName);
+		
+		return pBool.getValue().boolValue();
+	}
+	
 	@Override
 	public void render(Graphics2D g) {
 		
@@ -747,9 +761,16 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 //			g.setColor(new Color(200,200,100));
 			g.setColor(Color.MAGENTA);
 			g.fillOval(gazeX[cgc]-5, gazeY[cgc]-5, 10,10);
-			if(!visibleObjectList.isEmpty())
+			if(!visibleObjectList.isEmpty() && getBooleanProperty(PROPERTY_DRAW_TEXT))
 			{
-				g.drawString(visibleObjectList.get(0).name, gazeX[cgc]+25, gazeY[cgc]+5);
+				String name =visibleObjectList.get(0).name;
+				int width =g.getFontMetrics().stringWidth(name);
+				g.setColor(Color.white);
+				g.fillRect(gazeX[cgc]+25, gazeY[cgc]-5, width, 10);
+				g.setColor(Color.black);
+				
+				g.drawString(name, gazeX[cgc]+25, gazeY[cgc]+5);
+				
 			}
 		
 			//print time and index
@@ -770,10 +791,24 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 				
 				g.fillRect(50, y, 20, 20);
 				
-				g.drawRect(obj.topLeftPoint.x, obj.topLeftPoint.y, obj.size.width, obj.size.height);
+				if(getBooleanProperty(PROPERTY_DRAW_RECT))
+				{
+					g.drawRect(obj.topLeftPoint.x, obj.topLeftPoint.y, obj.size.width, obj.size.height);
+				}
+				
 				
 				g.setColor(Color.black);
 				g.drawString(obj.name +" ("+obj.gazeDistance+")",  80, y+10);
+				
+				if(obj.gazeDistance < 50 && getBooleanProperty(PROPERTY_DRAW_TEXT))
+				{
+					int width =g.getFontMetrics().stringWidth(obj.name);
+					g.setColor(Color.white);
+					g.fillRect( obj.topLeftPoint.x+obj.size.width/2, obj.topLeftPoint.y+obj.size.height/2-5, width, 10);
+					g.setColor(obj.getColor());
+					g.drawString(obj.name , obj.topLeftPoint.x+obj.size.width/2, obj.topLeftPoint.y+obj.size.height/2+5);
+				}
+				
 			}
 		}
 		

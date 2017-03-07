@@ -19,6 +19,7 @@ import java.util.TimerTask;
 
 import javax.imageio.ImageIO;
 
+import multifaceted.Util;
 import perspectives.base.Property;
 import perspectives.base.Viewer;
 import perspectives.properties.PBoolean;
@@ -35,8 +36,9 @@ class VisibleObject implements Comparable<VisibleObject>{
 	public Dimension size;
 	public String doiProperties;
 	public double gazeDistance;
+	public double rectDistance;
 	public VisibleObject(int index, String name, int[] colorArray, Point topLeftPoint, 
-			Dimension size, String doiProperties, double gazeDistance) {
+			Dimension size, String doiProperties, double gazeDistance, double rectDistance) {
 		this.index = index;
 		this.name = name;
 		this.colorArray = colorArray;
@@ -44,6 +46,7 @@ class VisibleObject implements Comparable<VisibleObject>{
 		this.size = size;
 		this.doiProperties = doiProperties;
 		this.gazeDistance = gazeDistance;
+		this.rectDistance = rectDistance;
 	}
 	
 	public Color getColor()
@@ -701,16 +704,21 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 				int height = maxy[i] - miny[i] + 1;
 								
 				double dToCenter = Math.sqrt((centerX - x)*(centerX-x) + (centerY-y)*(centerY-y));
+				double rectDistance = Util.distanceToRectangle(centerX-width/2, centerY-height/2,
+						width, height, new Point(x,y));
+				
 				printText+=" || viewed=" + dToCenter;
 				
 				printText+=" || center=(" + centerX + "," + centerY + ")";
 				printText+=" || size=(" + width + "," + height + ")";
+				printText+=" || rectDistance="+ rectDistance;
 					
 				if (this.withCutouts)
 					printText+=" || cutout=" + doiNames[i];
 				
 				VisibleObject visibleObject 
-				= new VisibleObject(i,com2[i], com1[i], new Point((int)(centerX-width/2), (int)(centerY-height/2)), new Dimension(width, height), doiProps[i], dToCenter);
+				= new VisibleObject(i,com2[i], com1[i], new Point((int)(centerX-width/2), (int)(centerY-height/2)),
+						new Dimension(width, height), doiProps[i], dToCenter, rectDistance);
 				visibleObjectList.add(visibleObject);
 			}
 			printText+=" || " + doiProps[i];
@@ -750,7 +758,7 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 					if(obj.gazeDistance < 50)
 					{
 						System.out.println(gazeT[cgc]+"\t"+obj.name +"\t"+String.format("%.3f",obj.gazeDistance)+"\t"
-									+obj.size.width+"\t"+obj.size.height);
+									+obj.size.width+"\t"+obj.size.height+"\t"+obj.rectDistance);
 					}
 					
 					

@@ -76,7 +76,7 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 	
 	public static final long TIME_LAPSE = 100;
 	
-	private static final int SKIP_VALUE =10;
+	private static final int SKIP_VALUE =50;
 	boolean withCutouts = false;
 
 	String[] imageNames;
@@ -248,17 +248,21 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 	
 	private void skip(int value)
 	{
-		this.cgc+= value -1;
-		
-		if(this.cgc < -1)
+		int newGazeIndex = cgc+value;
+		double time =0;
+		if(newGazeIndex <0 )
 		{
-			this.cgc = -1;
+			time = gazeT[0];
 		}
-		else if(this.cgc > this.gazeT.length)
+		else if (newGazeIndex > gazeT.length-1)
 		{
-			this.cgc = this.gazeT.length -2;
+			time = gazeT[gazeT.length-1];
 		}
-		advance();
+		else
+		{
+			time = gazeT[newGazeIndex];
+			setTime(time);
+		}
 	}
 	public void advanceAll()
 	{
@@ -731,7 +735,32 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 		
 		return pBool.getValue().boolValue();
 	}
-	
+	private void printResult()
+	{
+		if (cgc >= 0 && cgc < gazeT.length){
+			
+		
+		
+			if(!visibleObjectList.isEmpty())
+			{	
+				for(int i=0;i<visibleObjectList.size();i++)
+				{
+				
+					VisibleObject obj = visibleObjectList.get(i);
+					if(obj.gazeDistance < 50)
+					{
+						System.out.println(gazeT[cgc]+"\t"+obj.name +"\t"+String.format("%.3f",obj.gazeDistance)+"\t"
+									+obj.size.width+"\t"+obj.size.height);
+					}
+					
+					
+					
+					
+				}
+			}
+		}
+		
+	}
 	@Override
 	public void render(Graphics2D g) {
 		
@@ -879,6 +908,7 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 	@Override
 	public boolean mousereleased(int x, int y, int button) {
 		// TODO Auto-generated method stub
+		printResult();
 		return false;
 	}
 

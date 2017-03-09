@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
@@ -37,8 +38,12 @@ class VisibleObject implements Comparable<VisibleObject>{
 	public String doiProperties;
 	public double gazeDistance;
 	public double rectDistance;
+	public Rectangle rect;
+	
+	public boolean isColorMatch;
+	
 	public VisibleObject(int index, String name, int[] colorArray, Point topLeftPoint, 
-			Dimension size, String doiProperties, double gazeDistance, double rectDistance) {
+			Dimension size, String doiProperties, double gazeDistance, double rectDistance, Rectangle rect, boolean isColorMatch) {
 		this.index = index;
 		this.name = name;
 		this.colorArray = colorArray;
@@ -47,6 +52,8 @@ class VisibleObject implements Comparable<VisibleObject>{
 		this.doiProperties = doiProperties;
 		this.gazeDistance = gazeDistance;
 		this.rectDistance = rectDistance;
+		this.rect = rect;
+		this.isColorMatch = isColorMatch;
 	}
 	
 	public Color getColor()
@@ -55,9 +62,39 @@ class VisibleObject implements Comparable<VisibleObject>{
 	}
 
 	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		String msg =this.name+", rectDistance="+rectDistance+", size=["+size.width+", "+size.height+"],  doi="+doiProperties;
+		return msg;
+	}
+	@Override
 	public int compareTo(VisibleObject o) {
 		// TODO Auto-generated method stub
-		return Double.compare(this.gazeDistance, o.gazeDistance);
+		return Double.compare(this.rectDistance, o.rectDistance);
+	}
+	public static boolean isColorMatch(BufferedImage currentMask, int gazeX, int gazeY, int radius, int[] colorArray)
+	{
+		Color objectColor = new Color(colorArray[0], colorArray[1], colorArray[2]);
+		for(int x = gazeX - radius;x < gazeX+radius; x++)
+		{	
+			for(int y = gazeY- radius; y < gazeY+radius;y++)
+			{
+				if(
+						x>= 0 && x < currentMask.getWidth() && 
+						y>=0 && y< currentMask.getHeight()
+					)
+				{
+					Color maskColor = new Color(currentMask.getRGB(x, y));
+					if(maskColor.equals(objectColor))
+					{
+						return true;
+					}
+				}
+			}
+		}
+			
+		
+		return false;
 	}
 }
 public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer {
@@ -80,6 +117,7 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 	public static final long TIME_LAPSE = 100;
 	
 	private static final int SKIP_VALUE =50;
+	public static final int FOVEAL_RADIUS = 26;
 	boolean withCutouts = false;
 
 	String[] imageNames;
@@ -716,10 +754,20 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 				if (this.withCutouts)
 					printText+=" || cutout=" + doiNames[i];
 				
+				
+				//Visible Object start
+				Rectangle rect = new Rectangle((int)(centerX-width/2),(int)(centerY-height/2),width, height );
+				boolean isColorMatch = VisibleObject.isColorMatch(currentMask, x, y, FOVEAL_RADIUS, com1[i]);
+				
+				
+				
+				
 				VisibleObject visibleObject 
-				= new VisibleObject(i,com2[i], com1[i], new Point((int)(centerX-width/2), (int)(centerY-height/2)),
-						new Dimension(width, height), doiProps[i], dToCenter, rectDistance);
+				= new VisibleObject(i,com2[i], com1[i], new Point(rect.x, rect.y),
+						new Dimension(rect.width, rect.height), doiProps[i], dToCenter,
+						rectDistance, rect, isColorMatch);
 				visibleObjectList.add(visibleObject);
+				//Visible Object end
 			}
 			printText+=" || " + doiProps[i];
 			
@@ -798,15 +846,21 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 //			g.setColor(new Color(200,200,100));
 			g.setColor(Color.MAGENTA);
 			g.fillOval(gazeX[cgc]-5, gazeY[cgc]-5, 10,10);
+			g.drawOval(gazeX[cgc]-FOVEAL_RADIUS, gazeY[cgc]-FOVEAL_RADIUS, 2* FOVEAL_RADIUS, 2* FOVEAL_RADIUS);
 			if(!visibleObjectList.isEmpty() && getBooleanProperty(PROPERTY_DRAW_TEXT))
-			{
+			{	
 				String name =visibleObjectList.get(0).name;
-				int width =g.getFontMetrics().stringWidth(name);
-				g.setColor(Color.white);
-				g.fillRect(gazeX[cgc]+25, gazeY[cgc]-5, width, 10);
-				g.setColor(Color.black);
+				if( visibleObjectList.get(0).isColorMatch)
+				{
+					int width =g.getFontMetrics().stringWidth(name);
+					g.setColor(Color.white);
+					g.fillRect(gazeX[cgc]+25, gazeY[cgc]-5, width, 10);
+					
+					g.setColor(Color.black);
+					
+					g.drawString(name, gazeX[cgc]+25, gazeY[cgc]+5);
+				}
 				
-				g.drawString(name, gazeX[cgc]+25, gazeY[cgc]+5);
 				
 			}
 		
@@ -826,7 +880,7 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 				VisibleObject obj = visibleObjectList.get(i);
 				g.setColor(obj.getColor());
 				
-				g.fillRect(50, y, 20, 20);
+				g.fillRect(50, y, 6, 6);
 				
 				if(getBooleanProperty(PROPERTY_DRAW_RECT))
 				{
@@ -835,15 +889,21 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 				
 				
 				g.setColor(Color.black);
-				g.drawString(obj.name +" ("+obj.gazeDistance+")",  80, y+10);
+				g.drawString(obj.toString(),  80, y+10);
 				
-				if(obj.gazeDistance < 50 && getBooleanProperty(PROPERTY_DRAW_TEXT))
+				if(obj.rectDistance < FOVEAL_RADIUS && obj.isColorMatch && getBooleanProperty(PROPERTY_DRAW_TEXT))
 				{
+					int smallerDimension = Math.min(obj.size.width, obj.size.height);
+					String tooSmall ="";
+					if(smallerDimension < FOVEAL_RADIUS)
+					{
+						tooSmall="(Too Small)";
+					}
 					int width =g.getFontMetrics().stringWidth(obj.name);
 					g.setColor(Color.white);
 					g.fillRect( obj.topLeftPoint.x+obj.size.width/2, obj.topLeftPoint.y+obj.size.height/2-5, width, 10);
 					g.setColor(obj.getColor());
-					g.drawString(obj.name , obj.topLeftPoint.x+obj.size.width/2, obj.topLeftPoint.y+obj.size.height/2+5);
+					g.drawString(obj.name+tooSmall , obj.topLeftPoint.x+obj.size.width/2, obj.topLeftPoint.y+obj.size.height/2+5);
 				}
 				
 			}

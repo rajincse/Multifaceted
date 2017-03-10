@@ -72,6 +72,11 @@ class VisibleObject implements Comparable<VisibleObject>{
 		// TODO Auto-generated method stub
 		return Double.compare(this.rectDistance, o.rectDistance);
 	}
+	public static boolean isInCircle(int x, int y, int centerX, int centerY, double radius)
+	{
+		double distanceSquare = (x-centerX) * (x-centerX) + (y-centerY) * (y-centerY);
+		return distanceSquare < (radius * radius);
+	}
 	public static boolean isColorMatch(BufferedImage currentMask, int gazeX, int gazeY, int radius, int[] colorArray)
 	{
 		Color objectColor = new Color(colorArray[0], colorArray[1], colorArray[2]);
@@ -82,6 +87,7 @@ class VisibleObject implements Comparable<VisibleObject>{
 				if(
 						x>= 0 && x < currentMask.getWidth() && 
 						y>=0 && y< currentMask.getHeight()
+						&& isInCircle(x, y, gazeX, gazeY, radius)
 					)
 				{
 					Color maskColor = new Color(currentMask.getRGB(x, y));
@@ -715,17 +721,25 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 		processTime(this.outstream, gazeX[cgc], gazeY[cgc], visible, minx, miny, maxx, maxy, doiNames, doiProps);
 		
 
-		if(!this.getContainer().getEnvironment().isOffline())
+		if(!isHeadlessMode())
 		{
 			requestRender();
 		}
 		
 		return true;
 	}
+	public boolean isHeadlessMode()
+	{
+		return this.getContainer().getEnvironment().isOffline();
+	}
 	private ArrayList<VisibleObject> visibleObjectList = new ArrayList<VisibleObject>();
 	private void processTime(PrintStream out, int x, int y, boolean[] visible, int[] minx, int[] miny, int[] maxx, int[] maxy, String[] doiNames, String[] doiProps){
 	
-		this.visibleObjectList.clear();
+		if(!isHeadlessMode())
+		{
+			this.visibleObjectList.clear();
+		}
+		
 		String printText ="";
 		//go through all objects, detect if they were viewed, print their properties, save their outlines
 		for (int i=0; i<com1.length; i++){
@@ -742,31 +756,42 @@ public class ThreeDProjectionDetector extends Viewer implements JavaAwtRenderer 
 				int height = maxy[i] - miny[i] + 1;
 								
 				double dToCenter = Math.sqrt((centerX - x)*(centerX-x) + (centerY-y)*(centerY-y));
-				double rectDistance = Util.distanceToRectangle(centerX-width/2, centerY-height/2,
-						width, height, new Point(x,y));
 				
 				printText+=" || viewed=" + dToCenter;
 				
 				printText+=" || center=(" + centerX + "," + centerY + ")";
 				printText+=" || size=(" + width + "," + height + ")";
-				printText+=" || rectDistance="+ rectDistance;
+				
 					
 				if (this.withCutouts)
 					printText+=" || cutout=" + doiNames[i];
 				
 				
-				//Visible Object start
+				//Extra 2 properties
+				double rectDistance = Util.distanceToRectangle(centerX-width/2, centerY-height/2,
+						width, height, new Point(x,y));
+				
 				Rectangle rect = new Rectangle((int)(centerX-width/2),(int)(centerY-height/2),width, height );
 				boolean isColorMatch = VisibleObject.isColorMatch(currentMask, x, y, FOVEAL_RADIUS, com1[i]);
 				
 				
+				printText+=" || rectDistance="+ rectDistance;
+				printText+=" || onSurface="+ isColorMatch;
+				
+				//Visible Object start
+				if(!isHeadlessMode())
+				{
+					VisibleObject visibleObject 
+					= new VisibleObject(i,com2[i], com1[i], new Point(rect.x, rect.y),
+							new Dimension(rect.width, rect.height), doiProps[i], dToCenter,
+							rectDistance, rect, isColorMatch);
+					if(visibleObject.isColorMatch)
+					{
+						visibleObjectList.add(visibleObject);
+					}
+				}
 				
 				
-				VisibleObject visibleObject 
-				= new VisibleObject(i,com2[i], com1[i], new Point(rect.x, rect.y),
-						new Dimension(rect.width, rect.height), doiProps[i], dToCenter,
-						rectDistance, rect, isColorMatch);
-				visibleObjectList.add(visibleObject);
 				//Visible Object end
 			}
 			printText+=" || " + doiProps[i];
